@@ -1,0 +1,25 @@
+:root {
+  /* Usto Color Palette */
+  --usto-alt-white: #FAFBFB;
+  --usto-primary-300: #58828E;
+  --usto-primary-200: #C1D8DC;
+  --usto-gray-100: #BEC3C3;
+  --usto-gray-200: #888C8D;
+  --usto-alt-black: #191919;
+  
+  /* Typography */
+  --font-family: 'Noto Sans KR', sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 64px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  
+  /* Shadows */
+  --shadow-drop: 0px 8px 10px 0px rgba(234, 237, 237, 1);
+}

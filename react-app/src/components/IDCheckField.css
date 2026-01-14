@@ -1,0 +1,38 @@
+.id-check-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.id-check-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.id-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.check-duplicate-button {
+  width: 136px;
+  height: 70px;
+  padding: 14px;
+  flex-shrink: 0;
+  font-size: 24px;
+  font-weight: 700;
+  min-width: 136px;
+}
+
+@media (max-width: 768px) {
+  .id-check-wrapper {
+    flex-direction: column;
+  }
+  
+  .check-duplicate-button {
+    width: 100%;
+  }
+}

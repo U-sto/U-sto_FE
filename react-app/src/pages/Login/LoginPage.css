@@ -1,0 +1,39 @@
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-xl);
+  flex: 1;
+  padding: 40px 20px;
+}
+
+.login-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .login-title {
+    font-size: 28px;
+  }
+  
+  .login-wrapper {
+    gap: var(--spacing-lg);
+  }
+}

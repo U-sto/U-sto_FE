@@ -1,0 +1,40 @@
+.chatbot-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 80px;
+  height: 80px;
+  background-color: var(--usto-primary-300);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 2px 6px 0px rgba(88, 130, 142, 0.3);
+  transition: background-color 0.2s, transform 0.2s;
+  z-index: 1000;
+}
+
+.chatbot-button:hover {
+  background-color: var(--usto-primary-200);
+  transform: scale(1.05);
+}
+
+.chatbot-button:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .chatbot-button {
+    width: 60px;
+    height: 60px;
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .chatbot-button svg {
+    width: 40px;
+    height: 40px;
+  }
+}

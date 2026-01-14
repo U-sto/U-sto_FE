@@ -1,0 +1,91 @@
+.signup-complete-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.signup-complete-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 40px 20px;
+}
+
+.signup-complete-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 72px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.signup-complete-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  width: 100%;
+}
+
+.signup-complete-title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.signup-complete-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  width: 100%;
+}
+
+.signup-complete-subtitle {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: #888C8D;
+  text-align: center;
+  width: 100%;
+}
+
+.signup-complete-button {
+  width: 100%;
+  background-color: var(--usto-primary-300);
+  min-height: 80px;
+}
+
+.signup-complete-button:hover {
+  background-color: var(--usto-primary-200);
+}
+
+@media (max-width: 768px) {
+  .signup-complete-title {
+    font-size: 28px;
+  }
+  
+  .signup-complete-subtitle {
+    font-size: 20px;
+  }
+  
+  .signup-complete-content {
+    gap: 48px;
+  }
+  
+  .signup-complete-text {
+    gap: 32px;
+  }
+}

@@ -1,0 +1,62 @@
+.email-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.email-auth-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.email-input-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 2;
+  min-width: 0;
+}
+
+.email-input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.email-domain {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.448;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.send-code-button {
+  width: 136px;
+  height: 70px;
+  padding: 14px;
+  flex-shrink: 0;
+  font-size: 24px;
+  font-weight: 700;
+  min-width: 136px;
+}
+
+@media (max-width: 768px) {
+  .email-auth-wrapper {
+    flex-direction: column;
+  }
+  
+  .send-code-button {
+    width: 100%;
+  }
+  
+  .email-domain {
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,47 @@
+.button {
+  width: 100%;
+  padding: 14px 170px;
+  background-color: var(--usto-primary-200);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.448;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70px;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--usto-primary-300);
+  transform: translateY(-1px);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button:focus {
+  outline: 2px solid var(--usto-primary-300);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .button {
+    font-size: 24px;
+    padding: 12px 40px;
+  }
+}
