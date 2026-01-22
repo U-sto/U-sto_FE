@@ -10,6 +10,7 @@ import FindPasswordPage from './pages/FindPW/FindPasswordPage'
 import FindPasswordResetPage from './pages/FindPW/FindPasswordResetPage'
 import FindPasswordCompletePage from './pages/FindPW/FindPasswordCompletePage'
 import HomePage from './pages/Home/HomePage'
+import AcqConfirmationPage from './pages/acq-confirmation/AcqConfirmationPage'
 import './styles/variables.css'
 import './App.css'
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="/find-password/reset" element={<FindPasswordResetPage />} />
         <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
       </Routes>
     </BrowserRouter>
   )

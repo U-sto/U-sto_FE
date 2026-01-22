@@ -1,7 +1,6 @@
 .gnb-with-menu {
   width: 100%;
   position: relative;
-  box-shadow: var(--shadow-drop);
 }
 
 .gnb-top-bar {
