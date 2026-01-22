@@ -239,7 +239,7 @@ const AcqConfirmationPage = () => {
               </div>
               <div 
                 className="acq-sidebar-menu-item"
-                onClick={() => navigate('/disuse-registration')}
+                onClick={() => navigate('/disposal-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품불용등록관리

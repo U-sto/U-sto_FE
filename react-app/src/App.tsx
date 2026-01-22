@@ -12,6 +12,7 @@ import FindPasswordCompletePage from './pages/FindPW/FindPasswordCompletePage'
 import HomePage from './pages/Home/HomePage'
 import AcqConfirmationPage from './pages/acq-confirmation/AcqConfirmationPage'
 import ReturnManagementPage from './pages/Return_Management/ReturnManagementPage'
+import DisposalManagementPage from './pages/Disposal_Management/DisposalManagementPage'
 import './styles/variables.css'
 import './App.css'
 
@@ -33,6 +34,7 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
         <Route path="/return-management" element={<ReturnManagementPage />} />
+        <Route path="/disposal-management" element={<DisposalManagementPage />} />
       </Routes>
     </BrowserRouter>
   )
