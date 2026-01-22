@@ -55,8 +55,24 @@ const GNBWithMenu = () => {
                 >
                   물품 취득 확정 관리
                 </div>
-                <div className="gnb-dropdown-item">물품 반납 등록 관리</div>
-                <div className="gnb-dropdown-item">물품 불용 등록 관리</div>
+                <div
+                  className="gnb-dropdown-item"
+                  onClick={() => {
+                    navigate('/return-management')
+                    setActiveDropdown(null)
+                  }}
+                >
+                  물품 반납 등록 관리
+                </div>
+                <div
+                  className="gnb-dropdown-item"
+                  onClick={() => {
+                    navigate('/disposal-management')
+                    setActiveDropdown(null)
+                  }}
+                >
+                  물품 불용 등록 관리
+                </div>
                 <div className="gnb-dropdown-item">물품 처분 등록 관리</div>
               </div>
             )}
