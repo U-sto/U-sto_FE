@@ -22,6 +22,7 @@ type Filters = {
 }
 
 const AcqConfirmationPage = () => {
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<Filters>({
     g2bName: '',
     g2bNumberFrom: '',
@@ -231,7 +232,7 @@ const AcqConfirmationPage = () => {
               </div>
               <div 
                 className="acq-sidebar-menu-item"
-                onClick={() => navigate('/return-registration')}
+                onClick={() => navigate('/return-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품반납등록관리
