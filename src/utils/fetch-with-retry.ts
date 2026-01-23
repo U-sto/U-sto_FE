@@ -66,7 +66,12 @@ export async function fetchWithRetry<T extends { status?: number }>(
       // Successful Figma requests don't have a status property, and some endpoints return 200 with an
       // error status in the body, e.g. https://www.figma.com/developers/api#get-images-endpoint
       if (result.status && result.status !== 200) {
-        throw new Error(`Curl command failed: ${JSON.stringify(result)}`);
+        const errorInfo = {
+          status: result.status,
+          message: (result as any).message || (result as any).err || "Unknown error",
+          url,
+        };
+        throw new Error(`Curl command failed with status ${result.status}: ${errorInfo.message}`);
       }
 
       return result;

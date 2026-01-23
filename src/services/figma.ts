@@ -1,3 +1,4 @@
+import path from "path";
 import type {
   GetImagesResponse,
   GetFileResponse,
@@ -184,21 +185,25 @@ export class FigmaService {
       const fillDownloads = imageFills
         .map((item) => {
           const { imageRef, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
-          const imageUrl = fillUrls[imageRef!];
-          return imageUrl
-            ? downloadAndProcessImage(
-                fileName,
-                resolvedPath,
-                imageUrl,
-                needsCropping,
-                cropTransform,
-                requiresImageDimensions,
-              ).then((result) => ({
-                ...result,
-                imageRef: item.imageRef,
-                fileName: item.fileName,
-              }))
-            : null;
+          if (!imageRef) {
+            return null;
+          }
+          const imageUrl = fillUrls[imageRef];
+          if (!imageUrl) {
+            return null;
+          }
+          return downloadAndProcessImage(
+            fileName,
+            resolvedPath,
+            imageUrl,
+            needsCropping,
+            cropTransform,
+            requiresImageDimensions,
+          ).then((result) => ({
+            ...result,
+            imageRef: item.imageRef,
+            fileName: item.fileName,
+          }));
         })
         .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
 
