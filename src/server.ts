@@ -50,10 +50,9 @@ export async function startHttpServer(port: number, mcpServer: McpServer): Promi
   app.post("/mcp", async (req, res) => {
     Logger.log("Received StreamableHTTP request");
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    // Logger.log("Session ID:", sessionId);
-    // Logger.log("Headers:", req.headers);
-    // Logger.log("Body:", req.body);
-    // Logger.log("Is Initialize Request:", isInitializeRequest(req.body));
+    Logger.logHeaders("Session headers:", req.headers);
+    Logger.logBody("Request body:", req.body);
+    Logger.log("Is Initialize Request:", isInitializeRequest(req.body));
     let transport: StreamableHTTPServerTransport;
 
     if (sessionId && transports.streamable[sessionId]) {
@@ -74,11 +73,11 @@ export async function startHttpServer(port: number, mcpServer: McpServer): Promi
           delete transports.streamable[transport.sessionId];
         }
       };
-      // TODO? There semes to be an issue—at least in Cursor—where after a connection is made to an HTTP Streamable endpoint, SSE connections to the same Express server fail with "Received a response for an unknown message ID"
+      // TODO? There seems to be an issue—at least in Cursor—where after a connection is made to an HTTP Streamable endpoint, SSE connections to the same Express server fail with "Received a response for an unknown message ID"
       await mcpServer.connect(transport);
     } else {
       // Invalid request
-      Logger.log("Invalid request:", req.body);
+      Logger.logBody("Invalid request body:", req.body);
       res.status(400).json({
         jsonrpc: "2.0",
         error: {
@@ -151,8 +150,8 @@ export async function startHttpServer(port: number, mcpServer: McpServer): Promi
     Logger.log("Establishing new SSE connection");
     const transport = new SSEServerTransport("/messages", res);
     Logger.log(`New SSE connection established for sessionId ${transport.sessionId}`);
-    Logger.log("/sse request headers:", req.headers);
-    Logger.log("/sse request body:", req.body);
+    Logger.logHeaders("/sse request headers:", req.headers);
+    Logger.logBody("/sse request body:", req.body);
 
     transports.sse[transport.sessionId] = transport;
     res.on("close", () => {
@@ -167,8 +166,8 @@ export async function startHttpServer(port: number, mcpServer: McpServer): Promi
     const transport = transports.sse[sessionId];
     if (transport) {
       Logger.log(`Received SSE message for sessionId ${sessionId}`);
-      Logger.log("/messages request headers:", req.headers);
-      Logger.log("/messages request body:", req.body);
+      Logger.logHeaders("/messages request headers:", req.headers);
+      Logger.logBody("/messages request body:", req.body);
       await transport.handlePostMessage(req, res);
     } else {
       res.status(400).send(`No transport found for sessionId ${sessionId}`);
@@ -220,10 +219,13 @@ export async function stopHttpServer(): Promise<void> {
         return;
       }
       httpServer = null;
-      const closing = Object.values(transports.sse).map((transport) => {
+      const closingSse = Object.values(transports.sse).map((transport) => {
         return transport.close();
       });
-      Promise.all(closing).then(() => {
+      const closingStreamable = Object.values(transports.streamable).map((transport) => {
+        return transport.close();
+      });
+      Promise.all([...closingSse, ...closingStreamable]).then(() => {
         resolve();
       });
     });

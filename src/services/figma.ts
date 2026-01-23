@@ -1,11 +1,9 @@
-import path from "path";
 import type {
   GetImagesResponse,
   GetFileResponse,
   GetFileNodesResponse,
   GetImageFillsResponse,
 } from "@figma/rest-api-spec";
-import { downloadFigmaImage } from "~/utils/common.js";
 import { downloadAndProcessImage, type ImageProcessingResult } from "~/utils/image-processing.js";
 import { Logger, writeLogs } from "~/utils/logger.js";
 import { fetchWithRetry } from "~/utils/fetch-with-retry.js";
@@ -20,6 +18,21 @@ type SvgOptions = {
   outlineText: boolean;
   includeId: boolean;
   simplifyStroke: boolean;
+};
+
+export type DownloadImageItem = {
+  imageRef?: string;
+  nodeId?: string;
+  fileName: string;
+  needsCropping?: boolean;
+  cropTransform?: any;
+  requiresImageDimensions?: boolean;
+};
+
+export type DownloadImageResult = ImageProcessingResult & {
+  nodeId?: string;
+  imageRef?: string;
+  fileName: string;
 };
 
 export class FigmaService {
@@ -138,21 +151,14 @@ export class FigmaService {
    * - Image cropping based on transform matrices
    * - CSS variable generation for image dimensions
    *
-   * @returns Array of local file paths for successfully downloaded images
+   * @returns Array of download results with original request information
    */
   async downloadImages(
     fileKey: string,
     localPath: string,
-    items: Array<{
-      imageRef?: string;
-      nodeId?: string;
-      fileName: string;
-      needsCropping?: boolean;
-      cropTransform?: any;
-      requiresImageDimensions?: boolean;
-    }>,
+    items: DownloadImageItem[],
     options: { pngScale?: number; svgOptions?: SvgOptions } = {},
-  ): Promise<ImageProcessingResult[]> {
+  ): Promise<DownloadImageResult[]> {
     if (items.length === 0) return [];
 
     const sanitizedPath = path.normalize(localPath).replace(/^(\.\.(\/|\\|$))+/, "");
@@ -176,8 +182,9 @@ export class FigmaService {
     if (imageFills.length > 0) {
       const fillUrls = await this.getImageFillUrls(fileKey);
       const fillDownloads = imageFills
-        .map(({ imageRef, fileName, needsCropping, cropTransform, requiresImageDimensions }) => {
-          const imageUrl = fillUrls[imageRef];
+        .map((item) => {
+          const { imageRef, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
+          const imageUrl = fillUrls[imageRef!];
           return imageUrl
             ? downloadAndProcessImage(
                 fileName,
@@ -186,10 +193,14 @@ export class FigmaService {
                 needsCropping,
                 cropTransform,
                 requiresImageDimensions,
-              )
+              ).then((result) => ({
+                ...result,
+                imageRef: item.imageRef,
+                fileName: item.fileName,
+              }))
             : null;
         })
-        .filter((promise): promise is Promise<ImageProcessingResult> => promise !== null);
+        .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
 
       if (fillDownloads.length > 0) {
         downloadPromises.push(Promise.all(fillDownloads));
@@ -210,7 +221,8 @@ export class FigmaService {
           { pngScale },
         );
         const pngDownloads = pngNodes
-          .map(({ nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions }) => {
+          .map((item) => {
+            const { nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
             const imageUrl = pngUrls[nodeId];
             return imageUrl
               ? downloadAndProcessImage(
@@ -220,10 +232,14 @@ export class FigmaService {
                   needsCropping,
                   cropTransform,
                   requiresImageDimensions,
-                )
+                ).then((result) => ({
+                  ...result,
+                  nodeId: item.nodeId,
+                  fileName: item.fileName,
+                }))
               : null;
           })
-          .filter((promise): promise is Promise<ImageProcessingResult> => promise !== null);
+          .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
 
         if (pngDownloads.length > 0) {
           downloadPromises.push(Promise.all(pngDownloads));
@@ -239,7 +255,8 @@ export class FigmaService {
           { svgOptions },
         );
         const svgDownloads = svgNodes
-          .map(({ nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions }) => {
+          .map((item) => {
+            const { nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
             const imageUrl = svgUrls[nodeId];
             return imageUrl
               ? downloadAndProcessImage(
@@ -249,10 +266,14 @@ export class FigmaService {
                   needsCropping,
                   cropTransform,
                   requiresImageDimensions,
-                )
+                ).then((result) => ({
+                  ...result,
+                  nodeId: item.nodeId,
+                  fileName: item.fileName,
+                }))
               : null;
           })
-          .filter((promise): promise is Promise<ImageProcessingResult> => promise !== null);
+          .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
 
         if (svgDownloads.length > 0) {
           downloadPromises.push(Promise.all(svgDownloads));

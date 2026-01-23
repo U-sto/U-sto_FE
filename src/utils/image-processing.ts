@@ -18,9 +18,7 @@ export async function applyCropTransform(
   try {
     // Extract transform values
     const scaleX = cropTransform[0]?.[0] ?? 1;
-    const skewX = cropTransform[0]?.[1] ?? 0;
     const translateX = cropTransform[0]?.[2] ?? 0;
-    const skewY = cropTransform[1]?.[0] ?? 0;
     const scaleY = cropTransform[1]?.[1] ?? 1;
     const translateY = cropTransform[1]?.[2] ?? 0;
 
@@ -145,10 +143,12 @@ export async function downloadAndProcessImage(
   // First download the original image
   const { downloadFigmaImage } = await import("./common.js");
   const originalPath = await downloadFigmaImage(fileName, localPath, imageUrl);
+  processingLog.push(`Downloaded original image: ${originalPath}`);
   Logger.log(`Downloaded original image: ${originalPath}`);
 
   // Get original dimensions before any processing
   const originalDimensions = await getImageDimensions(originalPath);
+  processingLog.push(`Original dimensions: ${originalDimensions.width}x${originalDimensions.height}`);
   Logger.log(`Original dimensions: ${originalDimensions.width}x${originalDimensions.height}`);
 
   let finalPath = originalPath;
@@ -157,6 +157,7 @@ export async function downloadAndProcessImage(
 
   // Apply crop transform if needed
   if (needsCropping && cropTransform) {
+    processingLog.push("Applying crop transform...");
     Logger.log("Applying crop transform...");
 
     // Extract crop region info before applying transform
@@ -180,20 +181,26 @@ export async function downloadAndProcessImage(
       cropRegion = { left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight };
       finalPath = await applyCropTransform(originalPath, cropTransform);
       wasCropped = true;
-      Logger.log(`Cropped to region: ${cropLeft}, ${cropTop}, ${cropWidth}x${cropHeight}`);
+      const cropMessage = `Cropped to region: ${cropLeft}, ${cropTop}, ${cropWidth}x${cropHeight}`;
+      processingLog.push(cropMessage);
+      Logger.log(cropMessage);
     } else {
-      Logger.log("Invalid crop dimensions, keeping original image");
+      const invalidMessage = "Invalid crop dimensions, keeping original image";
+      processingLog.push(invalidMessage);
+      Logger.log(invalidMessage);
     }
   }
 
   // Get final dimensions after processing
   const finalDimensions = await getImageDimensions(finalPath);
+  processingLog.push(`Final dimensions: ${finalDimensions.width}x${finalDimensions.height}`);
   Logger.log(`Final dimensions: ${finalDimensions.width}x${finalDimensions.height}`);
 
   // Generate CSS variables if required (for TILE mode)
   let cssVariables: string | undefined;
   if (requiresImageDimensions) {
     cssVariables = generateImageCSSVariables(finalDimensions);
+    processingLog.push(`Generated CSS variables: ${cssVariables}`);
   }
 
   return {

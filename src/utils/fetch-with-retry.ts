@@ -39,7 +39,7 @@ export async function fetchWithRetry<T extends { status?: number }>(
 
     try {
       // Fallback to curl for  corporate networks that have proxies that sometimes block fetch
-      Logger.log(`[fetchWithRetry] Executing curl with args: ${JSON.stringify(curlArgs)}`);
+      Logger.logCurlArgs(`[fetchWithRetry] Executing curl with args:`, curlArgs);
       const { stdout, stderr } = await execFileAsync("curl", curlArgs);
 
       if (stderr) {
@@ -66,7 +66,7 @@ export async function fetchWithRetry<T extends { status?: number }>(
       // Successful Figma requests don't have a status property, and some endpoints return 200 with an
       // error status in the body, e.g. https://www.figma.com/developers/api#get-images-endpoint
       if (result.status && result.status !== 200) {
-        throw new Error(`Curl command failed: ${result}`);
+        throw new Error(`Curl command failed: ${JSON.stringify(result)}`);
       }
 
       return result;
