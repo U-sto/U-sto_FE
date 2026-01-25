@@ -65,13 +65,46 @@ export async function fetchWithRetry<T extends { status?: number }>(
 
       // Successful Figma requests don't have a status property, and some endpoints return 200 with an
       // error status in the body, e.g. https://www.figma.com/developers/api#get-images-endpoint
-      if (result.status && result.status !== 200) {
+      if (result && typeof result === "object" && "status" in result && result.status !== 200) {
+        // Extract error message from various possible fields in the response body
+        const resultAny = result as any;
+        let errorMessage = resultAny.message || resultAny.err || resultAny.error || "Unknown error";
+        
+        // If error is an object, try to extract message from it
+        if (typeof errorMessage === "object" && errorMessage !== null) {
+          errorMessage = errorMessage.message || errorMessage.err || JSON.stringify(errorMessage);
+        }
+        
+        // Sanitize URL to remove sensitive query parameters (if any)
+        let sanitizedUrl = url;
+        try {
+          const urlObj = new URL(url);
+          // Remove potentially sensitive query parameters
+          const sensitiveParams = ["token", "api_key", "access_token", "auth"];
+          sensitiveParams.forEach((param) => {
+            if (urlObj.searchParams.has(param)) {
+              urlObj.searchParams.set(param, "[REDACTED]");
+            }
+          });
+          sanitizedUrl = urlObj.toString();
+        } catch {
+          // If URL parsing fails, use original (might be relative path)
+          sanitizedUrl = url;
+        }
+        
         const errorInfo = {
           status: result.status,
-          message: (result as any).message || (result as any).err || "Unknown error",
-          url,
+          message: String(errorMessage),
+          url: sanitizedUrl,
         };
-        throw new Error(`Curl command failed with status ${result.status}: ${errorInfo.message}`);
+        
+        // Create error with additional context attached
+        const err = new Error(
+          `Curl command failed with status ${result.status}: ${errorMessage}`,
+        );
+        (err as any).info = errorInfo;
+        (err as any).raw = result;
+        throw err;
       }
 
       return result;

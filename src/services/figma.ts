@@ -152,6 +152,9 @@ export class FigmaService {
    * - Image cropping based on transform matrices
    * - CSS variable generation for image dimensions
    *
+   * Note: For large batches (hundreds/thousands of images), consider adding concurrency limiting
+   * (e.g., using p-limit) to prevent overwhelming the network or file system.
+   *
    * @returns Array of download results with original request information
    */
   async downloadImages(
@@ -182,30 +185,51 @@ export class FigmaService {
     // Download image fills with processing
     if (imageFills.length > 0) {
       const fillUrls = await this.getImageFillUrls(fileKey);
+      let skippedCount = 0;
       const fillDownloads = imageFills
         .map((item) => {
           const { imageRef, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
-          if (!imageRef) {
+          
+          // Validate required parameters (fileName is guaranteed by type, but double-check for safety)
+          if (fileName == null || fileName.trim() === "") {
+            Logger.log(`[downloadImages] Skipping item: missing fileName`);
+            skippedCount++;
             return null;
           }
+          
+          // Check imageRef (null/undefined only, not falsy)
+          if (imageRef == null) {
+            Logger.log(`[downloadImages] Skipping item ${fileName}: missing imageRef`);
+            skippedCount++;
+            return null;
+          }
+          
           const imageUrl = fillUrls[imageRef];
-          if (!imageUrl) {
+          // Check imageUrl (null/undefined only)
+          if (imageUrl == null) {
+            Logger.log(`[downloadImages] Skipping item ${fileName}: missing imageUrl for imageRef ${imageRef}`);
+            skippedCount++;
             return null;
           }
+          
           return downloadAndProcessImage(
             fileName,
             resolvedPath,
             imageUrl,
-            needsCropping,
+            needsCropping ?? false,
             cropTransform,
-            requiresImageDimensions,
+            requiresImageDimensions ?? false,
           ).then((result) => ({
             ...result,
-            imageRef: item.imageRef,
+            imageRef: item.imageRef!,
             fileName: item.fileName,
           }));
         })
         .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
+      
+      if (skippedCount > 0) {
+        Logger.log(`[downloadImages] Skipped ${skippedCount} image fill(s) due to missing data`);
+      }
 
       if (fillDownloads.length > 0) {
         downloadPromises.push(Promise.all(fillDownloads));
@@ -225,26 +249,44 @@ export class FigmaService {
           "png",
           { pngScale },
         );
+        let skippedPngCount = 0;
         const pngDownloads = pngNodes
           .map((item) => {
             const { nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
+            
+            // Validate required parameters
+            if (fileName == null || fileName.trim() === "" || nodeId == null) {
+              Logger.log(`[downloadImages] Skipping PNG node: missing fileName or nodeId`);
+              skippedPngCount++;
+              return null;
+            }
+            
             const imageUrl = pngUrls[nodeId];
-            return imageUrl
-              ? downloadAndProcessImage(
-                  fileName,
-                  resolvedPath,
-                  imageUrl,
-                  needsCropping,
-                  cropTransform,
-                  requiresImageDimensions,
-                ).then((result) => ({
-                  ...result,
-                  nodeId: item.nodeId,
-                  fileName: item.fileName,
-                }))
-              : null;
+            // Check imageUrl (null/undefined only)
+            if (imageUrl == null) {
+              Logger.log(`[downloadImages] Skipping PNG node ${nodeId} (${fileName}): missing imageUrl`);
+              skippedPngCount++;
+              return null;
+            }
+            
+            return downloadAndProcessImage(
+              fileName,
+              resolvedPath,
+              imageUrl,
+              needsCropping ?? false,
+              cropTransform,
+              requiresImageDimensions ?? false,
+            ).then((result) => ({
+              ...result,
+              nodeId: item.nodeId!,
+              fileName: item.fileName,
+            }));
           })
           .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
+        
+        if (skippedPngCount > 0) {
+          Logger.log(`[downloadImages] Skipped ${skippedPngCount} PNG node(s) due to missing data`);
+        }
 
         if (pngDownloads.length > 0) {
           downloadPromises.push(Promise.all(pngDownloads));
@@ -259,26 +301,44 @@ export class FigmaService {
           "svg",
           { svgOptions },
         );
+        let skippedSvgCount = 0;
         const svgDownloads = svgNodes
           .map((item) => {
             const { nodeId, fileName, needsCropping, cropTransform, requiresImageDimensions } = item;
+            
+            // Validate required parameters
+            if (fileName == null || fileName.trim() === "" || nodeId == null) {
+              Logger.log(`[downloadImages] Skipping SVG node: missing fileName or nodeId`);
+              skippedSvgCount++;
+              return null;
+            }
+            
             const imageUrl = svgUrls[nodeId];
-            return imageUrl
-              ? downloadAndProcessImage(
-                  fileName,
-                  resolvedPath,
-                  imageUrl,
-                  needsCropping,
-                  cropTransform,
-                  requiresImageDimensions,
-                ).then((result) => ({
-                  ...result,
-                  nodeId: item.nodeId,
-                  fileName: item.fileName,
-                }))
-              : null;
+            // Check imageUrl (null/undefined only)
+            if (imageUrl == null) {
+              Logger.log(`[downloadImages] Skipping SVG node ${nodeId} (${fileName}): missing imageUrl`);
+              skippedSvgCount++;
+              return null;
+            }
+            
+            return downloadAndProcessImage(
+              fileName,
+              resolvedPath,
+              imageUrl,
+              needsCropping ?? false,
+              cropTransform,
+              requiresImageDimensions ?? false,
+            ).then((result) => ({
+              ...result,
+              nodeId: item.nodeId!,
+              fileName: item.fileName,
+            }));
           })
           .filter((promise): promise is Promise<DownloadImageResult> => promise !== null);
+        
+        if (skippedSvgCount > 0) {
+          Logger.log(`[downloadImages] Skipped ${skippedSvgCount} SVG node(s) due to missing data`);
+        }
 
         if (svgDownloads.length > 0) {
           downloadPromises.push(Promise.all(svgDownloads));
