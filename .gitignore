@@ -1,42 +1,61 @@
-# Dependencies
-node_modules
-.pnpm-store
+# 1. Dependencies & Lockfiles (패키지 관련)
+node_modules/
+.pnpm-store/
 package-lock.json
+pnpm-lock.yaml
+pnpm-debug.log*
 
-# Build output
-dist
-
-# Environment variables
+# 2. Build & Environment (빌드 및 환경 변수)
+dist/
 .env
 .env.local
 .env.*.local
+.mcpregistry*
 
-# IDE
+# 3. U-sto Project Overhead (템플릿/관리용 파일)
+# 기본 Vite 프로젝트와 겹치지 않는 설정 파일들입니다.
+.changeset/
+.github/
+docs/
+.nvmrc
+.prettierrc
+jest.config.js
+server.json
+tsup.config.ts
+tsconfig.json
+tsconfig.node.json
+cspell.json
+
+# 4. Unnecessary Documents (불필요한 문서)
+# 메인 README.md를 제외한 다국어 문서 및 관리 파일들입니다.
+README.ko.md
+README.ja.md
+README.zh-cn.md
+README.zh-tw.md
+RELEASES.md
+ROADMAP.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# 5. IDE & System (에디터 및 OS 설정)
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
+Thumbs.db
 
-# Logs
-logs
+# 6. Logs & Testing (로그 및 테스트)
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-
-# Testing
-coverage
-test-output
-
-# OS
-.DS_Store
-Thumbs.db
-
-# mcp-publisher CLI tool files
-.mcpregistry*
+coverage/
+test-output/
