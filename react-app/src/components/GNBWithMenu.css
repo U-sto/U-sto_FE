@@ -59,7 +59,7 @@
   left: 0;
   margin-top: 8px;
   background-color: var(--usto-alt-white);
-  border: 1px solid var(--usto-primary-200);
+  border: none;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-drop);
   min-width: 200px;
@@ -77,10 +77,12 @@
   padding: 8px 16px;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
+  border: none;
+  background: transparent;
 }
 
 .gnb-dropdown-item:hover {
-  background-color: var(--usto-primary-200);
+  background-color: var(--btn-hover-bg);
   color: var(--usto-primary-300);
 }
 

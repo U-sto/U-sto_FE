@@ -3,6 +3,57 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import SystemLogo from './SystemLogo'
 import './GNBWithMenu.css'
 
+type MenuItem = {
+  label: string
+  path?: string
+  isMain?: boolean
+  isSubItem?: boolean
+  children?: MenuItem[]
+}
+
+type MenuSection = {
+  id: string
+  label: string
+  items: MenuItem[]
+}
+
+const menuData: MenuSection[] = [
+  {
+    id: 'admin',
+    label: '관리자',
+    items: [
+      { label: '물품 취득 확정 관리', path: '/acq-confirmation' },
+      { label: '물품 반납 등록 관리', path: '/return-management' },
+      { label: '물품 불용 등록 관리', path: '/disposal-management' },
+      { label: '물품 처분 등록 관리' },
+    ],
+  },
+  {
+    id: 'asset',
+    label: '물품 관리',
+    items: [
+      { label: '물품 취득 관리' },
+      {
+        label: '물품 운용 관리',
+        isMain: true,
+        children: [
+          { label: '물품 운용 대장 관리', isSubItem: true },
+          { label: '출력물 관리', isSubItem: true },
+          { label: '물품 반납 관리', isSubItem: true },
+        ],
+      },
+      { label: '물품 불용 관리' },
+      { label: '물품 처분 관리' },
+      { label: '보유 현황 조회' },
+    ],
+  },
+  {
+    id: 'ai',
+    label: 'AI 예측',
+    items: [{ label: '사용주기 AI 예측' }],
+  },
+]
+
 const GNBWithMenu = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -23,105 +74,79 @@ const GNBWithMenu = () => {
     navigate('/login')
   }
 
+  const handleItemClick = (item: MenuItem) => {
+    if (item.path) {
+      navigate(item.path)
+      setActiveDropdown(null)
+    }
+  }
+
+  const renderMenuItem = (sectionId: string, item: MenuItem) => {
+    const classNames = ['gnb-dropdown-item']
+    if (item.isMain) {
+      classNames.push('gnb-dropdown-main')
+    }
+    if (item.isSubItem) {
+      classNames.push('gnb-dropdown-subitem')
+    }
+
+    const button = (
+      <button
+        key={item.label}
+        type="button"
+        className={classNames.join(' ')}
+        onClick={() => handleItemClick(item)}
+      >
+        {item.label}
+      </button>
+    )
+
+    if (item.children && item.children.length > 0) {
+      return (
+        <div key={`${sectionId}-${item.label}`}>
+          {button}
+          <div className="gnb-dropdown-submenu">
+            {item.children.map((child) => renderMenuItem(sectionId, child))}
+          </div>
+        </div>
+      )
+    }
+
+    return button
+  }
+
   return (
     <nav className="gnb-with-menu">
       <div className="gnb-user-section">
         <span className="gnb-user-text">회원정보</span>
         <div className="gnb-user-divider"></div>
-        <span className="gnb-user-text" onClick={handleLogout}>로그아웃</span>
+        <button type="button" className="gnb-user-text" onClick={handleLogout}>
+          로그아웃
+        </button>
       </div>
       <div className="gnb-menu-content">
         <SystemLogo />
         <div className="gnb-menu-tabs">
-          <div className="gnb-dropdown">
-            <button
-              className="gnb-menu-tab"
-              onClick={() => handleDropdownToggle('admin')}
-              onMouseEnter={() => setActiveDropdown('admin')}
-            >
-              관리자
-            </button>
-            {activeDropdown === 'admin' && (
-              <div
-                className="gnb-dropdown-menu"
-                onMouseLeave={() => setActiveDropdown(null)}
+          {menuData.map((section) => (
+            <div key={section.id} className="gnb-dropdown">
+              <button
+                type="button"
+                className="gnb-menu-tab"
+                onClick={() => handleDropdownToggle(section.id)}
+                onMouseEnter={() => setActiveDropdown(section.id)}
               >
+                {section.label}
+              </button>
+              {activeDropdown === section.id && (
                 <div
-                  className="gnb-dropdown-item"
-                  onClick={() => {
-                    navigate('/acq-confirmation')
-                    setActiveDropdown(null)
-                  }}
+                  className="gnb-dropdown-menu"
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  물품 취득 확정 관리
+                  {section.items.map((item) => renderMenuItem(section.id, item))}
                 </div>
-                <div
-                  className="gnb-dropdown-item"
-                  onClick={() => {
-                    navigate('/return-management')
-                    setActiveDropdown(null)
-                  }}
-                >
-                  물품 반납 등록 관리
-                </div>
-                <div
-                  className="gnb-dropdown-item"
-                  onClick={() => {
-                    navigate('/disposal-management')
-                    setActiveDropdown(null)
-                  }}
-                >
-                  물품 불용 등록 관리
-                </div>
-                <div className="gnb-dropdown-item">물품 처분 등록 관리</div>
-              </div>
-            )}
-          </div>
-          
-          <div className="gnb-dropdown">
-            <button
-              className="gnb-menu-tab"
-              onClick={() => handleDropdownToggle('asset')}
-              onMouseEnter={() => setActiveDropdown('asset')}
-            >
-              물품 관리
-            </button>
-            {activeDropdown === 'asset' && (
-              <div
-                className="gnb-dropdown-menu"
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <div className="gnb-dropdown-item">물품 취득 관리</div>
-                <div className="gnb-dropdown-item gnb-dropdown-main">물품 운용 관리</div>
-                <div className="gnb-dropdown-submenu">
-                  <div className="gnb-dropdown-item gnb-dropdown-subitem">물품 운용 대장 관리</div>
-                  <div className="gnb-dropdown-item gnb-dropdown-subitem">출력물 관리</div>
-                  <div className="gnb-dropdown-item gnb-dropdown-subitem">물품 반납 관리</div>
-                </div>
-                <div className="gnb-dropdown-item">물품 불용 관리</div>
-                <div className="gnb-dropdown-item">물품 처분 관리</div>
-                <div className="gnb-dropdown-item">보유 현황 조회</div>
-              </div>
-            )}
-          </div>
-          
-          <div className="gnb-dropdown">
-            <button
-              className="gnb-menu-tab"
-              onClick={() => handleDropdownToggle('ai')}
-              onMouseEnter={() => setActiveDropdown('ai')}
-            >
-              AI 예측
-            </button>
-            {activeDropdown === 'ai' && (
-              <div
-                className="gnb-dropdown-menu"
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <div className="gnb-dropdown-item">사용주기 AI 예측</div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
       <div className="gnb-bottom-border"></div>

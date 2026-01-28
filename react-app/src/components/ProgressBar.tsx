@@ -17,7 +17,7 @@ const ProgressBar = ({ step = 1, totalSteps = 3 }: ProgressBarProps) => {
         {steps.map((stepNum) => (
           <div
             key={stepNum}
-            className={`progress-step ${stepNum === step ? 'active' : ''}`}
+            className={`progress-step ${stepNum <= step ? 'active' : ''}`}
           />
         ))}
       </div>

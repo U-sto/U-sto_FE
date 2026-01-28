@@ -11,6 +11,13 @@
   /* Typography */
   --font-family: 'Noto Sans KR', sans-serif;
   
+  /* Buttons */
+  --btn-reset-border: none;
+  --btn-reset-bg: none;
+  --btn-reset-padding: 0;
+  --btn-reset-outline: none;
+  --btn-hover-bg: rgba(0, 0, 0, 0.05);
+  
   /* Spacing */
   --spacing-xs: 8px;
   --spacing-sm: 12px;
