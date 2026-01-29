@@ -1,0 +1,34 @@
+.progress-bar {
+  width: 100%;
+  height: 8px;
+}
+
+.progress-bar-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+  height: 8px;
+}
+
+.progress-step {
+  width: 100%;
+  height: 8px;
+  background-color: var(--usto-gray-100);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.progress-step.active {
+  background-color: var(--usto-primary-200);
+}
+
+.progress-bar-fill {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .progress-step {
+    width: 80px;
+  }
+}
