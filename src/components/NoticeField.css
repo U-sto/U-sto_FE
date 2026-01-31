@@ -1,0 +1,228 @@
+.notice-field {
+  width: 100%;
+  max-width: 1980px;
+  height: 650px;
+  border: 2px solid var(--usto-primary-300);
+  border-radius: 16px;
+  padding: 0 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notice-field-content {
+  display: flex;
+  flex-direction: row;
+  gap: 54px;
+  width: 100%;
+  height: 100%;
+}
+
+.notice-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: 45px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-list-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+}
+
+.notice-list-divider {
+  width: 100%;
+  height: 2px;
+  background-color: var(--usto-primary-200);
+}
+
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.notice-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.notice-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 96px;
+  padding: var(--spacing-sm) 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notice-item:hover {
+  background-color: rgba(193, 216, 220, 0.1);
+}
+
+.notice-item.selected {
+  background-color: var(--usto-primary-200);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: 0 calc(-1 * var(--spacing-md));
+  border-radius: var(--radius-sm);
+}
+
+.notice-item-title {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.notice-item-date {
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: nowrap;
+}
+
+.notice-pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.notice-pagination-arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--usto-primary-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.notice-pagination-arrow:hover {
+  color: var(--usto-primary-200);
+}
+
+.notice-pagination-number {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-200);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.notice-pagination-number.active {
+  color: var(--usto-primary-300);
+}
+
+.notice-pagination-number:hover {
+  color: var(--usto-primary-300);
+}
+
+.notice-detail-divider {
+  width: 2px;
+  height: 100%;
+  background-color: var(--usto-primary-300);
+}
+
+.notice-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: 45px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-detail-title {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+}
+
+.notice-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notice-detail-meta {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 96px;
+}
+
+.notice-detail-writer {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+}
+
+.notice-detail-date {
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+}
+
+.notice-detail-text {
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: pre-line;
+}
+
+@media (max-width: 768px) {
+  .notice-field {
+    height: auto;
+    min-height: 474px;
+    padding: 24px;
+  }
+  
+  .notice-field-content {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .notice-detail-divider {
+    width: 100%;
+    height: 2px;
+  }
+}
