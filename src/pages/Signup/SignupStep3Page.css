@@ -58,21 +58,6 @@
   width: 100%;
 }
 
-/* Dropdown (소속) 스타일을 다른 입력창(TextField)과 동일하게 보이도록 조정 */
-.signup-step3-fields .dropdown-button {
-  border: 2px solid var(--usto-gray-100);
-  border-radius: var(--radius-sm);
-}
-
-.signup-step3-fields .dropdown-button:hover {
-  border-color: var(--usto-primary-200);
-}
-
-.signup-step3-fields .dropdown-button:focus {
-  outline: none;
-  border-color: var(--usto-primary-200);
-}
-
 .signup-step3-footer {
   width: 100%;
   height: 22px;
