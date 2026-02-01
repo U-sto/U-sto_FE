@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import './Dropdown.css'
+import './DropdownSmall.css'
 
 interface DropdownProps {
   placeholder?: string

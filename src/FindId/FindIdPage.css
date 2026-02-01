@@ -1,0 +1,79 @@
+.find-id-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.find-id-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex: 1;
+  padding: 40px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.find-id-subtitle {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  width: 100%;
+}
+
+.find-id-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+.email-auth-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.find-id-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 145px;
+}
+
+.find-id-link {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-100);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.find-id-link:hover {
+  color: var(--usto-primary-300);
+}
+
+@media (max-width: 768px) {
+  .find-id-subtitle {
+    font-size: 20px;
+  }
+  
+  .find-id-footer {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+}
