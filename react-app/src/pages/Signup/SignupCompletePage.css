@@ -1,34 +1,15 @@
-.signup-complete-page {
-  width: 100%;
-  min-height: 100vh;
-  background-color: var(--usto-alt-white);
-  display: flex;
-  flex-direction: column;
-}
-
-.signup-complete-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  padding: 40px 20px;
-}
+/* 레이아웃 관련 클래스(.signup-complete-page, .wrapper 등) 삭제됨 */
 
 .signup-complete-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 72px;
   max-width: 500px;
   width: 100%;
 }
 
-.signup-complete-text {
+.auth-layout-content.signup-complete-content .auth-layout-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 50px;
+  gap: 72px;
   width: 100%;
 }
 
@@ -75,6 +56,5 @@
 @media (max-width: 768px) {
   .signup-complete-title { font-size: 28px; }
   .signup-complete-subtitle { font-size: 20px; }
-  .signup-complete-content { gap: 48px; }
-  .signup-complete-text { gap: 32px; }
+  .auth-layout-content.signup-complete-content .auth-layout-body { gap: 48px; }
 }

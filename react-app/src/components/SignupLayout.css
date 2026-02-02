@@ -52,6 +52,7 @@
   height: 22px;
   display: flex;
   align-items: center;
+  margin-top: -24px; /* form 버튼과 푸터 링크 간격 24px (wrapper gap 48px 보정) */
 }
 
 .signup-layout-link {
