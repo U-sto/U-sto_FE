@@ -82,15 +82,7 @@
 }
 
 @media (max-width: 768px) {
-  .signup-step3-title {
-    font-size: 28px;
-  }
-  
-  .signup-step3-wrapper {
-    gap: 32px;
-  }
-  
-  .signup-step3-form {
-    padding-bottom: 60px;
-  }
+  .signup-step3-title { font-size: 28px; }
+  .signup-step3-wrapper { gap: 32px; }
+  .signup-step3-form { padding-bottom: 60px; }
 }

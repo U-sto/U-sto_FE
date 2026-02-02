@@ -51,6 +51,7 @@
 
 .gnb-dropdown {
   position: relative;
+  display: inline-block;
 }
 
 .gnb-dropdown-menu {
@@ -58,11 +59,15 @@
   top: 100%;
   left: 0;
   margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   background-color: var(--usto-alt-white);
   border: none;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-drop);
-  min-width: 200px;
+  width: max-content;
+  min-width: 100%;
   z-index: 1000;
   padding: 8px 0;
 }
@@ -79,6 +84,10 @@
   transition: background-color 0.2s, color 0.2s;
   border: none;
   background: transparent;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .gnb-dropdown-item:hover {
@@ -95,7 +104,14 @@
   flex-direction: column;
 }
 
-.gnb-dropdown-subitem {
+/* 최상위 항목만 왼쪽 정렬 (16px) */
+.gnb-dropdown-menu > button.gnb-dropdown-item,
+.gnb-dropdown-menu > div > button.gnb-dropdown-item {
+  padding-left: 16px;
+}
+
+/* 물품 운용 관리 하위 3개만 들여쓰기 */
+.gnb-dropdown-submenu .gnb-dropdown-item {
   padding-left: 32px;
 }
 

@@ -17,7 +17,6 @@
   align-items: center;
   min-height: 70px;
   white-space: nowrap;
-  writing-mode: horizontal-tb;
 }
 
 .button:hover:not(:disabled) {

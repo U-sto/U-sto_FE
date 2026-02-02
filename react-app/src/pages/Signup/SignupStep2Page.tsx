@@ -13,15 +13,9 @@ const SignupStep2Page = () => {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
-  const handleCheckDuplicate = () => {
-    console.log('아이디 중복확인:', userId)
-    // 여기에 중복확인 로직을 추가하세요
-  }
-
+  const handleCheckDuplicate = () => { /* TODO */ }
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('다음 단계:', { userId, password, passwordConfirm })
-    // 다음 단계로 이동
     navigate('/signup/step3')
   }
 
@@ -31,29 +25,14 @@ const SignupStep2Page = () => {
       <div className="signup-step2-wrapper">
         <h1 className="signup-step2-title">회원가입</h1>
         <ProgressBar step={2} />
-        
         <form className="signup-step2-form" onSubmit={handleNext}>
           <div className="signup-step2-fields">
-            <IDCheckField
-              userId={userId}
-              onUserIdChange={(e) => setUserId(e.target.value)}
-              onCheckDuplicate={handleCheckDuplicate}
-            />
-            
+            <IDCheckField userId={userId} onUserIdChange={(e) => setUserId(e.target.value)} onCheckDuplicate={handleCheckDuplicate} />
             <div className="password-fields">
-              <PasswordField
-                placeholder="비밀번호"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <PasswordField
-                placeholder="비밀번호 재입력"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-              />
+              <PasswordField placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordField placeholder="비밀번호 재입력" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
             </div>
           </div>
-          
           <div className="signup-step2-bottom">
             <Button type="submit">다음</Button>
             <div className="signup-step2-footer">

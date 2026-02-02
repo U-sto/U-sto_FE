@@ -12,6 +12,7 @@
   align-items: center;
   gap: var(--spacing-lg);
   flex: 1;
+  min-width: min-content;
   text-decoration: none;
   cursor: pointer;
 }
@@ -23,6 +24,7 @@
   line-height: 1.2;
   letter-spacing: -0.03em;
   transition: color 0.2s;
+  white-space: nowrap !important;
 }
 
 .find-id-tab:not(.active) .find-id-tab-text {

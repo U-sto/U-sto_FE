@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/GNBWithMenu'
 import TextField from '../../components/TextField'
 import Dropdown from '../../components/Dropdown'
-import DropdownSmall from '../../components/DropdownSmall'
 import Button from '../../components/Button'
 import RadioButton from '../../components/RadioButton'
 import ChatBotButton from '../../components/ChatBotButton'
@@ -239,14 +238,14 @@ const AcqConfirmationPage = () => {
               </div>
               <div 
                 className="acq-sidebar-menu-item"
-                onClick={() => navigate('/disposal-management')}
+                onClick={() => navigate('/disuse-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품불용등록관리
               </div>
               <div 
                 className="acq-sidebar-menu-item"
-                onClick={() => navigate('/disposal-registration')}
+                onClick={() => navigate('/disposal-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품처분등록관리
@@ -276,10 +275,11 @@ const AcqConfirmationPage = () => {
                 {/* 첫 번째 행: G2B목록명, 운용부서 */}
                 <div className="acq-field">
                   <div className="acq-label">G2B목록명</div>
-                  <DropdownSmall
+                  <Dropdown
+                    size="small"
                     placeholder="목록명을 선택하세요"
                     value={filters.g2bName}
-                    onChange={(value) => {
+                    onChange={(value: string) => {
                       const matched = g2bOptions.find((opt) => opt.name === value)
                       if (matched) {
                         // 43211613-26081535 형식에서 앞부분 숫자 추출
@@ -306,10 +306,11 @@ const AcqConfirmationPage = () => {
 
                 <div className="acq-field">
                   <div className="acq-label">운용부서</div>
-                  <DropdownSmall
+                  <Dropdown
+                    size="small"
                     placeholder="선택"
                     value={filters.category}
-                    onChange={(value) => setFilters((p) => ({ ...p, category: value }))}
+                    onChange={(value: string) => setFilters((p) => ({ ...p, category: value }))}
                     options={categoryOptions}
                   />
                 </div>

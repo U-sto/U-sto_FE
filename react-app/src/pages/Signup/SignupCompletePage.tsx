@@ -6,11 +6,6 @@ import './SignupCompletePage.css'
 
 const SignupCompletePage = () => {
   const navigate = useNavigate()
-
-  const handleLogin = () => {
-    navigate('/login')
-  }
-
   return (
     <div className="signup-complete-page">
       <GNB />
@@ -23,9 +18,7 @@ const SignupCompletePage = () => {
             </div>
             <p className="signup-complete-subtitle">로그인 후 이용해 주세요.</p>
           </div>
-          <Button onClick={handleLogin} className="signup-complete-button">
-            로그인
-          </Button>
+          <Button onClick={() => navigate('/login')} className="signup-complete-button">로그인</Button>
         </div>
       </div>
     </div>

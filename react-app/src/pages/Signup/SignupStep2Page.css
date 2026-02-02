@@ -81,11 +81,6 @@
 }
 
 @media (max-width: 768px) {
-  .signup-step2-title {
-    font-size: 28px;
-  }
-  
-  .signup-step2-wrapper {
-    gap: 32px;
-  }
+  .signup-step2-title { font-size: 28px; }
+  .signup-step2-wrapper { gap: 32px; }
 }

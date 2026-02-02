@@ -5,34 +5,34 @@ import TextField from '../../components/TextField'
 import Button from '../../components/Button'
 import RadioButton from '../../components/RadioButton'
 import ChatBotButton from '../../components/ChatBotButton'
-import './DisposalManagementPage.css'
+import './ReturnManagementPage.css'
 
 type Filters = {
-  disposalDateFrom: string
-  disposalDateTo: string
+  returnDateFrom: string
+  returnDateTo: string
   approvalStatus: string
 }
 
-const DisposalManagementPage = () => {
+const ReturnManagementPage = () => {
   const navigate = useNavigate()
   const [filters, setFilters] = useState<Filters>({
-    disposalDateFrom: '',
-    disposalDateTo: '',
+    returnDateFrom: '',
+    returnDateTo: '',
     approvalStatus: '전체',
   })
 
   const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
 
-  const [disposalDateError, setDisposalDateError] = useState<string>('')
+  const [returnDateError, setReturnDateError] = useState<string>('')
   const [searchedFilters, setSearchedFilters] = useState<Filters | null>(null)
 
-  // 전체 데이터 (초기 데이터) - 불용 등록 목록
+  // 전체 데이터 (초기 데이터) - 반납 등록 목록
   const allRegistrationData = useMemo(
     () =>
       Array.from({ length: 5 }).map((_, idx) => ({
         id: idx + 1,
-        disposalDate: '2026-01-21',
-        disposalConfirmDate: '2026-01-22',
+        returnDate: '2026-01-21',
+        returnConfirmDate: '2026-01-22',
         registrantId: `user${idx + 1}`,
         registrantName: `등록자${idx + 1}`,
         approvalStatus: '대기',
@@ -40,7 +40,7 @@ const DisposalManagementPage = () => {
     [],
   )
 
-  // 전체 데이터 (초기 데이터) - 불용 물품 목록
+  // 전체 데이터 (초기 데이터) - 반납 물품 목록
   const allItemData = useMemo(
     () =>
       Array.from({ length: 10 }).map((_, idx) => ({
@@ -52,23 +52,23 @@ const DisposalManagementPage = () => {
         acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
         operatingDept: `운용부서 ${idx + 1}`,
         itemStatus: '운용중',
-        reason: '불용 사유',
+        reason: '반납 사유',
       })),
     [],
   )
 
-  // 필터링된 데이터 - 불용 등록 목록
+  // 필터링된 데이터 - 반납 등록 목록
   const filteredRegistrationData = useMemo(() => {
     if (!searchedFilters) {
       return allRegistrationData
     }
 
     return allRegistrationData.filter((item) => {
-      // 불용일자 필터
-      if (searchedFilters.disposalDateFrom && item.disposalDate < searchedFilters.disposalDateFrom) {
+      // 반납일자 필터
+      if (searchedFilters.returnDateFrom && item.returnDate < searchedFilters.returnDateFrom) {
         return false
       }
-      if (searchedFilters.disposalDateTo && item.disposalDate > searchedFilters.disposalDateTo) {
+      if (searchedFilters.returnDateTo && item.returnDate > searchedFilters.returnDateTo) {
         return false
       }
 
@@ -83,7 +83,7 @@ const DisposalManagementPage = () => {
     })
   }, [allRegistrationData, searchedFilters])
 
-  // 필터링된 데이터 - 불용 물품 목록
+  // 필터링된 데이터 - 반납 물품 목록
   const filteredItemData = useMemo(() => {
     // 등록 목록과 연동되도록 할 수도 있지만, 일단 전체 데이터 반환
     return allItemData
@@ -103,11 +103,11 @@ const DisposalManagementPage = () => {
 
   const onReset = () => {
     setFilters({
-      disposalDateFrom: '',
-      disposalDateTo: '',
+      returnDateFrom: '',
+      returnDateTo: '',
       approvalStatus: '전체',
     })
-    setDisposalDateError('')
+    setReturnDateError('')
     setSearchedFilters(null)
   }
 
@@ -115,9 +115,9 @@ const DisposalManagementPage = () => {
     // 날짜 유효성 검사
     let hasError = false
 
-    if (filters.disposalDateFrom && filters.disposalDateTo) {
-      validateDateRange(filters.disposalDateFrom, filters.disposalDateTo, setDisposalDateError)
-      if (filters.disposalDateTo < filters.disposalDateFrom) {
+    if (filters.returnDateFrom && filters.returnDateTo) {
+      validateDateRange(filters.returnDateFrom, filters.returnDateTo, setReturnDateError)
+      if (filters.returnDateTo < filters.returnDateFrom) {
         hasError = true
       }
     }
@@ -131,43 +131,43 @@ const DisposalManagementPage = () => {
   }
 
   return (
-    <div className="disposal-page">
+    <div className="return-page">
       <GNBWithMenu />
 
-      <div className="disposal-layout">
+      <div className="return-layout">
         {/* SideBar */}
-        <aside className="disposal-sidebar">
-          <div className="disposal-sidebar-main">
-            <span className="disposal-sidebar-main-text">관리자</span>
+        <aside className="return-sidebar">
+          <div className="return-sidebar-main">
+            <span className="return-sidebar-main-text">관리자</span>
           </div>
 
-          <div className="disposal-sidebar-category">
-            <div className="disposal-sidebar-category-title">관리자 메뉴</div>
-            <div className="disposal-sidebar-menu-list">
+          <div className="return-sidebar-category">
+            <div className="return-sidebar-category-title">관리자 메뉴</div>
+            <div className="return-sidebar-menu-list">
               <div
-                className="disposal-sidebar-menu-item"
+                className="return-sidebar-menu-item"
                 onClick={() => navigate('/acq-confirmation')}
                 style={{ cursor: 'pointer' }}
               >
                 물품취득확정관리
               </div>
               <div
-                className="disposal-sidebar-menu-item"
+                className="return-sidebar-menu-item return-sidebar-menu-item-active"
                 onClick={() => navigate('/return-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품반납등록관리
               </div>
               <div
-                className="disposal-sidebar-menu-item disposal-sidebar-menu-item-active"
-                onClick={() => navigate('/disposal-management')}
+                className="return-sidebar-menu-item"
+                onClick={() => navigate('/disuse-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품불용등록관리
               </div>
               <div
-                className="disposal-sidebar-menu-item"
-                onClick={() => navigate('/disposal-registration')}
+                className="return-sidebar-menu-item"
+                onClick={() => navigate('/disposal-management')}
                 style={{ cursor: 'pointer' }}
               >
                 물품처분등록관리
@@ -176,57 +176,57 @@ const DisposalManagementPage = () => {
           </div>
         </aside>
 
-        <main className="disposal-main">
+        <main className="return-main">
           {/* DepthBar */}
-          <section className="disposal-depthbar">
-            <div className="disposal-depthbar-bg" />
-            <div className="disposal-depthbar-track">
-              <div className="disposal-depth-pill disposal-depth-pill-active">
-                <span className="disposal-depth-text">관리자 메뉴</span>
+          <section className="return-depthbar">
+            <div className="return-depthbar-bg" />
+            <div className="return-depthbar-track">
+              <div className="return-depth-pill return-depth-pill-active">
+                <span className="return-depth-text">관리자 메뉴</span>
               </div>
-              <div className="disposal-depth-pill">
-                <span className="disposal-depth-text disposal-depth-text-inactive">물품 불용 등록 관리</span>
+              <div className="return-depth-pill">
+                <span className="return-depth-text return-depth-text-inactive">물품 반납 등록 관리</span>
               </div>
             </div>
           </section>
 
           {/* Filter Section */}
-          <section className="disposal-filter">
-            <div className="disposal-filter-wrapper">
-              <div className="disposal-filter-grid">
-                <div className="disposal-field">
-                  <div className="disposal-label">불용일자</div>
-                  <div className="disposal-date-field-wrapper">
-                    <div className="disposal-date-range">
+          <section className="return-filter">
+            <div className="return-filter-wrapper">
+              <div className="return-filter-grid">
+                <div className="return-field">
+                  <div className="return-label">반납일자</div>
+                  <div className="return-date-field-wrapper">
+                    <div className="return-date-range">
                       <TextField
                         type="date"
-                        value={filters.disposalDateFrom}
+                        value={filters.returnDateFrom}
                         onChange={(e) => {
-                          setFilters((p) => ({ ...p, disposalDateFrom: e.target.value }))
-                          if (filters.disposalDateTo) {
-                            validateDateRange(e.target.value, filters.disposalDateTo, setDisposalDateError)
+                          setFilters((p) => ({ ...p, returnDateFrom: e.target.value }))
+                          if (filters.returnDateTo) {
+                            validateDateRange(e.target.value, filters.returnDateTo, setReturnDateError)
                           }
                         }}
                       />
-                      <span className="disposal-date-sep">~</span>
+                      <span className="return-date-sep">~</span>
                       <TextField
                         type="date"
-                        value={filters.disposalDateTo}
+                        value={filters.returnDateTo}
                         onChange={(e) => {
-                          setFilters((p) => ({ ...p, disposalDateTo: e.target.value }))
-                          if (filters.disposalDateFrom) {
-                            validateDateRange(filters.disposalDateFrom, e.target.value, setDisposalDateError)
+                          setFilters((p) => ({ ...p, returnDateTo: e.target.value }))
+                          if (filters.returnDateFrom) {
+                            validateDateRange(filters.returnDateFrom, e.target.value, setReturnDateError)
                           }
                         }}
                       />
                     </div>
-                    {disposalDateError && <div className="disposal-error-text">{disposalDateError}</div>}
+                    {returnDateError && <div className="return-error-text">{returnDateError}</div>}
                   </div>
                 </div>
 
-                <div className="disposal-field">
-                  <div className="disposal-label">승인상태</div>
-                  <div className="disposal-radio-group">
+                <div className="return-field">
+                  <div className="return-label">승인상태</div>
+                  <div className="return-radio-group">
                     {approvalOptions.map((option) => (
                       <RadioButton
                         key={option}
@@ -241,31 +241,31 @@ const DisposalManagementPage = () => {
                 </div>
               </div>
 
-              <div className="disposal-filter-actions">
-                <Button className="disposal-btn disposal-btn-outline" onClick={onReset}>
+              <div className="return-filter-actions">
+                <Button className="return-btn return-btn-outline" onClick={onReset}>
                   초기화
                 </Button>
-                <Button className="disposal-btn disposal-btn-primary" onClick={onSearch}>
+                <Button className="return-btn return-btn-primary" onClick={onSearch}>
                   조회
                 </Button>
               </div>
             </div>
           </section>
 
-          {/* Upper Table - 불용 등록 목록 */}
-          <section className="disposal-table disposal-table-upper">
-            <div className="disposal-table-top">
-              <div className="disposal-table-label">불용 등록 목록</div>
+          {/* Upper Table - 반납 등록 목록 */}
+          <section className="return-table return-table-upper">
+            <div className="return-table-top">
+              <div className="return-table-label">반납 등록 목록</div>
             </div>
 
-            <div className="disposal-table-wrap">
-              <div className="disposal-table-wrap-inner">
-                <table className="disposal-table-el">
+            <div className="return-table-wrap">
+              <div className="return-table-wrap-inner">
+                <table className="return-table-el">
                   <thead>
                     <tr>
                       <th style={{ width: 100 }}>순번</th>
-                      <th style={{ width: 150 }}>불용일자</th>
-                      <th style={{ width: 150 }}>불용확정일자</th>
+                      <th style={{ width: 150 }}>반납일자</th>
+                      <th style={{ width: 150 }}>반납확정일자</th>
                       <th style={{ width: 150 }}>등록자ID</th>
                       <th style={{ width: 150 }}>등록자명</th>
                       <th style={{ width: 100 }}>승인상태</th>
@@ -275,8 +275,8 @@ const DisposalManagementPage = () => {
                     {filteredRegistrationData.map((item) => (
                       <tr key={item.id}>
                         <td>{item.id}</td>
-                        <td>{item.disposalDate}</td>
-                        <td>{item.disposalConfirmDate}</td>
+                        <td>{item.returnDate}</td>
+                        <td>{item.returnConfirmDate}</td>
                         <td>{item.registrantId}</td>
                         <td>{item.registrantName}</td>
                         <td>{item.approvalStatus}</td>
@@ -287,47 +287,47 @@ const DisposalManagementPage = () => {
               </div>
             </div>
 
-            <div className="disposal-pagination">
-              <button className="disposal-page-btn" type="button">
+            <div className="return-pagination">
+              <button className="return-page-btn" type="button">
                 ‹
               </button>
-              <button className="disposal-page-num disposal-page-num-active" type="button">
+              <button className="return-page-num return-page-num-active" type="button">
                 1
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 2
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 3
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 4
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 5
               </button>
-              <button className="disposal-page-btn" type="button">
+              <button className="return-page-btn" type="button">
                 ›
               </button>
-              <div className="disposal-pagination-summary">
+              <div className="return-pagination-summary">
                 총 {allRegistrationData.length}건 / 조회 {filteredRegistrationData.length}건
               </div>
             </div>
           </section>
 
-          {/* Lower Table - 불용 물품 목록 */}
-          <section className="disposal-table disposal-table-lower">
-            <div className="disposal-table-top">
-              <div className="disposal-table-label">불용 물품 목록</div>
-              <div className="disposal-table-actions">
-                <Button className="disposal-btn disposal-btn-outline disposal-btn-table">반려</Button>
-                <Button className="disposal-btn disposal-btn-primary disposal-btn-table">확정</Button>
+          {/* Lower Table - 반납 물품 목록 */}
+          <section className="return-table return-table-lower">
+            <div className="return-table-top">
+              <div className="return-table-label">반납 물품 목록</div>
+              <div className="return-table-actions">
+                <Button className="return-btn return-btn-outline return-btn-table">반려</Button>
+                <Button className="return-btn return-btn-primary return-btn-table">확정</Button>
               </div>
             </div>
 
-            <div className="disposal-table-wrap">
-              <div className="disposal-table-wrap-inner">
-                <table className="disposal-table-el">
+            <div className="return-table-wrap">
+              <div className="return-table-wrap-inner">
+                <table className="return-table-el">
                   <thead>
                     <tr>
                       <th style={{ width: 56 }}>
@@ -364,29 +364,29 @@ const DisposalManagementPage = () => {
               </div>
             </div>
 
-            <div className="disposal-pagination">
-              <button className="disposal-page-btn" type="button">
+            <div className="return-pagination">
+              <button className="return-page-btn" type="button">
                 ‹
               </button>
-              <button className="disposal-page-num disposal-page-num-active" type="button">
+              <button className="return-page-num return-page-num-active" type="button">
                 1
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 2
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 3
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 4
               </button>
-              <button className="disposal-page-num" type="button">
+              <button className="return-page-num" type="button">
                 5
               </button>
-              <button className="disposal-page-btn" type="button">
+              <button className="return-page-btn" type="button">
                 ›
               </button>
-              <div className="disposal-pagination-summary">
+              <div className="return-pagination-summary">
                 총 {allItemData.length}건 / 조회 {filteredItemData.length}건
               </div>
             </div>
@@ -398,4 +398,4 @@ const DisposalManagementPage = () => {
   )
 }
 
-export default DisposalManagementPage
+export default ReturnManagementPage
