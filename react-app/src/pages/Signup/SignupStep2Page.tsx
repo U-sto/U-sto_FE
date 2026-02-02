@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import GNB from '../../components/GNB'
-import ProgressBar from '../../components/ProgressBar'
+import { useNavigate } from 'react-router-dom'
+import SignupLayout from '../../components/SignupLayout'
 import IDCheckField from '../../components/IDCheckField'
 import PasswordField from '../../components/PasswordField'
 import Button from '../../components/Button'
@@ -12,36 +11,66 @@ const SignupStep2Page = () => {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [isIdChecked, setIsIdChecked] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleCheckDuplicate = () => { /* TODO */ }
+  const handleCheckDuplicate = () => {
+    if (!userId.trim()) {
+      setError('아이디를 입력해 주세요.')
+      setIsIdChecked(false)
+      return
+    }
+    setError(null)
+    setIsIdChecked(true)
+    // TODO: 실제 중복 검사 API 호출
+  }
+
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!password.trim() || !passwordConfirm.trim()) {
+      setError('비밀번호를 모두 입력해 주세요.')
+      return
+    }
+
+    if (password !== passwordConfirm) {
+      setError('비밀번호가 일치하지 않습니다.')
+      return
+    }
+
+    setError(null)
     navigate('/signup/step3')
   }
 
   return (
-    <div className="signup-step2-page">
-      <GNB />
-      <div className="signup-step2-wrapper">
-        <h1 className="signup-step2-title">회원가입</h1>
-        <ProgressBar step={2} />
-        <form className="signup-step2-form" onSubmit={handleNext}>
-          <div className="signup-step2-fields">
-            <IDCheckField userId={userId} onUserIdChange={(e) => setUserId(e.target.value)} onCheckDuplicate={handleCheckDuplicate} />
-            <div className="password-fields">
-              <PasswordField placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} />
-              <PasswordField placeholder="비밀번호 재입력" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} />
-            </div>
-          </div>
-          <div className="signup-step2-bottom">
-            <Button type="submit">다음</Button>
-            <div className="signup-step2-footer">
-              <Link to="/login" className="signup-step2-link">기존 계정 로그인</Link>
-            </div>
-          </div>
-        </form>
+    <SignupLayout step={2} title="회원가입" onSubmit={handleNext}>
+      <div className="signup-step2-fields">
+        <IDCheckField
+          userId={userId}
+          onUserIdChange={(e) => {
+            setUserId(e.target.value)
+            setIsIdChecked(false)
+          }}
+          onCheckDuplicate={handleCheckDuplicate}
+        />
+        <div className="password-fields">
+          <PasswordField
+            placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+          <PasswordField
+            placeholder="비밀번호 재입력"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            autoComplete="new-password"
+          />
+        </div>
       </div>
-    </div>
+      {error && <p className="form-error">{error}</p>}
+      <Button type="submit">다음</Button>
+    </SignupLayout>
   )
 }
 

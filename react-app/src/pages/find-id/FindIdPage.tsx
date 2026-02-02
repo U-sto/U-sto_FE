@@ -14,6 +14,7 @@ const FindIdPage = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleSendCode = () => {
     console.log('인증번호 전송:', email)
@@ -21,6 +22,7 @@ const FindIdPage = () => {
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     console.log('인증하기:', { name, email, authCode })
     navigate('/find-id/result', { state: { userId: DUMMY_USER_ID } })
   }
@@ -41,6 +43,7 @@ const FindIdPage = () => {
           placeholder="이름"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
         />
         <div className="find-id-email-section">
           <EmailAuthField
@@ -52,8 +55,10 @@ const FindIdPage = () => {
             placeholder="인증번호를 입력해 주세요"
             value={authCode}
             onChange={(e) => setAuthCode(e.target.value)}
+            inputMode="numeric"
           />
         </div>
+        {error && <p className="form-error">{error}</p>}
         <Button type="submit">인증하기</Button>
       </form>
     </AuthLayout>

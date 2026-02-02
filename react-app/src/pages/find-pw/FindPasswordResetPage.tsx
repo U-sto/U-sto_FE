@@ -10,21 +10,20 @@ const FindPasswordResetPage = () => {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.')
+    const hasPassword = password.trim().length > 0
+    const hasConfirm = confirmPassword.trim().length > 0
+    if (hasPassword && hasConfirm && password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.')
       return
     }
 
-    if (!password.trim() || !confirmPassword.trim()) {
-      alert('비밀번호를 입력해 주세요.')
-      return
-    }
-
-    console.log('비밀번호 변경:', { password, confirmPassword })
+    setError(null)
+    // TODO: API 연동 시 비밀번호 일치·규칙 검사 후 navigate
     navigate('/find-password/complete')
   }
 
@@ -46,13 +45,16 @@ const FindPasswordResetPage = () => {
             placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
           />
           <PasswordField
             placeholder="비밀번호 재입력"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
           />
         </div>
+        {error && <p className="form-error">{error}</p>}
         <Button type="submit">변경하기</Button>
       </form>
     </AuthLayout>

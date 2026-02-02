@@ -5,9 +5,15 @@ interface PasswordFieldProps {
   placeholder?: string
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  autoComplete?: string
 }
 
-const PasswordField = ({ placeholder, value, onChange }: PasswordFieldProps) => {
+const PasswordField = ({
+  placeholder,
+  value,
+  onChange,
+  autoComplete = 'off',
+}: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = useState(false)
 
   const togglePasswordVisibility = () => {
@@ -22,6 +28,7 @@ const PasswordField = ({ placeholder, value, onChange }: PasswordFieldProps) => 
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        autoComplete={autoComplete}
       />
       <button
         type="button"
