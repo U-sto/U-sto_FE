@@ -13,6 +13,8 @@ const PhoneAuthField = ({ phone, onPhoneChange, onSendCode }: PhoneAuthFieldProp
     <div className="phone-auth-field">
       <div className="phone-auth-wrapper">
         <TextField
+          type="tel"
+          inputMode="tel"
           placeholder="전화번호"
           value={phone}
           onChange={onPhoneChange}

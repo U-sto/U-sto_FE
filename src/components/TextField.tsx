@@ -6,9 +6,17 @@ interface TextFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   type?: string
   className?: string
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
 }
 
-const TextField = ({ placeholder, value, onChange, type = 'text', className = '' }: TextFieldProps) => {
+const TextField = ({
+  placeholder,
+  value,
+  onChange,
+  type = 'text',
+  className = '',
+  inputMode,
+}: TextFieldProps) => {
   return (
     <input
       type={type}
@@ -16,6 +24,7 @@ const TextField = ({ placeholder, value, onChange, type = 'text', className = ''
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      inputMode={inputMode}
     />
   )
 }

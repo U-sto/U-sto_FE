@@ -11,12 +11,14 @@ const LoginForm = () => {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isFormValid = userId.trim().length > 0 && password.trim().length > 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('로그인 시도:', { userId, password, autoLogin })
-    // 여기에 실제 로그인 로직을 추가하세요
-    // 로그인 성공 시 홈으로 이동
+    setError(null)
+    // TODO: API 연동 시 isFormValid 검사 후 로그인 성공 시에만 navigate
     navigate('/home')
   }
 
@@ -34,7 +36,7 @@ const LoginForm = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      
+
       <div className="login-form-options">
         <Checkbox
           checked={autoLogin}
@@ -42,9 +44,11 @@ const LoginForm = () => {
           label="자동 로그인"
         />
       </div>
-      
+
+      {error && <p className="form-error">{error}</p>}
+
       <Button type="submit">로그인</Button>
-      
+
       <div className="login-form-footer">
         <Link to="/signup" className="login-link">회원가입</Link>
         <Link to="/find-id" className="login-link">아이디/비밀번호 찾기</Link>

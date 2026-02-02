@@ -14,12 +14,14 @@ const EmailAuthField = ({ email, onEmailChange, onSendCode }: EmailAuthFieldProp
       <div className="email-auth-wrapper">
         <div className="email-input-group">
           <TextField
+            type="text"
+            inputMode="email"
             placeholder="이메일"
             value={email}
             onChange={onEmailChange}
             className="email-input"
           />
-          <span className="email-domain">@ hanyang.ac.kr</span>
+          <span className="email-domain">@hanyang.ac.kr</span>
         </div>
         <Button
           type="button"

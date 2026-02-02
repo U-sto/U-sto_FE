@@ -71,15 +71,7 @@
 }
 
 @media (max-width: 768px) {
-  .signup-title {
-    font-size: 28px;
-  }
-  
-  .signup-subtitle {
-    font-size: 20px;
-  }
-  
-  .signup-wrapper {
-    gap: 32px;
-  }
+  .signup-title { font-size: 28px; }
+  .signup-subtitle { font-size: 20px; }
+  .signup-wrapper { gap: 32px; }
 }

@@ -1,18 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import LoginPage from './pages/Login/LoginPage'
-import SignupPage from './pages/Signup/SignupPage'
-import SignupStep2Page from './pages/Signup/SignupStep2Page'
-import SignupStep3Page from './pages/Signup/SignupStep3Page'
-import SignupCompletePage from './pages/Signup/SignupCompletePage'
-import FindIdPage from './pages/FindId/FindIdPage'
-import FindIdResultPage from './pages/FindId/FindIdResultPage'
-import FindPasswordPage from './pages/FindPW/FindPasswordPage'
-import FindPasswordResetPage from './pages/FindPW/FindPasswordResetPage'
-import FindPasswordCompletePage from './pages/FindPW/FindPasswordCompletePage'
-import HomePage from './pages/Home/HomePage'
+import LoginPage from './pages/login/LoginPage'
+import SignupPage from './pages/signup/SignupPage'
+import SignupStep2Page from './pages/signup/SignupStep2Page'
+import SignupStep3Page from './pages/signup/SignupStep3Page'
+import SignupCompletePage from './pages/signup/SignupCompletePage'
+import FindIdPage from './pages/find-id/FindIdPage'
+import FindIdResultPage from './pages/find-id/FindIdResultPage'
+import FindPasswordPage from './pages/find-pw/FindPasswordPage'
+import FindPasswordResetPage from './pages/find-pw/FindPasswordResetPage'
+import FindPasswordCompletePage from './pages/find-pw/FindPasswordCompletePage'
+import HomePage from './pages/home/HomePage'
 import AcqConfirmationPage from './pages/acq-confirmation/AcqConfirmationPage'
-import ReturnManagementPage from './pages/Return_Management/ReturnManagementPage'
-import DisposalManagementPage from './pages/Disposal_Management/DisposalManagementPage'
+import ReturnManagementPage from './pages/return-management/ReturnManagementPage'
+import DisuseManagementPage from './pages/disuse-management/DisuseManagementPage'
+import DisposalManagementPage from './pages/disposal-management/DisposalManagementPage'
 import './styles/variables.css'
 import './App.css'
 
@@ -34,6 +35,8 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
         <Route path="/return-management" element={<ReturnManagementPage />} />
+        <Route path="/disuse-management" element={<DisuseManagementPage />} />
+        {/* 물품 처분 등록 관리: /disposal-management (disposal-registration 경로는 없음) */}
         <Route path="/disposal-management" element={<DisposalManagementPage />} />
       </Routes>
     </BrowserRouter>

@@ -24,8 +24,8 @@ const menuData: MenuSection[] = [
     items: [
       { label: '물품 취득 확정 관리', path: '/acq-confirmation' },
       { label: '물품 반납 등록 관리', path: '/return-management' },
-      { label: '물품 불용 등록 관리', path: '/disposal-management' },
-      { label: '물품 처분 등록 관리' },
+      { label: '물품 불용 등록 관리', path: '/disuse-management' },
+      { label: '물품 처분 등록 관리', path: '/disposal-management' },
     ],
   },
   {

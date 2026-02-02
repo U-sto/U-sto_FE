@@ -18,6 +18,11 @@
   --btn-reset-outline: none;
   --btn-hover-bg: rgba(0, 0, 0, 0.05);
   
+  /* Dropdown arrow colors */
+  --dropdown-arrow-selected-color: #58828E;
+  --dropdown-arrow-default-color: #BEC3C3;
+  --dropdown-small-arrow-color: #888C8D;
+
   /* Spacing */
   --spacing-xs: 8px;
   --spacing-sm: 12px;
