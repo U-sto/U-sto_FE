@@ -65,7 +65,7 @@
 .signup-complete-button {
   width: 100%;
   background-color: var(--usto-primary-300);
-  min-height: 80px;
+  min-height: 56px;
 }
 
 .signup-complete-button:hover {

@@ -7,6 +7,7 @@ interface TextFieldProps {
   type?: string
   className?: string
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
+  autoComplete?: string
 }
 
 const TextField = ({
@@ -16,6 +17,7 @@ const TextField = ({
   type = 'text',
   className = '',
   inputMode,
+  autoComplete,
 }: TextFieldProps) => {
   return (
     <input
@@ -25,6 +27,7 @@ const TextField = ({
       value={value}
       onChange={onChange}
       inputMode={inputMode}
+      autoComplete={autoComplete}
     />
   )
 }

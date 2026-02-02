@@ -9,11 +9,3 @@ button {
   padding: var(--btn-reset-padding);
   outline: var(--btn-reset-outline);
 }
-
-.form-error {
-  margin-top: 8px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #e53935;
-  font-weight: 500;
-}

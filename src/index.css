@@ -14,3 +14,13 @@ body {
   width: 100%;
   min-height: 100vh;
 }
+
+.form-error {
+  color: #ff4d4f;
+  font-size: 14px;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+}

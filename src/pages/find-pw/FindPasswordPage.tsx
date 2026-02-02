@@ -12,6 +12,7 @@ const FindPasswordPage = () => {
   const [userId, setUserId] = useState('')
   const [email, setEmail] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleSendCode = () => {
     console.log('인증번호 전송:', email)
@@ -19,6 +20,7 @@ const FindPasswordPage = () => {
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     console.log('인증하기:', { userId, email, authCode })
     navigate('/find-password/reset')
   }
@@ -43,9 +45,10 @@ const FindPasswordPage = () => {
     >
       <form className="find-password-form" onSubmit={handleAuth}>
         <TextField
-          placeholder="아이디"
+          placeholder="아이디를 입력해 주세요"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
+          autoComplete="username"
         />
         <div className="find-password-email-section">
           <EmailAuthField
@@ -57,8 +60,10 @@ const FindPasswordPage = () => {
             placeholder="인증번호를 입력해 주세요"
             value={authCode}
             onChange={(e) => setAuthCode(e.target.value)}
+            inputMode="numeric"
           />
         </div>
+        {error && <p className="form-error">{error}</p>}
         <Button type="submit">인증하기</Button>
       </form>
     </AuthLayout>
