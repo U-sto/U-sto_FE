@@ -6,9 +6,19 @@ interface TextFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   type?: string
   className?: string
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
+  autoComplete?: string
 }
 
-const TextField = ({ placeholder, value, onChange, type = 'text', className = '' }: TextFieldProps) => {
+const TextField = ({
+  placeholder,
+  value,
+  onChange,
+  type = 'text',
+  className = '',
+  inputMode,
+  autoComplete,
+}: TextFieldProps) => {
   return (
     <input
       type={type}
@@ -16,6 +26,8 @@ const TextField = ({ placeholder, value, onChange, type = 'text', className = ''
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      inputMode={inputMode}
+      autoComplete={autoComplete}
     />
   )
 }

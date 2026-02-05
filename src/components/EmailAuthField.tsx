@@ -14,6 +14,8 @@ const EmailAuthField = ({ email, onEmailChange, onSendCode }: EmailAuthFieldProp
       <div className="email-auth-wrapper">
         <div className="email-input-group">
           <TextField
+            type="text"
+            inputMode="email"
             placeholder="이메일"
             value={email}
             onChange={onEmailChange}

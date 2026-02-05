@@ -23,12 +23,9 @@
   background-color: var(--usto-primary-200);
 }
 
-.progress-bar-fill {
-  display: none;
-}
-
 @media (max-width: 768px) {
   .progress-step {
     width: 80px;
   }
 }
+

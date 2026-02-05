@@ -1,23 +1,19 @@
 import './ProgressBar.css'
 
 interface ProgressBarProps {
-  step: number
-  totalSteps?: number
+  step: 1 | 2 | 3
 }
 
-const ProgressBar = ({ step = 1, totalSteps = 3 }: ProgressBarProps) => {
-  const steps = Array.from({ length: totalSteps }, (_, i) => i + 1)
+const ProgressBar = ({ step }: ProgressBarProps) => {
+  const steps: (1 | 2 | 3)[] = [1, 2, 3]
 
   return (
     <div className="progress-bar">
-      <div 
-        className="progress-bar-container"
-        style={{ gridTemplateColumns: `repeat(${totalSteps}, 1fr)` }}
-      >
-        {steps.map((stepNum) => (
+      <div className="progress-bar-container">
+        {steps.map((s) => (
           <div
-            key={stepNum}
-            className={`progress-step ${stepNum <= step ? 'active' : ''}`}
+            key={s}
+            className={`progress-step ${s <= step ? 'active' : ''}`.trim()}
           />
         ))}
       </div>
@@ -26,3 +22,4 @@ const ProgressBar = ({ step = 1, totalSteps = 3 }: ProgressBarProps) => {
 }
 
 export default ProgressBar
+

@@ -17,7 +17,7 @@ const CheckCircle = ({ size = 100 }: CheckCircleProps) => {
         <circle cx="50" cy="50" r="50" fill="var(--usto-primary-200)" />
         <path
           d="M27.08 50L41.67 64.58L72.92 35.42"
-          stroke="white"
+          stroke="var(--usto-alt-white)"
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -28,3 +28,4 @@ const CheckCircle = ({ size = 100 }: CheckCircleProps) => {
 }
 
 export default CheckCircle
+

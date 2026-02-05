@@ -1,6 +1,6 @@
 .button {
   width: 100%;
-  padding: 14px var(--spacing-lg);
+  padding: 14px 170px;
   background-color: var(--usto-primary-200);
   border: none;
   border-radius: var(--radius-sm);

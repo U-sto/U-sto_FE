@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SystemLogo from './SystemLogo'
 import './GNBWithMenu.css'
 
@@ -24,8 +24,8 @@ const menuData: MenuSection[] = [
     items: [
       { label: '물품 취득 확정 관리', path: '/acq-confirmation' },
       { label: '물품 반납 등록 관리', path: '/return-management' },
-      { label: '물품 불용 등록 관리', path: '/disposal-management' },
-      { label: '물품 처분 등록 관리' },
+      { label: '물품 불용 등록 관리', path: '/disuse-management' },
+      { label: '물품 처분 등록 관리', path: '/disposal-management' },
     ],
   },
   {
@@ -56,7 +56,15 @@ const menuData: MenuSection[] = [
 
 const GNBWithMenu = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+
+  // 로고 클릭으로 리셋된 경우 드롭다운 상태 초기화
+  useEffect(() => {
+    if (location.state?.reset) {
+      setActiveDropdown(null)
+    }
+  }, [location.state])
 
   const handleDropdownToggle = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu)
