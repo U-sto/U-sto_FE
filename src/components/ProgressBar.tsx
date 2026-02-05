@@ -8,7 +8,13 @@ const ProgressBar = ({ step }: ProgressBarProps) => {
   const steps: (1 | 2 | 3)[] = [1, 2, 3]
 
   return (
-    <div className="progress-bar">
+    <div
+      className="progress-bar"
+      role="progressbar"
+      aria-valuemin={1}
+      aria-valuemax={3}
+      aria-valuenow={step}
+    >
       <div className="progress-bar-container">
         {steps.map((s) => (
           <div

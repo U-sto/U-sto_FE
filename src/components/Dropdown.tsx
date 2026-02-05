@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import './Dropdown.css'
 
 interface DropdownProps {
@@ -12,7 +12,6 @@ interface DropdownProps {
 const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredOptions, setFilteredOptions] = useState(options)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -22,15 +21,13 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
     }
   }, [isOpen])
 
-  useEffect(() => {
+  const filteredOptions = useMemo(() => {
     if (searchTerm === '') {
-      setFilteredOptions(options)
-    } else {
-      const filtered = options.filter(option =>
-        option.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setFilteredOptions(filtered)
+      return options
     }
+    return options.filter((option) =>
+      option.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
   }, [searchTerm, options])
 
   useEffect(() => {
@@ -100,6 +97,8 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            spellCheck={false}
+            autoComplete="off"
             onClick={(e) => e.stopPropagation()}
           />
         ) : (

@@ -1,17 +1,23 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type ReactNode,
+} from 'react'
 
 type AppResetContextValue = {
   resetKey: number
   triggerReset: () => void
 }
 
-const AppResetContext = createContext<AppResetContextValue | null>(null)
+const AppResetContext = createContext<AppResetContextValue | undefined>(undefined)
 
 export const AppResetProvider = ({ children }: { children: ReactNode }) => {
   const [resetKey, setResetKey] = useState(0)
 
   const triggerReset = useCallback(() => {
-    setResetKey((k) => k + 1)
+    setResetKey((prev) => prev + 1)
   }, [])
 
   return (
@@ -23,8 +29,9 @@ export const AppResetProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAppReset = (): AppResetContextValue => {
   const ctx = useContext(AppResetContext)
-  if (!ctx) {
+  if (ctx === undefined) {
     throw new Error('useAppReset must be used within AppResetProvider')
   }
   return ctx
 }
+
