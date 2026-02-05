@@ -45,7 +45,7 @@ const PasswordField = ({
         >
           <path
             d="M16 10C12 10 8.73 12.11 7 15.5C8.73 18.89 12 21 16 21C20 21 23.27 18.89 25 15.5C23.27 12.11 20 10 16 10ZM16 19C13.79 19 12 17.21 12 15C12 12.79 13.79 11 16 11C18.21 11 20 12.79 20 15C20 17.21 18.21 19 16 19ZM16 13C14.34 13 13 14.34 13 16C13 17.66 14.34 19 16 19C17.66 19 19 17.66 19 16C19 14.34 17.66 13 16 13Z"
-            fill={value ? '#58828E' : '#BEC3C3'}
+            fill={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
           />
           {!showPassword && (
             <line
@@ -53,7 +53,7 @@ const PasswordField = ({
               y1="26"
               x2="26"
               y2="6"
-              stroke={value ? '#58828E' : '#BEC3C3'}
+              stroke={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
               strokeWidth="2"
               strokeLinecap="round"
             />

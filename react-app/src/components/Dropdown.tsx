@@ -73,13 +73,19 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
   const isSmall = size === 'small'
   const wrapperClass = isSmall ? 'dropdown-small-wrapper' : 'dropdown-wrapper'
   const buttonClass = isSmall ? 'dropdown-small-button' : 'dropdown-button'
-  const searchInputClass = isSmall ? 'dropdown-small-search-input' : 'dropdown-search-input'
+  const searchInputClass = isSmall
+    ? 'dropdown-small-search-input'
+    : 'dropdown-search-input'
   const selectedClass = isSmall ? 'dropdown-small-selected' : 'dropdown-selected'
-  const placeholderClass = isSmall ? 'dropdown-small-placeholder' : 'dropdown-placeholder'
+  const placeholderClass = isSmall
+    ? 'dropdown-small-placeholder'
+    : 'dropdown-placeholder'
   const arrowClass = isSmall ? 'dropdown-small-arrow' : 'dropdown-arrow'
   const menuClass = isSmall ? 'dropdown-small-menu' : 'dropdown-menu'
   const optionClass = isSmall ? 'dropdown-small-option' : 'dropdown-option'
-  const noResultsClass = isSmall ? 'dropdown-small-no-results' : 'dropdown-no-results'
+  const noResultsClass = isSmall
+    ? 'dropdown-small-no-results'
+    : 'dropdown-no-results'
 
   return (
     <div className={wrapperClass} ref={dropdownRef}>
@@ -117,7 +123,7 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
           >
             <path
               d="M3.5 5.25L7 8.75L10.5 5.25"
-              stroke="var(--dropdown-small-arrow-color)"
+              stroke="var(--usto-gray-200)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -134,11 +140,7 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
           >
             <path
               d="M6.67 12L16 21.33L25.33 12"
-              stroke={
-                value
-                  ? 'var(--dropdown-arrow-selected-color)'
-                  : 'var(--dropdown-arrow-default-color)'
-              }
+              stroke={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"

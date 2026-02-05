@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import GNBWithMenu from '../../components/GNBWithMenu'
 import TextField from '../../components/TextField'
 import Dropdown from '../../components/Dropdown'
 import Button from '../../components/Button'
 import RadioButton from '../../components/RadioButton'
-import ChatBotButton from '../../components/ChatBotButton'
+import {
+  ManagementPageLayout,
+  FilterPanel,
+  DataTable,
+  type DataTableColumn,
+} from '../../components/management'
 import './AcqConfirmationPage.css'
 
 type Filters = {
@@ -20,8 +23,21 @@ type Filters = {
   category: string
 }
 
+type AcqTableRow = {
+  id: number
+  g2bNumber: string
+  g2bName: string
+  acquireDate: string
+  acquireAmount: string
+  sortDate: string
+  operatingDept: string
+  operatingStatus: string
+  usefulLife: string
+  quantity: number
+  approvalStatus: string
+}
+
 const AcqConfirmationPage = () => {
-  const navigate = useNavigate()
   const [filters, setFilters] = useState<Filters>({
     g2bName: '',
     g2bNumberFrom: '',
@@ -52,29 +68,27 @@ const AcqConfirmationPage = () => {
   const [searchedFilters, setSearchedFilters] = useState<Filters | null>(null)
 
   // 전체 데이터 (초기 데이터)
-  const allTableData = useMemo(
-    () =>
-      Array.from({ length: 15 }).map((_, idx) => {
-        const g2bOption = g2bOptions[idx % g2bOptions.length]
-        // 같은 G2B목록명은 같은 목록번호를 사용
-        const g2bNumber = g2bOption.number
-        
-        return {
-          id: idx + 1,
-          g2bNumber: g2bNumber,
-          g2bName: g2bOption.name,
-          acquireDate: '2026-01-21',
-          acquireAmount: (1000000 * (idx + 1)).toLocaleString() + '원',
-          sortDate: '2026-01-21',
-          operatingDept: `운용부서 ${idx + 1}`,
-          operatingStatus: '운용중',
-          usefulLife: `${5 + idx}년`,
-          quantity: idx + 1,
-          approvalStatus: '대기',
-        }
-      }),
-    [g2bOptions],
-  )
+  const allTableData = useMemo<AcqTableRow[]>(() => {
+    return Array.from({ length: 15 }).map((_, idx) => {
+      const g2bOption = g2bOptions[idx % g2bOptions.length]
+      // 같은 G2B목록명은 같은 목록번호를 사용
+      const g2bNumber = g2bOption.number
+
+      return {
+        id: idx + 1,
+        g2bNumber,
+        g2bName: g2bOption.name,
+        acquireDate: '2026-01-21',
+        acquireAmount: (1000000 * (idx + 1)).toLocaleString() + '원',
+        sortDate: '2026-01-21',
+        operatingDept: `운용부서 ${idx + 1}`,
+        operatingStatus: '운용중',
+        usefulLife: `${5 + idx}년`,
+        quantity: idx + 1,
+        approvalStatus: '대기',
+      }
+    })
+  }, [g2bOptions])
 
   // 필터링된 데이터
   const filteredData = useMemo(() => {
@@ -208,70 +222,79 @@ const AcqConfirmationPage = () => {
     setSearchedFilters({ ...filters })
   }
 
+  const columns: DataTableColumn<AcqTableRow>[] = [
+    {
+      key: 'select',
+      header: '',
+      width: 56,
+      render: () => <input type="checkbox" />,
+    },
+    {
+      key: 'g2bNumber',
+      header: 'G2B목록번호',
+      width: 120,
+      render: (row) => row.g2bNumber,
+    },
+    {
+      key: 'g2bName',
+      header: 'G2B목록명',
+      width: 150,
+      render: (row) => row.g2bName,
+    },
+    {
+      key: 'acquireDate',
+      header: '취득일자',
+      width: 100,
+      render: (row) => row.acquireDate,
+    },
+    {
+      key: 'acquireAmount',
+      header: '취득금액',
+      width: 120,
+      render: (row) => row.acquireAmount,
+    },
+    {
+      key: 'sortDate',
+      header: '정리일자',
+      width: 100,
+      render: (row) => row.sortDate,
+    },
+    {
+      key: 'operatingDept',
+      header: '운용부서',
+      width: 120,
+      render: (row) => row.operatingDept,
+    },
+    {
+      key: 'operatingStatus',
+      header: '운용상태',
+      width: 100,
+      render: (row) => row.operatingStatus,
+    },
+    {
+      key: 'usefulLife',
+      header: '내용연수',
+      width: 100,
+      render: (row) => row.usefulLife,
+    },
+    {
+      key: 'quantity',
+      header: '수량',
+      width: 80,
+      render: (row) => row.quantity,
+    },
+    {
+      key: 'approvalStatus',
+      header: '승인상태',
+      width: 100,
+      render: (row) => row.approvalStatus,
+    },
+  ]
+
   return (
-    <div className="acq-page">
-      <GNBWithMenu />
-
-      <div className="acq-layout">
-        {/* SideBar (Figma SideBar/관리자) */}
-        <aside className="acq-sidebar">
-          <div className="acq-sidebar-main">
-            <span className="acq-sidebar-main-text">관리자</span>
-          </div>
-
-          <div className="acq-sidebar-category">
-            <div className="acq-sidebar-category-title">관리자 메뉴</div>
-            <div className="acq-sidebar-menu-list">
-              <div 
-                className="acq-sidebar-menu-item acq-sidebar-menu-item-active"
-                onClick={() => navigate('/acq-confirmation')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품취득확정관리
-              </div>
-              <div 
-                className="acq-sidebar-menu-item"
-                onClick={() => navigate('/return-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품반납등록관리
-              </div>
-              <div 
-                className="acq-sidebar-menu-item"
-                onClick={() => navigate('/disuse-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품불용등록관리
-              </div>
-              <div 
-                className="acq-sidebar-menu-item"
-                onClick={() => navigate('/disposal-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품처분등록관리
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        <main className="acq-main">
-          {/* DepthBar */}
-          <section className="acq-depthbar">
-            <div className="acq-depthbar-bg" />
-            <div className="acq-depthbar-track">
-              <div className="acq-depth-pill acq-depth-pill-active">
-                <span className="acq-depth-text">관리자 메뉴</span>
-              </div>
-              <div className="acq-depth-pill">
-                <span className="acq-depth-text acq-depth-text-inactive">물품 취득 확정 관리</span>
-              </div>
-            </div>
-          </section>
-
-          {/* SearchFilterField/취득 */}
-          <section className="acq-filter">
-            <div className="acq-filter-wrapper">
-              <div className="acq-filter-grid">
+    <ManagementPageLayout pageKey="acq" depthSecondLabel="물품 취득 확정 관리">
+      <FilterPanel pageKey="acq">
+        <div className="acq-filter-grid">
                 {/* 첫 번째 행: G2B목록명, 운용부서 */}
                 <div className="acq-field">
                   <div className="acq-label">G2B목록명</div>
@@ -413,96 +436,29 @@ const AcqConfirmationPage = () => {
                 </div>
               </div>
 
-              <div className="acq-filter-actions">
-                <Button className="acq-btn acq-btn-outline" onClick={onReset}>
-                  초기화
-                </Button>
-                <Button className="acq-btn acq-btn-primary" onClick={onSearch}>
-                  조회
-                </Button>
-              </div>
-            </div>
-          </section>
+        <div className="acq-filter-actions">
+          <Button className="acq-btn acq-btn-outline" onClick={onReset}>
+            초기화
+          </Button>
+          <Button className="acq-btn acq-btn-primary" onClick={onSearch}>
+            조회
+          </Button>
+        </div>
+      </FilterPanel>
 
-          {/* Table/Form1 */}
-          <section className="acq-table">
-            <div className="acq-table-top">
-              <div className="acq-table-label">물품 취득 대장 목록</div>
-              <Button className="acq-btn acq-btn-primary acq-btn-small">확정</Button>
-            </div>
-
-            <div className="acq-table-wrap">
-              <div className="acq-table-wrap-inner">
-                <table className="acq-table-el">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 56 }} />
-                      <th style={{ width: 120 }}>G2B목록번호</th>
-                      <th style={{ width: 150 }}>G2B목록명</th>
-                      <th style={{ width: 100 }}>취득일자</th>
-                      <th style={{ width: 120 }}>취득금액</th>
-                      <th style={{ width: 100 }}>정리일자</th>
-                      <th style={{ width: 120 }}>운용부서</th>
-                      <th style={{ width: 100 }}>운용상태</th>
-                      <th style={{ width: 100 }}>내용연수</th>
-                      <th style={{ width: 80 }}>수량</th>
-                      <th style={{ width: 100 }}>승인상태</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input type="checkbox" />
-                        </td>
-                        <td>{item.g2bNumber}</td>
-                        <td>{item.g2bName}</td>
-                        <td>{item.acquireDate}</td>
-                        <td>{item.acquireAmount}</td>
-                        <td>{item.sortDate}</td>
-                        <td>{item.operatingDept}</td>
-                        <td>{item.operatingStatus}</td>
-                        <td>{item.usefulLife}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.approvalStatus}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="acq-pagination">
-              <button className="acq-page-btn" type="button">
-                ‹
-              </button>
-              <button className="acq-page-num acq-page-num-active" type="button">
-                1
-              </button>
-              <button className="acq-page-num" type="button">
-                2
-              </button>
-              <button className="acq-page-num" type="button">
-                3
-              </button>
-              <button className="acq-page-num" type="button">
-                4
-              </button>
-              <button className="acq-page-num" type="button">
-                5
-              </button>
-              <button className="acq-page-btn" type="button">
-                ›
-              </button>
-              <div className="acq-pagination-summary">
-                총 {allTableData.length}건 / 조회 {filteredData.length}건
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-      <ChatBotButton />
-    </div>
+      <DataTable<AcqTableRow>
+        pageKey="acq"
+        title="물품 취득 대장 목록"
+        data={filteredData}
+        totalCount={allTableData.length}
+        pageSize={10}
+        columns={columns}
+        getRowKey={(row) => row.id}
+        renderActions={() => (
+          <Button className="acq-btn acq-btn-primary acq-btn-small">확정</Button>
+        )}
+      />
+    </ManagementPageLayout>
   )
 }
 

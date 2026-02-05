@@ -18,6 +18,9 @@ const LoginForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (!isFormValid) {
+      return
+    }
     // TODO: API 연동 시 isFormValid 검사 후 로그인 성공 시에만 navigate
     navigate('/home')
   }
@@ -47,7 +50,9 @@ const LoginForm = () => {
 
       {error && <p className="form-error">{error}</p>}
 
-      <Button type="submit">로그인</Button>
+      <Button type="submit" disabled={!isFormValid}>
+        로그인
+      </Button>
 
       <div className="login-form-footer">
         <Link to="/signup" className="login-link">회원가입</Link>

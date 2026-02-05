@@ -14,7 +14,7 @@
 /* Sidebar */
 .return-sidebar {
   width: 340px;
-  height: 1080px;
+  min-height: 100%;
   padding: 0;
   background: var(--usto-primary-200);
   box-shadow: 8px 0 10px 0 rgba(234, 237, 237, 1);
@@ -89,7 +89,6 @@
 .return-main {
   flex: 1;
   padding-top: 0;
-  height: 1080px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -283,7 +282,7 @@
   font-family: var(--font-family);
   font-weight: 700;
   font-size: 12px;
-  color: #d64545;
+  color: var(--usto-primary-300);
 }
 
 .return-filter-actions {

@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import GNBWithMenu from '../../components/GNBWithMenu'
 import TextField from '../../components/TextField'
 import Button from '../../components/Button'
 import RadioButton from '../../components/RadioButton'
-import ChatBotButton from '../../components/ChatBotButton'
+import {
+  ManagementPageLayout,
+  FilterPanel,
+  DataTable,
+  type DataTableColumn,
+} from '../../components/management'
 import './ReturnManagementPage.css'
 
 type Filters = {
@@ -13,8 +16,28 @@ type Filters = {
   approvalStatus: string
 }
 
+type ReturnRegistrationRow = {
+  id: number
+  returnDate: string
+  returnConfirmDate: string
+  registrantId: string
+  registrantName: string
+  approvalStatus: string
+}
+
+type ReturnItemRow = {
+  id: number
+  g2bNumber: string
+  g2bName: string
+  itemUniqueNumber: string
+  acquireDate: string
+  acquireAmount: string
+  operatingDept: string
+  itemStatus: string
+  reason: string
+}
+
 const ReturnManagementPage = () => {
-  const navigate = useNavigate()
   const [filters, setFilters] = useState<Filters>({
     returnDateFrom: '',
     returnDateTo: '',
@@ -27,35 +50,31 @@ const ReturnManagementPage = () => {
   const [searchedFilters, setSearchedFilters] = useState<Filters | null>(null)
 
   // 전체 데이터 (초기 데이터) - 반납 등록 목록
-  const allRegistrationData = useMemo(
-    () =>
-      Array.from({ length: 5 }).map((_, idx) => ({
-        id: idx + 1,
-        returnDate: '2026-01-21',
-        returnConfirmDate: '2026-01-22',
-        registrantId: `user${idx + 1}`,
-        registrantName: `등록자${idx + 1}`,
-        approvalStatus: '대기',
-      })),
-    [],
-  )
+  const allRegistrationData = useMemo<ReturnRegistrationRow[]>(() => {
+    return Array.from({ length: 5 }).map((_, idx) => ({
+      id: idx + 1,
+      returnDate: '2026-01-21',
+      returnConfirmDate: '2026-01-22',
+      registrantId: `user${idx + 1}`,
+      registrantName: `등록자${idx + 1}`,
+      approvalStatus: '대기',
+    }))
+  }, [])
 
   // 전체 데이터 (초기 데이터) - 반납 물품 목록
-  const allItemData = useMemo(
-    () =>
-      Array.from({ length: 10 }).map((_, idx) => ({
-        id: idx + 1,
-        g2bNumber: '43211613-26081535',
-        g2bName: '노트북',
-        itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-        acquireDate: '2026-01-15',
-        acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-        operatingDept: `운용부서 ${idx + 1}`,
-        itemStatus: '운용중',
-        reason: '반납 사유',
-      })),
-    [],
-  )
+  const allItemData = useMemo<ReturnItemRow[]>(() => {
+    return Array.from({ length: 10 }).map((_, idx) => ({
+      id: idx + 1,
+      g2bNumber: '43211613-26081535',
+      g2bName: '노트북',
+      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
+      acquireDate: '2026-01-15',
+      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
+      operatingDept: `운용부서 ${idx + 1}`,
+      itemStatus: '운용중',
+      reason: '반납 사유',
+    }))
+  }, [])
 
   // 필터링된 데이터 - 반납 등록 목록
   const filteredRegistrationData = useMemo(() => {
@@ -130,70 +149,109 @@ const ReturnManagementPage = () => {
     setSearchedFilters({ ...filters })
   }
 
+  const registrationColumns: DataTableColumn<ReturnRegistrationRow>[] = [
+    {
+      key: 'id',
+      header: '순번',
+      width: 100,
+      render: (row) => row.id,
+    },
+    {
+      key: 'returnDate',
+      header: '반납일자',
+      width: 150,
+      render: (row) => row.returnDate,
+    },
+    {
+      key: 'returnConfirmDate',
+      header: '반납확정일자',
+      width: 150,
+      render: (row) => row.returnConfirmDate,
+    },
+    {
+      key: 'registrantId',
+      header: '등록자ID',
+      width: 150,
+      render: (row) => row.registrantId,
+    },
+    {
+      key: 'registrantName',
+      header: '등록자명',
+      width: 150,
+      render: (row) => row.registrantName,
+    },
+    {
+      key: 'approvalStatus',
+      header: '승인상태',
+      width: 100,
+      render: (row) => row.approvalStatus,
+    },
+  ]
+
+  const itemColumns: DataTableColumn<ReturnItemRow>[] = [
+    {
+      key: 'select',
+      header: <input type="checkbox" />,
+      width: 56,
+      render: () => <input type="checkbox" />,
+    },
+    {
+      key: 'g2bNumber',
+      header: 'G2B목록번호',
+      width: 150,
+      render: (row) => row.g2bNumber,
+    },
+    {
+      key: 'g2bName',
+      header: 'G2B목록명',
+      width: 150,
+      render: (row) => row.g2bName,
+    },
+    {
+      key: 'itemUniqueNumber',
+      header: '물품고유번호',
+      width: 150,
+      render: (row) => row.itemUniqueNumber,
+    },
+    {
+      key: 'acquireDate',
+      header: '취득일자',
+      width: 120,
+      render: (row) => row.acquireDate,
+    },
+    {
+      key: 'acquireAmount',
+      header: '취득금액',
+      width: 120,
+      render: (row) => row.acquireAmount,
+    },
+    {
+      key: 'operatingDept',
+      header: '운용부서',
+      width: 120,
+      render: (row) => row.operatingDept,
+    },
+    {
+      key: 'itemStatus',
+      header: '물품상태',
+      width: 100,
+      render: (row) => row.itemStatus,
+    },
+    {
+      key: 'reason',
+      header: '사유',
+      width: 150,
+      render: (row) => row.reason,
+    },
+  ]
+
   return (
-    <div className="return-page">
-      <GNBWithMenu />
-
-      <div className="return-layout">
-        {/* SideBar */}
-        <aside className="return-sidebar">
-          <div className="return-sidebar-main">
-            <span className="return-sidebar-main-text">관리자</span>
-          </div>
-
-          <div className="return-sidebar-category">
-            <div className="return-sidebar-category-title">관리자 메뉴</div>
-            <div className="return-sidebar-menu-list">
-              <div
-                className="return-sidebar-menu-item"
-                onClick={() => navigate('/acq-confirmation')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품취득확정관리
-              </div>
-              <div
-                className="return-sidebar-menu-item return-sidebar-menu-item-active"
-                onClick={() => navigate('/return-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품반납등록관리
-              </div>
-              <div
-                className="return-sidebar-menu-item"
-                onClick={() => navigate('/disuse-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품불용등록관리
-              </div>
-              <div
-                className="return-sidebar-menu-item"
-                onClick={() => navigate('/disposal-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품처분등록관리
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        <main className="return-main">
-          {/* DepthBar */}
-          <section className="return-depthbar">
-            <div className="return-depthbar-bg" />
-            <div className="return-depthbar-track">
-              <div className="return-depth-pill return-depth-pill-active">
-                <span className="return-depth-text">관리자 메뉴</span>
-              </div>
-              <div className="return-depth-pill">
-                <span className="return-depth-text return-depth-text-inactive">물품 반납 등록 관리</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Filter Section */}
-          <section className="return-filter">
-            <div className="return-filter-wrapper">
-              <div className="return-filter-grid">
+    <ManagementPageLayout
+      pageKey="return"
+      depthSecondLabel="물품 반납 등록 관리"
+    >
+      <FilterPanel pageKey="return">
+        <div className="return-filter-grid">
                 <div className="return-field">
                   <div className="return-label">반납일자</div>
                   <div className="return-date-field-wrapper">
@@ -233,168 +291,58 @@ const ReturnManagementPage = () => {
                         name="approvalStatus"
                         value={option}
                         checked={filters.approvalStatus === option}
-                        onChange={(value) => setFilters((p) => ({ ...p, approvalStatus: value }))}
+                        onChange={(value) =>
+                          setFilters((p) => ({ ...p, approvalStatus: value }))
+                        }
                         label={option}
                       />
                     ))}
                   </div>
                 </div>
-              </div>
+        </div>
 
-              <div className="return-filter-actions">
-                <Button className="return-btn return-btn-outline" onClick={onReset}>
-                  초기화
-                </Button>
-                <Button className="return-btn return-btn-primary" onClick={onSearch}>
-                  조회
-                </Button>
-              </div>
-            </div>
-          </section>
+        <div className="return-filter-actions">
+          <Button className="return-btn return-btn-outline" onClick={onReset}>
+            초기화
+          </Button>
+          <Button className="return-btn return-btn-primary" onClick={onSearch}>
+            조회
+          </Button>
+        </div>
+      </FilterPanel>
 
-          {/* Upper Table - 반납 등록 목록 */}
-          <section className="return-table return-table-upper">
-            <div className="return-table-top">
-              <div className="return-table-label">반납 등록 목록</div>
-            </div>
+      <DataTable<ReturnRegistrationRow>
+        pageKey="return"
+        title="반납 등록 목록"
+        data={filteredRegistrationData}
+        totalCount={allRegistrationData.length}
+        pageSize={10}
+        variant="upper"
+        columns={registrationColumns}
+        getRowKey={(row) => row.id}
+      />
 
-            <div className="return-table-wrap">
-              <div className="return-table-wrap-inner">
-                <table className="return-table-el">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 100 }}>순번</th>
-                      <th style={{ width: 150 }}>반납일자</th>
-                      <th style={{ width: 150 }}>반납확정일자</th>
-                      <th style={{ width: 150 }}>등록자ID</th>
-                      <th style={{ width: 150 }}>등록자명</th>
-                      <th style={{ width: 100 }}>승인상태</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRegistrationData.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>{item.returnDate}</td>
-                        <td>{item.returnConfirmDate}</td>
-                        <td>{item.registrantId}</td>
-                        <td>{item.registrantName}</td>
-                        <td>{item.approvalStatus}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="return-pagination">
-              <button className="return-page-btn" type="button">
-                ‹
-              </button>
-              <button className="return-page-num return-page-num-active" type="button">
-                1
-              </button>
-              <button className="return-page-num" type="button">
-                2
-              </button>
-              <button className="return-page-num" type="button">
-                3
-              </button>
-              <button className="return-page-num" type="button">
-                4
-              </button>
-              <button className="return-page-num" type="button">
-                5
-              </button>
-              <button className="return-page-btn" type="button">
-                ›
-              </button>
-              <div className="return-pagination-summary">
-                총 {allRegistrationData.length}건 / 조회 {filteredRegistrationData.length}건
-              </div>
-            </div>
-          </section>
-
-          {/* Lower Table - 반납 물품 목록 */}
-          <section className="return-table return-table-lower">
-            <div className="return-table-top">
-              <div className="return-table-label">반납 물품 목록</div>
-              <div className="return-table-actions">
-                <Button className="return-btn return-btn-outline return-btn-table">반려</Button>
-                <Button className="return-btn return-btn-primary return-btn-table">확정</Button>
-              </div>
-            </div>
-
-            <div className="return-table-wrap">
-              <div className="return-table-wrap-inner">
-                <table className="return-table-el">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 56 }}>
-                        <input type="checkbox" />
-                      </th>
-                      <th style={{ width: 150 }}>G2B목록번호</th>
-                      <th style={{ width: 150 }}>G2B목록명</th>
-                      <th style={{ width: 150 }}>물품고유번호</th>
-                      <th style={{ width: 120 }}>취득일자</th>
-                      <th style={{ width: 120 }}>취득금액</th>
-                      <th style={{ width: 120 }}>운용부서</th>
-                      <th style={{ width: 100 }}>물품상태</th>
-                      <th style={{ width: 150 }}>사유</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredItemData.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input type="checkbox" />
-                        </td>
-                        <td>{item.g2bNumber}</td>
-                        <td>{item.g2bName}</td>
-                        <td>{item.itemUniqueNumber}</td>
-                        <td>{item.acquireDate}</td>
-                        <td>{item.acquireAmount}</td>
-                        <td>{item.operatingDept}</td>
-                        <td>{item.itemStatus}</td>
-                        <td>{item.reason}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="return-pagination">
-              <button className="return-page-btn" type="button">
-                ‹
-              </button>
-              <button className="return-page-num return-page-num-active" type="button">
-                1
-              </button>
-              <button className="return-page-num" type="button">
-                2
-              </button>
-              <button className="return-page-num" type="button">
-                3
-              </button>
-              <button className="return-page-num" type="button">
-                4
-              </button>
-              <button className="return-page-num" type="button">
-                5
-              </button>
-              <button className="return-page-btn" type="button">
-                ›
-              </button>
-              <div className="return-pagination-summary">
-                총 {allItemData.length}건 / 조회 {filteredItemData.length}건
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-      <ChatBotButton />
-    </div>
+      <DataTable<ReturnItemRow>
+        pageKey="return"
+        title="반납 물품 목록"
+        data={filteredItemData}
+        totalCount={allItemData.length}
+        pageSize={10}
+        variant="lower"
+        columns={itemColumns}
+        getRowKey={(row) => row.id}
+        renderActions={() => (
+          <div className="return-table-actions">
+            <Button className="return-btn return-btn-outline return-btn-table">
+              반려
+            </Button>
+            <Button className="return-btn return-btn-primary return-btn-table">
+              확정
+            </Button>
+          </div>
+        )}
+      />
+    </ManagementPageLayout>
   )
 }
 

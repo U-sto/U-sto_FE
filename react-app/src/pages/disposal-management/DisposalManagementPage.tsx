@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import GNBWithMenu from '../../components/GNBWithMenu'
 import TextField from '../../components/TextField'
 import Button from '../../components/Button'
 import RadioButton from '../../components/RadioButton'
-import ChatBotButton from '../../components/ChatBotButton'
+import {
+  ManagementPageLayout,
+  FilterPanel,
+  DataTable,
+  type DataTableColumn,
+} from '../../components/management'
 import './DisposalManagementPage.css'
 
 type Filters = {
@@ -13,8 +16,28 @@ type Filters = {
   approvalStatus: string
 }
 
+type DisposalRegistrationRow = {
+  id: number
+  disposalDate: string
+  disposalConfirmDate: string
+  registrantId: string
+  registrantName: string
+  approvalStatus: string
+}
+
+type DisposalItemRow = {
+  id: number
+  g2bNumber: string
+  g2bName: string
+  itemUniqueNumber: string
+  acquireDate: string
+  acquireAmount: string
+  operatingDept: string
+  itemStatus: string
+  reason: string
+}
+
 const DisposalManagementPage = () => {
-  const navigate = useNavigate()
   const [filters, setFilters] = useState<Filters>({
     disposalDateFrom: '',
     disposalDateTo: '',
@@ -26,45 +49,41 @@ const DisposalManagementPage = () => {
   const [disposalDateError, setDisposalDateError] = useState<string>('')
   const [searchedFilters, setSearchedFilters] = useState<Filters | null>(null)
 
-  // 전체 데이터 (초기 데이터) - 불용 등록 목록
-  const allRegistrationData = useMemo(
-    () =>
-      Array.from({ length: 5 }).map((_, idx) => ({
-        id: idx + 1,
-        disposalDate: '2026-01-21',
-        disposalConfirmDate: '2026-01-22',
-        registrantId: `user${idx + 1}`,
-        registrantName: `등록자${idx + 1}`,
-        approvalStatus: '대기',
-      })),
-    [],
-  )
+  // 전체 데이터 (초기 데이터) - 처분 등록 목록
+  const allRegistrationData = useMemo<DisposalRegistrationRow[]>(() => {
+    return Array.from({ length: 5 }).map((_, idx) => ({
+      id: idx + 1,
+      disposalDate: '2026-01-21',
+      disposalConfirmDate: '2026-01-22',
+      registrantId: `user${idx + 1}`,
+      registrantName: `등록자${idx + 1}`,
+      approvalStatus: '대기',
+    }))
+  }, [])
 
-  // 전체 데이터 (초기 데이터) - 불용 물품 목록
-  const allItemData = useMemo(
-    () =>
-      Array.from({ length: 10 }).map((_, idx) => ({
-        id: idx + 1,
-        g2bNumber: '43211613-26081535',
-        g2bName: '노트북',
-        itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-        acquireDate: '2026-01-15',
-        acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-        operatingDept: `운용부서 ${idx + 1}`,
-        itemStatus: '운용중',
-        reason: '불용 사유',
-      })),
-    [],
-  )
+  // 전체 데이터 (초기 데이터) - 처분 물품 목록
+  const allItemData = useMemo<DisposalItemRow[]>(() => {
+    return Array.from({ length: 10 }).map((_, idx) => ({
+      id: idx + 1,
+      g2bNumber: '43211613-26081535',
+      g2bName: '노트북',
+      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
+      acquireDate: '2026-01-15',
+      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
+      operatingDept: `운용부서 ${idx + 1}`,
+      itemStatus: '운용중',
+      reason: '처분 사유',
+    }))
+  }, [])
 
-  // 필터링된 데이터 - 불용 등록 목록
+  // 필터링된 데이터 - 처분 등록 목록
   const filteredRegistrationData = useMemo(() => {
     if (!searchedFilters) {
       return allRegistrationData
     }
 
     return allRegistrationData.filter((item) => {
-      // 불용일자 필터
+      // 처분일자 필터
       if (searchedFilters.disposalDateFrom && item.disposalDate < searchedFilters.disposalDateFrom) {
         return false
       }
@@ -88,6 +107,102 @@ const DisposalManagementPage = () => {
     // 등록 목록과 연동되도록 할 수도 있지만, 일단 전체 데이터 반환
     return allItemData
   }, [allItemData])
+
+  const registrationColumns: DataTableColumn<DisposalRegistrationRow>[] = [
+    {
+      key: 'id',
+      header: '순번',
+      width: 100,
+      render: (row) => row.id,
+    },
+    {
+      key: 'disposalDate',
+      header: '처분일자',
+      width: 150,
+      render: (row) => row.disposalDate,
+    },
+    {
+      key: 'disposalConfirmDate',
+      header: '처분확정일자',
+      width: 150,
+      render: (row) => row.disposalConfirmDate,
+    },
+    {
+      key: 'registrantId',
+      header: '등록자ID',
+      width: 150,
+      render: (row) => row.registrantId,
+    },
+    {
+      key: 'registrantName',
+      header: '등록자명',
+      width: 150,
+      render: (row) => row.registrantName,
+    },
+    {
+      key: 'approvalStatus',
+      header: '승인상태',
+      width: 100,
+      render: (row) => row.approvalStatus,
+    },
+  ]
+
+  const itemColumns: DataTableColumn<DisposalItemRow>[] = [
+    {
+      key: 'select',
+      header: <input type="checkbox" />,
+      width: 56,
+      render: () => <input type="checkbox" />,
+    },
+    {
+      key: 'g2bNumber',
+      header: 'G2B목록번호',
+      width: 150,
+      render: (row) => row.g2bNumber,
+    },
+    {
+      key: 'g2bName',
+      header: 'G2B목록명',
+      width: 150,
+      render: (row) => row.g2bName,
+    },
+    {
+      key: 'itemUniqueNumber',
+      header: '물품고유번호',
+      width: 150,
+      render: (row) => row.itemUniqueNumber,
+    },
+    {
+      key: 'acquireDate',
+      header: '취득일자',
+      width: 120,
+      render: (row) => row.acquireDate,
+    },
+    {
+      key: 'acquireAmount',
+      header: '취득금액',
+      width: 120,
+      render: (row) => row.acquireAmount,
+    },
+    {
+      key: 'operatingDept',
+      header: '운용부서',
+      width: 120,
+      render: (row) => row.operatingDept,
+    },
+    {
+      key: 'itemStatus',
+      header: '물품상태',
+      width: 100,
+      render: (row) => row.itemStatus,
+    },
+    {
+      key: 'reason',
+      header: '사유',
+      width: 150,
+      render: (row) => row.reason,
+    },
+  ]
 
   const validateDateRange = (
     baseDate: string,
@@ -131,270 +246,113 @@ const DisposalManagementPage = () => {
   }
 
   return (
-    <div className="disposal-page">
-      <GNBWithMenu />
-
-      <div className="disposal-layout">
-        {/* SideBar */}
-        <aside className="disposal-sidebar">
-          <div className="disposal-sidebar-main">
-            <span className="disposal-sidebar-main-text">관리자</span>
-          </div>
-
-          <div className="disposal-sidebar-category">
-            <div className="disposal-sidebar-category-title">관리자 메뉴</div>
-            <div className="disposal-sidebar-menu-list">
-              <div
-                className="disposal-sidebar-menu-item"
-                onClick={() => navigate('/acq-confirmation')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품취득확정관리
+    <ManagementPageLayout
+      pageKey="disposal"
+      depthSecondLabel="물품 처분 등록 관리"
+    >
+      <FilterPanel pageKey="disposal">
+        <div className="disposal-filter-grid">
+          <div className="disposal-field">
+            <div className="disposal-label">처분일자</div>
+            <div className="disposal-date-field-wrapper">
+              <div className="disposal-date-range">
+                <TextField
+                  type="date"
+                  value={filters.disposalDateFrom}
+                  onChange={(e) => {
+                    setFilters((p) => ({ ...p, disposalDateFrom: e.target.value }))
+                    if (filters.disposalDateTo) {
+                      validateDateRange(
+                        e.target.value,
+                        filters.disposalDateTo,
+                        setDisposalDateError,
+                      )
+                    }
+                  }}
+                />
+                <span className="disposal-date-sep">~</span>
+                <TextField
+                  type="date"
+                  value={filters.disposalDateTo}
+                  onChange={(e) => {
+                    setFilters((p) => ({ ...p, disposalDateTo: e.target.value }))
+                    if (filters.disposalDateFrom) {
+                      validateDateRange(
+                        filters.disposalDateFrom,
+                        e.target.value,
+                        setDisposalDateError,
+                      )
+                    }
+                  }}
+                />
               </div>
-              <div
-                className="disposal-sidebar-menu-item"
-                onClick={() => navigate('/return-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품반납등록관리
-              </div>
-              <div
-                className="disposal-sidebar-menu-item"
-                onClick={() => navigate('/disuse-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품불용등록관리
-              </div>
-              <div
-                className="disposal-sidebar-menu-item disposal-sidebar-menu-item-active"
-                onClick={() => navigate('/disposal-management')}
-                style={{ cursor: 'pointer' }}
-              >
-                물품처분등록관리
-              </div>
+              {disposalDateError && (
+                <div className="disposal-error-text">{disposalDateError}</div>
+              )}
             </div>
           </div>
-        </aside>
 
-        <main className="disposal-main">
-          {/* DepthBar */}
-          <section className="disposal-depthbar">
-            <div className="disposal-depthbar-bg" />
-            <div className="disposal-depthbar-track">
-              <div className="disposal-depth-pill disposal-depth-pill-active">
-                <span className="disposal-depth-text">관리자 메뉴</span>
-              </div>
-              <div className="disposal-depth-pill">
-                <span className="disposal-depth-text disposal-depth-text-inactive">물품 처분 등록 관리</span>
-              </div>
+          <div className="disposal-field">
+            <div className="disposal-label">승인상태</div>
+            <div className="disposal-radio-group">
+              {approvalOptions.map((option) => (
+                <RadioButton
+                  key={option}
+                  name="approvalStatus"
+                  value={option}
+                  checked={filters.approvalStatus === option}
+                  onChange={(value) =>
+                    setFilters((p) => ({ ...p, approvalStatus: value }))
+                  }
+                  label={option}
+                />
+              ))}
             </div>
-          </section>
+          </div>
+        </div>
 
-          {/* Filter Section */}
-          <section className="disposal-filter">
-            <div className="disposal-filter-wrapper">
-              <div className="disposal-filter-grid">
-                <div className="disposal-field">
-                  <div className="disposal-label">불용일자</div>
-                  <div className="disposal-date-field-wrapper">
-                    <div className="disposal-date-range">
-                      <TextField
-                        type="date"
-                        value={filters.disposalDateFrom}
-                        onChange={(e) => {
-                          setFilters((p) => ({ ...p, disposalDateFrom: e.target.value }))
-                          if (filters.disposalDateTo) {
-                            validateDateRange(e.target.value, filters.disposalDateTo, setDisposalDateError)
-                          }
-                        }}
-                      />
-                      <span className="disposal-date-sep">~</span>
-                      <TextField
-                        type="date"
-                        value={filters.disposalDateTo}
-                        onChange={(e) => {
-                          setFilters((p) => ({ ...p, disposalDateTo: e.target.value }))
-                          if (filters.disposalDateFrom) {
-                            validateDateRange(filters.disposalDateFrom, e.target.value, setDisposalDateError)
-                          }
-                        }}
-                      />
-                    </div>
-                    {disposalDateError && <div className="disposal-error-text">{disposalDateError}</div>}
-                  </div>
-                </div>
+        <div className="disposal-filter-actions">
+          <Button className="disposal-btn disposal-btn-outline" onClick={onReset}>
+            초기화
+          </Button>
+          <Button className="disposal-btn disposal-btn-primary" onClick={onSearch}>
+            조회
+          </Button>
+        </div>
+      </FilterPanel>
 
-                <div className="disposal-field">
-                  <div className="disposal-label">승인상태</div>
-                  <div className="disposal-radio-group">
-                    {approvalOptions.map((option) => (
-                      <RadioButton
-                        key={option}
-                        name="approvalStatus"
-                        value={option}
-                        checked={filters.approvalStatus === option}
-                        onChange={(value) => setFilters((p) => ({ ...p, approvalStatus: value }))}
-                        label={option}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+      <DataTable<DisposalRegistrationRow>
+        pageKey="disposal"
+        title="처분 등록 목록"
+        data={filteredRegistrationData}
+        totalCount={allRegistrationData.length}
+        pageSize={10}
+        variant="upper"
+        columns={registrationColumns}
+        getRowKey={(row) => row.id}
+      />
 
-              <div className="disposal-filter-actions">
-                <Button className="disposal-btn disposal-btn-outline" onClick={onReset}>
-                  초기화
-                </Button>
-                <Button className="disposal-btn disposal-btn-primary" onClick={onSearch}>
-                  조회
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          {/* Upper Table - 불용 등록 목록 */}
-          <section className="disposal-table disposal-table-upper">
-            <div className="disposal-table-top">
-              <div className="disposal-table-label">불용 등록 목록</div>
-            </div>
-
-            <div className="disposal-table-wrap">
-              <div className="disposal-table-wrap-inner">
-                <table className="disposal-table-el">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 100 }}>순번</th>
-                      <th style={{ width: 150 }}>불용일자</th>
-                      <th style={{ width: 150 }}>불용확정일자</th>
-                      <th style={{ width: 150 }}>등록자ID</th>
-                      <th style={{ width: 150 }}>등록자명</th>
-                      <th style={{ width: 100 }}>승인상태</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRegistrationData.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>{item.disposalDate}</td>
-                        <td>{item.disposalConfirmDate}</td>
-                        <td>{item.registrantId}</td>
-                        <td>{item.registrantName}</td>
-                        <td>{item.approvalStatus}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="disposal-pagination">
-              <button className="disposal-page-btn" type="button">
-                ‹
-              </button>
-              <button className="disposal-page-num disposal-page-num-active" type="button">
-                1
-              </button>
-              <button className="disposal-page-num" type="button">
-                2
-              </button>
-              <button className="disposal-page-num" type="button">
-                3
-              </button>
-              <button className="disposal-page-num" type="button">
-                4
-              </button>
-              <button className="disposal-page-num" type="button">
-                5
-              </button>
-              <button className="disposal-page-btn" type="button">
-                ›
-              </button>
-              <div className="disposal-pagination-summary">
-                총 {allRegistrationData.length}건 / 조회 {filteredRegistrationData.length}건
-              </div>
-            </div>
-          </section>
-
-          {/* Lower Table - 불용 물품 목록 */}
-          <section className="disposal-table disposal-table-lower">
-            <div className="disposal-table-top">
-              <div className="disposal-table-label">불용 물품 목록</div>
-              <div className="disposal-table-actions">
-                <Button className="disposal-btn disposal-btn-outline disposal-btn-table">반려</Button>
-                <Button className="disposal-btn disposal-btn-primary disposal-btn-table">확정</Button>
-              </div>
-            </div>
-
-            <div className="disposal-table-wrap">
-              <div className="disposal-table-wrap-inner">
-                <table className="disposal-table-el">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 56 }}>
-                        <input type="checkbox" />
-                      </th>
-                      <th style={{ width: 150 }}>G2B목록번호</th>
-                      <th style={{ width: 150 }}>G2B목록명</th>
-                      <th style={{ width: 150 }}>물품고유번호</th>
-                      <th style={{ width: 120 }}>취득일자</th>
-                      <th style={{ width: 120 }}>취득금액</th>
-                      <th style={{ width: 120 }}>운용부서</th>
-                      <th style={{ width: 100 }}>물품상태</th>
-                      <th style={{ width: 150 }}>사유</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredItemData.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input type="checkbox" />
-                        </td>
-                        <td>{item.g2bNumber}</td>
-                        <td>{item.g2bName}</td>
-                        <td>{item.itemUniqueNumber}</td>
-                        <td>{item.acquireDate}</td>
-                        <td>{item.acquireAmount}</td>
-                        <td>{item.operatingDept}</td>
-                        <td>{item.itemStatus}</td>
-                        <td>{item.reason}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="disposal-pagination">
-              <button className="disposal-page-btn" type="button">
-                ‹
-              </button>
-              <button className="disposal-page-num disposal-page-num-active" type="button">
-                1
-              </button>
-              <button className="disposal-page-num" type="button">
-                2
-              </button>
-              <button className="disposal-page-num" type="button">
-                3
-              </button>
-              <button className="disposal-page-num" type="button">
-                4
-              </button>
-              <button className="disposal-page-num" type="button">
-                5
-              </button>
-              <button className="disposal-page-btn" type="button">
-                ›
-              </button>
-              <div className="disposal-pagination-summary">
-                총 {allItemData.length}건 / 조회 {filteredItemData.length}건
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-      <ChatBotButton />
-    </div>
+      <DataTable<DisposalItemRow>
+        pageKey="disposal"
+        title="처분 물품 목록"
+        data={filteredItemData}
+        totalCount={allItemData.length}
+        pageSize={10}
+        variant="lower"
+        columns={itemColumns}
+        getRowKey={(row) => row.id}
+        renderActions={() => (
+          <div className="disposal-table-actions">
+            <Button className="disposal-btn disposal-btn-outline disposal-btn-table">
+              반려
+            </Button>
+            <Button className="disposal-btn disposal-btn-primary disposal-btn-table">
+              확정
+            </Button>
+          </div>
+        )}
+      />
+    </ManagementPageLayout>
   )
 }
 

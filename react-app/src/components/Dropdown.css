@@ -3,18 +3,10 @@
   width: 100%;
 }
 
-.dropdown-arrow path {
-  stroke: var(--dropdown-arrow-default-color);
-}
-
 /* Small dropdown variants */
 .dropdown-small-wrapper {
   position: relative;
   width: 100%;
-}
-
-.dropdown-small-arrow path {
-  stroke: var(--dropdown-small-arrow-color);
 }
 
 .dropdown-button {

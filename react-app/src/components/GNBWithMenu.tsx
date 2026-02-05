@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import SystemLogo from './SystemLogo'
 import './GNBWithMenu.css'
 
@@ -56,15 +56,7 @@ const menuData: MenuSection[] = [
 
 const GNBWithMenu = () => {
   const navigate = useNavigate()
-  const location = useLocation()
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-
-  // 로고 클릭으로 리셋된 경우 드롭다운 상태 초기화
-  useEffect(() => {
-    if (location.state?.reset) {
-      setActiveDropdown(null)
-    }
-  }, [location.state])
 
   const handleDropdownToggle = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu)
@@ -133,15 +125,11 @@ const GNBWithMenu = () => {
                 type="button"
                 className="gnb-menu-tab"
                 onClick={() => handleDropdownToggle(section.id)}
-                onMouseEnter={() => setActiveDropdown(section.id)}
               >
                 {section.label}
               </button>
               {activeDropdown === section.id && (
-                <div
-                  className="gnb-dropdown-menu"
-                  onMouseLeave={() => setActiveDropdown(null)}
-                >
+                <div className="gnb-dropdown-menu">
                   {section.items.map((item) => renderMenuItem(section.id, item))}
                 </div>
               )}
