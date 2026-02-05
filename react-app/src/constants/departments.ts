@@ -1,8 +1,9 @@
 /**
- * 소속 선택용 부서/기관 목록 (가나다 순, 영어 항목 맨 아래)
+ * 소속 선택용 부서/기관 목록
+ * - 한글 항목: 가나다 순 (오름차순)
+ * - 영어/로마자 시작 항목: 배열의 마지막에 배치
  */
-export const DEPARTMENTS: string[] = [
-  // 한글 항목 (가나다 순)
+const RAW_DEPARTMENTS: string[] = [
   '강소연구개발특구지원단',
   '경상대학',
   '경상대학RC',
@@ -58,7 +59,6 @@ export const DEPARTMENTS: string[] = [
   '첨단융합대학RC',
   '글로벌문화통상대학',
   '글로벌문화통상대학RC',
-  // 영어 항목 (맨 아래)
   'ERICA기술지주회사',
   'ERICA산학협력단',
   'ERICA융합원',
@@ -68,3 +68,16 @@ export const DEPARTMENTS: string[] = [
   'RISE지산학협력단',
   'SW-AI융합교육원',
 ]
+
+const isEnglishLeading = (name: string) => /^[A-Za-z]/.test(name)
+
+const koreanDepartments = RAW_DEPARTMENTS.filter((name) => !isEnglishLeading(name)).sort(
+  (a, b) => a.localeCompare(b, 'ko-KR'),
+)
+
+const englishDepartments = RAW_DEPARTMENTS.filter((name) => isEnglishLeading(name)).sort((a, b) =>
+  a.localeCompare(b, 'en'),
+)
+
+export const DEPARTMENTS: string[] = [...koreanDepartments, ...englishDepartments]
+
