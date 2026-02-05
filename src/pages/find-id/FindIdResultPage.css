@@ -1,0 +1,17 @@
+.find-id-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+.find-id-result-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.find-id-result-buttons .button {
+  white-space: nowrap;
+}

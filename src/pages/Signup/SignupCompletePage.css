@@ -1,0 +1,60 @@
+/* 레이아웃 관련 클래스(.signup-complete-page, .wrapper 등) 삭제됨 */
+
+.signup-complete-content {
+  max-width: 500px;
+  width: 100%;
+}
+
+.auth-layout-content.signup-complete-content .auth-layout-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 72px;
+  width: 100%;
+}
+
+.signup-complete-title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.signup-complete-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  width: 100%;
+}
+
+.signup-complete-subtitle {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  text-align: center;
+  width: 100%;
+}
+
+.signup-complete-button {
+  width: 100%;
+  background-color: var(--usto-primary-300);
+  min-height: 56px;
+}
+
+.signup-complete-button:hover {
+  background-color: var(--usto-primary-200);
+}
+
+@media (max-width: 768px) {
+  .signup-complete-title { font-size: 28px; }
+  .signup-complete-subtitle { font-size: 20px; }
+  .auth-layout-content.signup-complete-content .auth-layout-body { gap: 48px; }
+}
