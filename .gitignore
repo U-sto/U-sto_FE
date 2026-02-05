@@ -1,61 +1,43 @@
-# 1. Dependencies & Lockfiles (패키지 관련)
-node_modules/
-.pnpm-store/
-package-lock.json
-pnpm-lock.yaml
-pnpm-debug.log*
+# 1. 모든 파일 및 폴더를 먼저 무시
+/*
 
-# 2. Build & Environment (빌드 및 환경 변수)
-dist/
-.env
-.env.local
-.env.*.local
-.mcpregistry*
+# 2. react-app 폴더와 그 내부의 src만 허용
+!/react-app/
+!/react-app/src/
+!/react-app/src/**
 
-# 3. U-sto Project Overhead (템플릿/관리용 파일)
-# 기본 Vite 프로젝트와 겹치지 않는 설정 파일들입니다.
+# 3. 루트에 있는 src 폴더는 절대 무시 (이게 핵심입니다)
+/src/
+
+# 4. react-app 실행에 필요한 최소한의 설정들 (필요 없다면 제외 가능)
+!/react-app/package.json
+!/react-app/index.html
+!/react-app/vite.config.ts
+!/react-app/tsconfig.json
+!/react-app/tsconfig.node.json
+
+# 5. 기타 루트에 있는 모든 지저분한 파일들 무시
 .changeset/
 .github/
+dist/
 docs/
+node_modules/
+.vite/
+.env
 .nvmrc
 .prettierrc
-jest.config.js
-server.json
-tsup.config.ts
-tsconfig.json
-tsconfig.node.json
-cspell.json
-
-# 4. Unnecessary Documents (불필요한 문서)
-# 메인 README.md를 제외한 다국어 문서 및 관리 파일들입니다.
-README.ko.md
-README.ja.md
-README.zh-cn.md
-README.zh-tw.md
-RELEASES.md
-ROADMAP.md
 CHANGELOG.md
 CONTRIBUTING.md
+eslint.config.js
+jest.config.js
 LICENSE
-
-# 5. IDE & System (에디터 및 OS 설정)
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.DS_Store
-Thumbs.db
-
-# 6. Logs & Testing (로그 및 테스트)
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-coverage/
-test-output/
+package.json
+pnpm-lock.yaml
+README*.md
+RELEASES.md
+ROADMAP.md
+server.json
+tsconfig.json
+tsup.config.ts
+cspell.json
+!/.gitignore

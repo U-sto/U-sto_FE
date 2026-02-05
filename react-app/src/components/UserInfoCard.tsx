@@ -9,8 +9,6 @@ const UserInfoCard = () => {
         <div className="user-info-details">
           <div className="user-info-name">유스토 (HYUusto)</div>
           <div className="user-info-org">한양대학교 ERICA캠퍼스</div>
-          <div className="user-info-divider"></div>
-          <div className="user-info-dept">소프트웨어융합대학 행정팀</div>
         </div>
       </div>
     </div>
