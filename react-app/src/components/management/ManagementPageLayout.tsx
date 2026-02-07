@@ -60,6 +60,7 @@ const ManagementPageLayout = ({
                     type="button"
                     className={classNames}
                     onClick={() => navigate(item.path)}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
                   </button>

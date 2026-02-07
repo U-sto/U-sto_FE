@@ -17,14 +17,14 @@
   cursor: pointer;
 }
 
-.find-id-tab-text {
+.find-id-tabs .find-id-tab .find-id-tab-text {
   font-family: var(--font-family);
   font-weight: 700;
   font-size: 36px;
   line-height: 1.2;
   letter-spacing: -0.03em;
   transition: color 0.2s;
-  white-space: nowrap !important;
+  white-space: nowrap;
 }
 
 .find-id-tab:not(.active) .find-id-tab-text {

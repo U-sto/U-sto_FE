@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ManagementPageKey } from './ManagementPageLayout'
+import './DataTable.css'
 
 export interface DataTableColumn<T> {
   key: string
@@ -79,13 +80,13 @@ function DataTable<T>({
 
       <div className={`${prefix}-table-wrap`}>
         <div className={`${prefix}-table-wrap-inner`}>
-          <table className={`${prefix}-table-el`}>
+          <table className={`${prefix}-table-el management-table-el`}>
             <thead>
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    style={column.width != null ? { width: column.width } : undefined}
+                    className={`${prefix}-th-${column.key}`}
                   >
                     {column.header}
                   </th>
@@ -93,19 +94,27 @@ function DataTable<T>({
               </tr>
             </thead>
             <tbody>
-              {pageData.map((row, rowIndex) => (
-                <tr key={getRowKey(row, rowIndex)}>
-                  {columns.map((column) => (
-                    <td key={column.key}>{column.render(row)}</td>
-                  ))}
+              {pageData.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length} className="management-table-empty">
+                    조회된 데이터가 없습니다.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                pageData.map((row, rowIndex) => (
+                  <tr key={getRowKey(row, rowIndex)}>
+                    {columns.map((column) => (
+                      <td key={column.key}>{column.render(row)}</td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <div className={paginationClass}>
+      <div className={`${paginationClass} management-pagination`}>
         <button
           type="button"
           className={pageBtnClass}
@@ -129,12 +138,12 @@ function DataTable<T>({
         <button
           type="button"
           className={pageBtnClass}
-          onClick={() => handlePageChange(currentPage - 1 + 2)}
+          onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
           ›
         </button>
-        <div className={summaryClass}>
+        <div className={`${summaryClass} management-pagination-summary`} aria-live="polite">
           총 {effectiveTotal}건 / 조회 {data.length}건
         </div>
       </div>

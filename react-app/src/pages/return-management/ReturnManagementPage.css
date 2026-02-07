@@ -1,23 +1,26 @@
 .return-page {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background: var(--usto-alt-white);
 }
 
 .return-layout {
+  flex: 1;
   display: flex;
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 /* Sidebar */
 .return-sidebar {
   width: 340px;
-  min-height: 100%;
+  flex-shrink: 0;
   padding: 0;
   background: var(--usto-primary-200);
-  box-shadow: 8px 0 10px 0 rgba(234, 237, 237, 1);
+  box-shadow: var(--usto-shadow-sidebar);
   display: flex;
   flex-direction: column;
   gap: 48px;
@@ -161,7 +164,7 @@
   top: 0;
   width: 100%;
   height: 60px;
-  background: rgba(88, 130, 142, 0.7);
+  background: var(--usto-primary-300-70);
   border-radius: 0 50px 50px 0;
   z-index: 0;
 }
@@ -184,12 +187,14 @@
 
 /* Filter */
 .return-filter {
-  width: 1420px;
+  width: calc(100% - 160px);
+  max-width: 1420px;
+  margin-left: 80px;
+  margin-right: 80px;
   background: var(--usto-primary-200);
   border-radius: 6px;
   padding: 14px 32px;
   margin-top: 48px;
-  margin-left: 80px;
   flex-shrink: 0;
 }
 
@@ -296,17 +301,17 @@
   padding-top: 5px;
 }
 
-.return-btn {
-  width: auto !important;
+.return-page .return-btn {
+  width: auto;
   border-radius: 4px;
   font-family: var(--font-family);
   font-weight: 500;
   font-size: 16px;
   line-height: 1.2;
   letter-spacing: -0.03em;
-  padding: 2px 12px !important;
-  height: auto !important;
-  min-height: 25px !important;
+  padding: 2px 12px;
+  height: auto;
+  min-height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,24 +329,26 @@
   color: var(--usto-alt-white);
 }
 
-.return-btn-table {
-  padding: 4px 16px !important;
+.return-page .return-btn-table {
+  padding: 4px 16px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px !important;
-  line-height: 1.4479999542236328 !important;
-  letter-spacing: -0.03em !important;
-  min-width: auto !important;
-  width: auto !important;
-  min-height: auto !important;
-  height: auto !important;
+  font-size: 14px;
+  line-height: 1.4479999542236328;
+  letter-spacing: -0.03em;
+  min-width: auto;
+  width: auto;
+  min-height: auto;
+  height: auto;
 }
 
 /* Table */
 .return-table {
-  width: 1420px;
-  margin-top: 30px;
+  width: calc(100% - 160px);
+  max-width: 1420px;
+  margin-top: 28px;
   margin-left: 80px;
+  margin-right: 80px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -438,7 +445,7 @@
   line-height: 1.2;
   letter-spacing: -0.03em;
   padding: 8px 16px;
-  border-right: 1px solid rgba(193, 216, 220, 1);
+  border-right: 1px solid var(--usto-primary-200);
   text-align: left;
 }
 
@@ -446,15 +453,22 @@
   border-right: none;
 }
 
-.return-table-el tbody td {
-  padding: 11.4px 16px;
-  border-top: 1px solid rgba(193, 216, 220, 1);
-  font-family: var(--font-family);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--usto-alt-black);
-  height: auto;
-}
+/* DataTable column widths */
+.return-table-el .return-th-id { width: 100px; }
+.return-table-el .return-th-returnDate { width: 150px; }
+.return-table-el .return-th-returnConfirmDate { width: 150px; }
+.return-table-el .return-th-registrantId { width: 150px; }
+.return-table-el .return-th-registrantName { width: 150px; }
+.return-table-el .return-th-approvalStatus { width: 100px; }
+.return-table-el .return-th-select { width: 56px; }
+.return-table-el .return-th-g2bNumber { width: 150px; }
+.return-table-el .return-th-g2bName { width: 150px; }
+.return-table-el .return-th-itemUniqueNumber { width: 150px; }
+.return-table-el .return-th-acquireDate { width: 120px; }
+.return-table-el .return-th-acquireAmount { width: 120px; }
+.return-table-el .return-th-operatingDept { width: 120px; }
+.return-table-el .return-th-itemStatus { width: 100px; }
+.return-table-el .return-th-reason { width: 150px; }
 
 .return-table-el tbody {
   display: table-row-group;
@@ -497,14 +511,25 @@
   color: var(--usto-primary-300);
 }
 
-.return-pagination-summary {
-  position: absolute;
-  left: 16px;
-  top: 4px;
-  font-family: var(--font-family);
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.4479999542236328;
-  letter-spacing: -0.03em;
-  color: var(--usto-alt-black);
+.return-sidebar-menu-item:focus-visible {
+  outline: 2px solid var(--usto-primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (max-width: 1024px) {
+  .return-filter,
+  .return-table {
+    width: calc(100% - 32px);
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .return-pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    min-height: 48px;
+  }
+
 }

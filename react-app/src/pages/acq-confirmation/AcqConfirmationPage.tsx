@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import TextField from '../../components/TextField'
 import Dropdown from '../../components/Dropdown'
 import Button from '../../components/Button'
@@ -9,6 +9,7 @@ import {
   DataTable,
   type DataTableColumn,
 } from '../../components/management'
+import { useManagementFilter } from '../../hooks/useManagementFilter'
 import './AcqConfirmationPage.css'
 
 type Filters = {
@@ -21,6 +22,18 @@ type Filters = {
   acquireDateTo: string
   approvalStatus: string
   category: string
+}
+
+const INITIAL_FILTERS: Filters = {
+  g2bName: '',
+  g2bNumberFrom: '',
+  g2bNumberTo: '',
+  sortDateFrom: '',
+  sortDateTo: '',
+  acquireDateFrom: '',
+  acquireDateTo: '',
+  approvalStatus: '전체',
+  category: '',
 }
 
 type AcqTableRow = {
@@ -38,16 +51,21 @@ type AcqTableRow = {
 }
 
 const AcqConfirmationPage = () => {
-  const [filters, setFilters] = useState<Filters>({
-    g2bName: '',
-    g2bNumberFrom: '',
-    g2bNumberTo: '',
-    sortDateFrom: '',
-    sortDateTo: '',
-    acquireDateFrom: '',
-    acquireDateTo: '',
-    approvalStatus: '전체',
-    category: '',
+  const {
+    filters,
+    setFilters,
+    searchedFilters,
+    dateErrors,
+    setDateError,
+    validateDateRange,
+    onReset,
+    onSearch,
+  } = useManagementFilter<Filters>({
+    initialFilters: INITIAL_FILTERS,
+    dateRanges: [
+      { fromKey: 'sortDateFrom', toKey: 'sortDateTo', errorKey: 'sortDate' },
+      { fromKey: 'acquireDateFrom', toKey: 'acquireDateTo', errorKey: 'acquireDate' },
+    ],
   })
 
   const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
@@ -62,10 +80,6 @@ const AcqConfirmationPage = () => {
     ],
     [],
   )
-
-  const [sortDateError, setSortDateError] = useState<string>('')
-  const [acquireDateError, setAcquireDateError] = useState<string>('')
-  const [searchedFilters, setSearchedFilters] = useState<Filters | null>(null)
 
   // 전체 데이터 (초기 데이터)
   const allTableData = useMemo<AcqTableRow[]>(() => {
@@ -167,60 +181,8 @@ const AcqConfirmationPage = () => {
     })
   }, [allTableData, searchedFilters])
 
-  const validateDateRange = (
-    baseDate: string,
-    compareDate: string,
-    setError: (error: string) => void,
-  ) => {
-    if (baseDate && compareDate && compareDate < baseDate) {
-      setError('비교날짜 이 후의 날짜를 선택해주세요 !')
-    } else {
-      setError('')
-    }
-  }
-
-  const onReset = () => {
-    setFilters({
-      g2bName: '',
-      g2bNumberFrom: '',
-      g2bNumberTo: '',
-      sortDateFrom: '',
-      sortDateTo: '',
-      acquireDateFrom: '',
-      acquireDateTo: '',
-      approvalStatus: '전체',
-      category: '',
-    })
-    setSortDateError('')
-    setAcquireDateError('')
-    setSearchedFilters(null)
-  }
-
-  const onSearch = () => {
-    // 날짜 유효성 검사
-    let hasError = false
-
-    if (filters.sortDateFrom && filters.sortDateTo) {
-      validateDateRange(filters.sortDateFrom, filters.sortDateTo, setSortDateError)
-      if (filters.sortDateTo < filters.sortDateFrom) {
-        hasError = true
-      }
-    }
-
-    if (filters.acquireDateFrom && filters.acquireDateTo) {
-      validateDateRange(filters.acquireDateFrom, filters.acquireDateTo, setAcquireDateError)
-      if (filters.acquireDateTo < filters.acquireDateFrom) {
-        hasError = true
-      }
-    }
-
-    if (hasError) {
-      return
-    }
-
-    // 필터 적용
-    setSearchedFilters({ ...filters })
-  }
+  const setSortDateError = (err: string) => setDateError('sortDate', err)
+  const setAcquireDateError = (err: string) => setDateError('acquireDate', err)
 
   const columns: DataTableColumn<AcqTableRow>[] = [
     {
@@ -295,7 +257,6 @@ const AcqConfirmationPage = () => {
     <ManagementPageLayout pageKey="acq" depthSecondLabel="물품 취득 확정 관리">
       <FilterPanel pageKey="acq">
         <div className="acq-filter-grid">
-                {/* 첫 번째 행: G2B목록명, 운용부서 */}
                 <div className="acq-field">
                   <div className="acq-label">G2B목록명</div>
                   <Dropdown
@@ -305,7 +266,6 @@ const AcqConfirmationPage = () => {
                     onChange={(value: string) => {
                       const matched = g2bOptions.find((opt) => opt.name === value)
                       if (matched) {
-                        // 43211613-26081535 형식에서 앞부분 숫자 추출
                         const parts = matched.number.split('-')
                         const numberPart = parts.length > 0 ? parts[0] : ''
                         setFilters((p) => ({
@@ -338,7 +298,6 @@ const AcqConfirmationPage = () => {
                   />
                 </div>
 
-                {/* 두 번째 행: G2B목록번호, 정리일자 */}
                 <div className="acq-field">
                   <div className="acq-label">G2B목록번호</div>
                   <div className="acq-number-range">
@@ -384,11 +343,10 @@ const AcqConfirmationPage = () => {
                         }}
                       />
                     </div>
-                    {sortDateError && <div className="acq-error-text">{sortDateError}</div>}
+                    {dateErrors.sortDate && <div className="acq-error-text">{dateErrors.sortDate}</div>}
                   </div>
                 </div>
 
-                {/* 세 번째 행: 취득일자, 승인상태 */}
                 <div className="acq-field">
                   <div className="acq-label">취득일자</div>
                   <div className="acq-date-field-wrapper">
@@ -415,7 +373,7 @@ const AcqConfirmationPage = () => {
                         }}
                       />
                     </div>
-                    {acquireDateError && <div className="acq-error-text">{acquireDateError}</div>}
+                    {dateErrors.acquireDate && <div className="acq-error-text">{dateErrors.acquireDate}</div>}
                   </div>
                 </div>
 
