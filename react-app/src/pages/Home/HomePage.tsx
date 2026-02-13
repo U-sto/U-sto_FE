@@ -1,7 +1,7 @@
-import GNBWithMenu from '../../components/GNBWithMenu'
-import UserInfoCard from '../../components/UserInfoCard'
-import NoticeField from '../../components/NoticeField'
-import ChatBotButton from '../../components/ChatBotButton'
+import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
+import UserInfoCard from '../../features/home/components/UserInfoCard/UserInfoCard'
+import NoticeField from '../../features/home/components/NoticeField/NoticeField'
+import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import './HomePage.css'
 
 const HomePage = () => {

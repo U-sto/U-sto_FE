@@ -5,21 +5,23 @@ import './styles/variables.css'
 import './App.css'
 
 // Use correct casing in import paths to avoid duplicated module issues
-const LoginPage = lazy(() => import('./pages/Login/LoginPage'))
-const SignupPage = lazy(() => import('./pages/Signup/SignupPage'))
-const SignupStep2Page = lazy(() => import('./pages/Signup/SignupStep2Page'))
-const SignupStep3Page = lazy(() => import('./pages/Signup/SignupStep3Page'))
-const SignupCompletePage = lazy(() => import('./pages/Signup/SignupCompletePage'))
-const FindIdPage = lazy(() => import('./pages/find-id/FindIdPage'))
-const FindIdResultPage = lazy(() => import('./pages/find-id/FindIdResultPage'))
-const FindPasswordPage = lazy(() => import('./pages/find-pw/FindPasswordPage'))
-const FindPasswordResetPage = lazy(() => import('./pages/find-pw/FindPasswordResetPage'));
-const FindPasswordCompletePage = lazy(() => import('./pages/find-pw/FindPasswordCompletePage'));
+const LoginPage = lazy(() => import('./pages/account-management/Login/LoginPage'))
+const SignupPage = lazy(() => import('./pages/account-management/Signup/SignupPage'))
+const SignupStep2Page = lazy(() => import('./pages/account-management/Signup/SignupStep2Page'))
+const SignupStep3Page = lazy(() => import('./pages/account-management/Signup/SignupStep3Page'))
+const SignupCompletePage = lazy(() => import('./pages/account-management/Signup/SignupCompletePage'))
+const FindIdPage = lazy(() => import('./pages/account-management/find-id/FindIdPage'))
+const FindIdResultPage = lazy(() => import('./pages/account-management/find-id/FindIdResultPage'))
+const FindPasswordPage = lazy(() => import('./pages/account-management/find-pw/FindPasswordPage'))
+const FindPasswordResetPage = lazy(() => import('./pages/account-management/find-pw/FindPasswordResetPage'));
+const FindPasswordCompletePage = lazy(() => import('./pages/account-management/find-pw/FindPasswordCompletePage'));
 const HomePage = lazy(() => import('./pages/Home/HomePage'));
-const AcqConfirmationPage = lazy(() => import('./pages/acq-confirmation/AcqConfirmationPage'));
-const ReturnManagementPage = lazy(() => import('./pages/return-management/ReturnManagementPage'));
-const DisuseManagementPage = lazy(() => import('./pages/disuse-management/DisuseManagementPage'));
-const DisposalManagementPage = lazy(() => import('./pages/disposal-management/DisposalManagementPage'));
+const AcqConfirmationPage = lazy(() => import('./pages/request-management/acq-confirmation/AcqConfirmationPage'));
+const OperationManagementPage = lazy(() => import('./pages/request-management/operation-management/OperationManagementPage'));
+const ReturnManagementPage = lazy(() => import('./pages/request-management/return-management/ReturnManagementPage'));
+const DisuseManagementPage = lazy(() => import('./pages/request-management/disuse-management/DisuseManagementPage'));
+const DisposalManagementPage = lazy(() => import('./pages/request-management/disposal-management/DisposalManagementPage'));
+const AcquisitionManagementPage = lazy(() => import('./pages/asset-management/acquisition-management/AcquisitionManagementPage'));
 
 function App() {
   return (
@@ -40,9 +42,11 @@ function App() {
             <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
+            <Route path="/operation-management" element={<OperationManagementPage />} />
             <Route path="/return-management" element={<ReturnManagementPage />} />
             <Route path="/disuse-management" element={<DisuseManagementPage />} />
             <Route path="/disposal-management" element={<DisposalManagementPage />} />
+            <Route path="/asset-management/acquisition-management" element={<AcquisitionManagementPage />} />
           </Routes>
         </Suspense>
       </AppResetProvider>

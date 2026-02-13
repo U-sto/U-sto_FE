@@ -1,0 +1,221 @@
+.asset-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--usto-alt-white);
+}
+
+.asset-layout {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.asset-sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  padding: 0;
+  background: var(--usto-primary-200);
+  box-shadow: var(--usto-shadow-sidebar);
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.asset-sidebar-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 340px;
+  height: 60px;
+  background: var(--usto-primary-300);
+}
+
+.asset-sidebar-main-text {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+}
+
+.asset-sidebar-category {
+  width: 340px;
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.asset-sidebar-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-sidebar-menu-item {
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  text-align: left;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.asset-sidebar-menu-item:hover {
+  color: var(--usto-primary-300);
+}
+
+/* 선택된 메뉴: 연한 회청색 배경 + 점선 보더 (Figma) */
+.asset-sidebar-menu-item-active {
+  font-weight: 500;
+  background: var(--usto-primary-100);
+  border: 1px dashed var(--usto-primary-300);
+}
+
+.asset-sidebar-group {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.asset-sidebar-group-title {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  padding: 8px 16px 4px;
+  pointer-events: none;
+}
+
+.asset-sidebar-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asset-sidebar-menu-item-sub {
+  padding-left: 32px;
+}
+
+.asset-main {
+  flex: 1;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.asset-depthbar {
+  position: relative;
+  width: 100%;
+  height: 60px;
+  margin-left: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  /* 물품 기본 정보 관리 뒤까지 동일 배경 유지 */
+  background: var(--usto-primary-200);
+}
+
+.asset-depthbar-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--usto-primary-200);
+  width: 100%;
+}
+
+.asset-depthbar-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 60px;
+  width: 690px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.asset-depthbar-track-three {
+  width: 920px;
+}
+
+.asset-depth-pill {
+  flex: 1;
+  height: 60px;
+  border-radius: 0 50px 50px 0;
+  background: var(--usto-primary-200);
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 84px;
+  position: relative;
+}
+
+/* 마지막 뎁스(물품 기본 정보 관리) 오른쪽 끝까지 배경 이어짐 */
+.asset-depth-pill:last-child::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  width: max(400px, calc(100vw - 690px));
+  background: var(--usto-primary-200);
+  z-index: -1;
+}
+
+.asset-depth-pill-active {
+  background: var(--usto-alt-white);
+}
+
+.asset-depth-pill-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--usto-primary-300-70);
+  border-radius: 0 50px 50px 0;
+  z-index: 0;
+}
+
+.asset-depth-text {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  white-space: nowrap;
+}
+
+.asset-depth-text-inactive {
+  color: var(--usto-alt-white);
+}
+
+.asset-sidebar-menu-item:focus-visible {
+  outline: 2px solid var(--usto-primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -1,0 +1,78 @@
+/* 공통: 관리 테이블 셀 패딩 (th, td) */
+.management-table-el th,
+.management-table-el td {
+  padding: 12px 16px;
+}
+
+.management-table-el tbody td {
+  border-top: 1px solid var(--usto-primary-200);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 공통: 관리 테이블 행 호버 */
+.management-table-el tbody tr:hover {
+  background-color: var(--usto-primary-100);
+  cursor: pointer;
+}
+
+/* 빈 데이터 메시지 */
+.management-table-el tbody td.management-table-empty {
+  text-align: center;
+  color: var(--usto-gray-200);
+}
+
+/* 페이지네이션: 버튼은 데이터 테이블 너비 기준 정중앙, summary는 좌/우 배치 */
+.management-pagination {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.management-pagination-buttons {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.management-pagination-buttons button {
+  pointer-events: auto;
+}
+
+.management-pagination-summary {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: 16px;
+  text-align: left;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+}
+
+@media (max-width: 480px) {
+  .management-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .management-pagination-buttons {
+    position: static;
+    pointer-events: auto;
+  }
+
+  .management-pagination-summary {
+    text-align: left;
+    order: -1;
+  }
+}
