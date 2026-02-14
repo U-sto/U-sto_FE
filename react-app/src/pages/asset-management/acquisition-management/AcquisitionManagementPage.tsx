@@ -2,7 +2,9 @@ import { useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
+import TitlePill from '../../../components/common/TitlePill/TitlePill'
 import AssetManagementPageLayout from '../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
+import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import './AcquisitionManagementPage.css'
 
 type FormState = {
@@ -47,6 +49,7 @@ const SearchIcon = () => (
 
 const AcquisitionManagementPage = () => {
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
 
   const update = (key: keyof FormState, value: string) => {
     setForm((p) => ({ ...p, [key]: value }))
@@ -60,6 +63,11 @@ const AcquisitionManagementPage = () => {
     // TODO: 목록 화면으로 이동 또는 모달
   }
 
+  const handleG2BSelect = (item: G2BItem) => {
+    update('g2bName', item.name)
+    update('g2bNumber', item.number)
+  }
+
   return (
     <AssetManagementPageLayout
       pageKey="acquisition"
@@ -69,7 +77,7 @@ const AcquisitionManagementPage = () => {
       <div className="acquisition-content">
         {/* 위쪽 한 줄: 왼쪽 제목 pill, 오른쪽 목록·저장 버튼 */}
         <div className="acquisition-form-title-row">
-          <span className="acquisition-form-title-pill">물품 기본 정보</span>
+          <TitlePill>물품 기본 정보</TitlePill>
           <div className="acquisition-form-actions">
             <Button className="acquisition-btn acquisition-btn-outline" onClick={handleList}>
               목록
@@ -92,7 +100,12 @@ const AcquisitionManagementPage = () => {
                   onChange={(e) => update('g2bName', e.target.value)}
                   placeholder="G2B목록명 검색"
                 />
-                <button type="button" className="acquisition-search-btn" aria-label="검색">
+                <button
+                  type="button"
+                  className="acquisition-search-btn"
+                  aria-label="검색"
+                  onClick={() => setIsG2BModalOpen(true)}
+                >
                   <SearchIcon />
                 </button>
               </div>
@@ -203,6 +216,11 @@ const AcquisitionManagementPage = () => {
         </div>
         </section>
       </div>
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
     </AssetManagementPageLayout>
   )
 }

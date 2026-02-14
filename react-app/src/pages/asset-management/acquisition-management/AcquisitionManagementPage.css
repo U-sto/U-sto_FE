@@ -17,23 +17,7 @@
 }
 
 /* 물품 취득 확정 관리 페이지의 "물품 취득 대장 목록" 제목과 동일 스타일 */
-.acquisition-form-title-pill {
-  background: var(--usto-primary-200);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-family: var(--font-family);
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.4479999542236328;
-  letter-spacing: -0.03em;
-  color: var(--usto-alt-black);
-  white-space: nowrap;
-  height: 25px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-}
+/* 이제 TitlePill 컴포넌트를 사용합니다 */
 
 /* 물품 기본 정보 패널 (폼 필드만) */
 .acquisition-form-panel {
