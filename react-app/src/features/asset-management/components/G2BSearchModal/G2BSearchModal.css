@@ -15,6 +15,8 @@
   padding: 24px;
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .g2b-section {
@@ -30,6 +32,8 @@
   padding: 16px;
   border-radius: 4px;
   flex-shrink: 0;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .g2b-section-title-row {
@@ -58,6 +62,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-wrap: nowrap;
 }
 
 .g2b-search-label {
@@ -82,31 +87,31 @@
   font-size: 14px;
 }
 
-/* 물품분류코드: 200x30 */
+/* 물품분류코드: 140x30 (가로 축소로 스크롤 없이 전체 표시) */
 .g2b-input-classification-code,
 .g2b-input-item-classification-code {
-  width: 200px;
+  width: 140px;
   height: 30px;
   flex: none;
 }
 
-/* 물품분류명: 200x30 */
+/* 물품분류명: 140x30 */
 .g2b-input-classification-name {
-  width: 200px;
+  width: 140px;
   height: 30px;
   flex: none;
 }
 
-/* 물품식별코드: 186x30 */
+/* 물품식별코드: 130x30 */
 .g2b-input-identification-code {
-  width: 186px;
+  width: 130px;
   height: 30px;
   flex: none;
 }
 
-/* 물품품목명: 200x30 */
+/* 물품품목명: 140x30 */
 .g2b-input-item-name {
-  width: 200px;
+  width: 140px;
   height: 30px;
   flex: none;
 }

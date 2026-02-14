@@ -10,6 +10,7 @@
   justify-content: center;
   z-index: 10000;
   padding: 20px;
+  overflow: auto;
 }
 
 .modal-content {
@@ -40,22 +41,26 @@
 .modal-g2b {
   width: 1468px;
   height: 920px;
-  max-width: 1468px;
-  max-height: 920px;
+  /* 항상 뷰포트 안에 맞춤 - 작은 윈도우에서 삐져나오지 않도록 */
+  max-width: min(1468px, calc(100vw - 40px));
+  max-height: min(920px, calc(100vh - 40px));
 }
 
 @media (max-width: 1500px) {
   .modal-g2b {
     width: calc(100vw - 40px);
-    max-width: 1468px;
   }
 }
 
 @media (max-height: 960px) {
   .modal-g2b {
     height: calc(100vh - 40px);
-    max-height: 920px;
   }
+}
+
+/* G2B 모달: 좁은 화면에서 내용 가로 스크롤 허용 */
+.modal-g2b .modal-body {
+  overflow: auto;
 }
 
 .modal-header {

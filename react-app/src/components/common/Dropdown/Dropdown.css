@@ -133,6 +133,25 @@
   letter-spacing: -0.03em;
 }
 
+.dropdown-small-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  padding: 0;
+}
+
+.dropdown-small-search-input::placeholder {
+  color: var(--usto-gray-200);
+}
+
 .dropdown-small-selected {
   color: var(--usto-alt-black);
 }

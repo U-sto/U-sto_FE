@@ -11,6 +11,10 @@ export type G2BItem = {
   number: string
   categoryCode?: string
   identificationCode?: string
+  sortDate?: string
+  operatingStatus?: string
+  usefulLife?: string
+  acquireAmount?: string
 }
 
 // 물품 분류 타입
@@ -28,6 +32,10 @@ export type ItemDetail = {
   classificationCode: string
   identificationCode: string
   name: string
+  sortDate?: string
+  operatingStatus?: string
+  usefulLife?: string
+  acquireAmount?: string
 }
 
 interface G2BSearchModalProps {
@@ -45,12 +53,12 @@ const MOCK_CLASSIFICATION_DATA: ItemClassification[] = [
 ]
 
 const MOCK_ITEM_DETAIL_DATA: ItemDetail[] = [
-  { id: '1', sequence: 1, classificationCode: 'CLS001', identificationCode: '43211613-26081535', name: '노트북' },
-  { id: '2', sequence: 2, classificationCode: 'CLS001', identificationCode: '43211614-26081536', name: '데스크탑' },
-  { id: '3', sequence: 3, classificationCode: 'CLS001', identificationCode: '43211615-26081537', name: '모니터' },
-  { id: '4', sequence: 4, classificationCode: 'CLS002', identificationCode: '43211616-26081538', name: '회의실 의자' },
-  { id: '5', sequence: 5, classificationCode: 'CLS002', identificationCode: '43211617-26081539', name: '책상' },
-  { id: '6', sequence: 6, classificationCode: 'CLS003', identificationCode: '43211618-26081540', name: '프로젝터' },
+  { id: '1', sequence: 1, classificationCode: 'CLS001', identificationCode: '43211613-26081535', name: '노트북', sortDate: '2024-12-01', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '1500000' },
+  { id: '2', sequence: 2, classificationCode: 'CLS001', identificationCode: '43211614-26081536', name: '데스크탑', sortDate: '2024-11-15', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '1200000' },
+  { id: '3', sequence: 3, classificationCode: 'CLS001', identificationCode: '43211615-26081537', name: '모니터', sortDate: '2024-10-20', operatingStatus: '운용중', usefulLife: '3', acquireAmount: '350000' },
+  { id: '4', sequence: 4, classificationCode: 'CLS002', identificationCode: '43211616-26081538', name: '회의실 의자', sortDate: '2024-09-10', operatingStatus: '운용중', usefulLife: '10', acquireAmount: '180000' },
+  { id: '5', sequence: 5, classificationCode: 'CLS002', identificationCode: '43211617-26081539', name: '책상', sortDate: '2024-08-05', operatingStatus: '운용중', usefulLife: '10', acquireAmount: '250000' },
+  { id: '6', sequence: 6, classificationCode: 'CLS003', identificationCode: '43211618-26081540', name: '프로젝터', sortDate: '2024-07-01', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '800000' },
 ]
 
 const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
@@ -125,6 +133,10 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
         name: selectedItemDetail.name,
         number: selectedItemDetail.identificationCode,
         categoryCode: selectedItemDetail.classificationCode,
+        sortDate: selectedItemDetail.sortDate ?? '',
+        operatingStatus: selectedItemDetail.operatingStatus ?? '',
+        usefulLife: selectedItemDetail.usefulLife ?? '',
+        acquireAmount: selectedItemDetail.acquireAmount ?? '',
       })
       // 초기화
       setClassificationFilters({ code: '', name: '' })

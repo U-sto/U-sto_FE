@@ -39,6 +39,12 @@ const INITIAL_FORM: FormState = {
 
 const ACQUIRE_SORT_OPTIONS = ['선택', '취득', '정리', '기타']
 const OPERATING_DEPT_OPTIONS = ['선택', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_CODE_MAP: Record<string, string> = {
+  선택: '',
+  운용부서1: 'DEPT001',
+  운용부서2: 'DEPT002',
+  운용부서3: 'DEPT003',
+}
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -55,6 +61,11 @@ const AcquisitionManagementPage = () => {
     setForm((p) => ({ ...p, [key]: value }))
   }
 
+  const handleOperatingDeptChange = (value: string) => {
+    update('operatingDept', value)
+    update('operatingDeptCode', OPERATING_DEPT_CODE_MAP[value] ?? '')
+  }
+
   const handleSave = () => {
     // TODO: 저장 API 연동
   }
@@ -66,6 +77,10 @@ const AcquisitionManagementPage = () => {
   const handleG2BSelect = (item: G2BItem) => {
     update('g2bName', item.name)
     update('g2bNumber', item.number)
+    if (item.sortDate !== undefined) update('sortDate', item.sortDate)
+    if (item.operatingStatus !== undefined) update('operatingStatus', item.operatingStatus)
+    if (item.usefulLife !== undefined) update('usefulLife', item.usefulLife)
+    if (item.acquireAmount !== undefined) update('acquireAmount', item.acquireAmount)
   }
 
   return (
@@ -94,11 +109,12 @@ const AcquisitionManagementPage = () => {
             {/* Row 1: G2B목록명(넓게), G2B목록번호 - 2열 */}
             <div className="acquisition-field acquisition-field-span2">
               <label className="acquisition-label">G2B목록명</label>
-              <div className="acquisition-input-with-icon">
+              <div className="acquisition-input-and-search">
                 <TextField
                   value={form.g2bName}
                   onChange={(e) => update('g2bName', e.target.value)}
                   placeholder="G2B목록명 검색"
+                  className="acquisition-g2b-input"
                 />
                 <button
                   type="button"
@@ -112,11 +128,19 @@ const AcquisitionManagementPage = () => {
             </div>
             <div className="acquisition-field acquisition-field-span2">
               <label className="acquisition-label">G2B목록번호</label>
-              <TextField
-                value={form.g2bNumber}
-                onChange={(e) => update('g2bNumber', e.target.value)}
-                placeholder=""
-              />
+              <div className="acquisition-g2b-number-split">
+                <TextField
+                  value={form.g2bNumber.split('-')[0] ?? ''}
+                  readOnly
+                  className="acquisition-readonly acquisition-g2b-number-box"
+                />
+                <span className="acquisition-g2b-number-sep">-</span>
+                <TextField
+                  value={form.g2bNumber.split('-')[1] ?? ''}
+                  readOnly
+                  className="acquisition-readonly acquisition-g2b-number-box"
+                />
+              </div>
             </div>
 
             {/* Row 2: 취득일자, 정리일자, 운용상태, 내용연수 - 4열 동일 너비 */}
@@ -131,25 +155,28 @@ const AcquisitionManagementPage = () => {
             <div className="acquisition-field">
               <label className="acquisition-label">정리일자</label>
               <TextField
-                type="date"
+                type="text"
                 value={form.sortDate}
-                onChange={(e) => update('sortDate', e.target.value)}
+                readOnly
+                className="acquisition-readonly"
               />
             </div>
             <div className="acquisition-field">
               <label className="acquisition-label">운용상태</label>
               <TextField
                 value={form.operatingStatus}
-                onChange={(e) => update('operatingStatus', e.target.value)}
                 placeholder=""
+                readOnly
+                className="acquisition-readonly"
               />
             </div>
             <div className="acquisition-field">
               <label className="acquisition-label">내용연수</label>
               <TextField
                 value={form.usefulLife}
-                onChange={(e) => update('usefulLife', e.target.value)}
                 placeholder=""
+                readOnly
+                className="acquisition-readonly"
               />
             </div>
 
@@ -158,8 +185,9 @@ const AcquisitionManagementPage = () => {
               <label className="acquisition-label">취득금액</label>
               <TextField
                 value={form.acquireAmount}
-                onChange={(e) => update('acquireAmount', e.target.value)}
                 placeholder=""
+                readOnly
+                className="acquisition-readonly"
               />
             </div>
             <div className="acquisition-field">
@@ -188,7 +216,7 @@ const AcquisitionManagementPage = () => {
                 size="small"
                 placeholder="선택"
                 value={form.operatingDept}
-                onChange={(value: string) => update('operatingDept', value)}
+                onChange={handleOperatingDeptChange}
                 options={OPERATING_DEPT_OPTIONS}
               />
             </div>
@@ -196,8 +224,9 @@ const AcquisitionManagementPage = () => {
               <label className="acquisition-label">운용부서코드</label>
               <TextField
                 value={form.operatingDeptCode}
-                onChange={(e) => update('operatingDeptCode', e.target.value)}
                 placeholder=""
+                readOnly
+                className="acquisition-readonly"
               />
             </div>
 

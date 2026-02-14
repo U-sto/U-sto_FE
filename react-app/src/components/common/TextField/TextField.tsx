@@ -3,11 +3,12 @@ import './TextField.css'
 interface TextFieldProps {
   placeholder?: string
   value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   type?: string
   className?: string
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
   autoComplete?: string
+  readOnly?: boolean
 }
 
 const TextField = ({
@@ -18,6 +19,7 @@ const TextField = ({
   className = '',
   inputMode,
   autoComplete,
+  readOnly = false,
 }: TextFieldProps) => {
   return (
     <input
@@ -26,6 +28,7 @@ const TextField = ({
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      readOnly={readOnly}
       inputMode={inputMode}
       autoComplete={autoComplete}
     />
