@@ -38,9 +38,21 @@ const menuData: MenuSection[] = [
         label: '물품 운용 관리',
         isMain: true,
         children: [
-          { label: '물품 운용 대장 관리', isSubItem: true },
-          { label: '출력물 관리', isSubItem: true },
-          { label: '물품 반납 관리', isSubItem: true },
+          {
+            label: '물품 운용 대장 관리',
+            isSubItem: true,
+            path: '/asset-management/operation-management/operation-ledger',
+          },
+          {
+            label: '출력물 관리',
+            isSubItem: true,
+            path: '/asset-management/operation-management/printout-management',
+          },
+          {
+            label: '물품 반납 관리',
+            isSubItem: true,
+            path: '/asset-management/operation-management/return-management',
+          },
         ],
       },
       { label: '물품 불용 관리' },

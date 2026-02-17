@@ -13,15 +13,61 @@ const SignupCompletePage = lazy(() => import('./pages/account-management/Signup/
 const FindIdPage = lazy(() => import('./pages/account-management/find-id/FindIdPage'))
 const FindIdResultPage = lazy(() => import('./pages/account-management/find-id/FindIdResultPage'))
 const FindPasswordPage = lazy(() => import('./pages/account-management/find-pw/FindPasswordPage'))
-const FindPasswordResetPage = lazy(() => import('./pages/account-management/find-pw/FindPasswordResetPage'));
-const FindPasswordCompletePage = lazy(() => import('./pages/account-management/find-pw/FindPasswordCompletePage'));
-const HomePage = lazy(() => import('./pages/Home/HomePage'));
-const AcqConfirmationPage = lazy(() => import('./pages/request-management/acq-confirmation/AcqConfirmationPage'));
-const OperationManagementPage = lazy(() => import('./pages/request-management/operation-management/OperationManagementPage'));
-const ReturnManagementPage = lazy(() => import('./pages/request-management/return-management/ReturnManagementPage'));
-const DisuseManagementPage = lazy(() => import('./pages/request-management/disuse-management/DisuseManagementPage'));
-const DisposalManagementPage = lazy(() => import('./pages/request-management/disposal-management/DisposalManagementPage'));
-const AcquisitionManagementPage = lazy(() => import('./pages/asset-management/acquisition-management/AcquisitionManagementPage'));
+const FindPasswordResetPage = lazy(
+  () => import('./pages/account-management/find-pw/FindPasswordResetPage'),
+)
+const FindPasswordCompletePage = lazy(
+  () => import('./pages/account-management/find-pw/FindPasswordCompletePage'),
+)
+const HomePage = lazy(() => import('./pages/Home/HomePage'))
+const AcqConfirmationPage = lazy(
+  () => import('./pages/request-management/acq-confirmation/AcqConfirmationPage'),
+)
+const OperationManagementPage = lazy(
+  () => import('./pages/request-management/operation-management/OperationManagementPage'),
+)
+const ReturnManagementPage = lazy(
+  () => import('./pages/request-management/return-management/ReturnManagementPage'),
+)
+const DisuseManagementPage = lazy(
+  () => import('./pages/request-management/disuse-management/DisuseManagementPage'),
+)
+const DisposalManagementPage = lazy(
+  () => import('./pages/request-management/disposal-management/DisposalManagementPage'),
+)
+const AcquisitionManagementPage = lazy(
+  () => import('./pages/asset-management/acquisition-management/AcquisitionManagementPage'),
+)
+const OperationLedgerPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/operation-management/operation-ledger/OperationLedgerPage'
+    ),
+)
+const OperationLedgerDetailPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/operation-management/operation-ledger/OperationLedgerDetailPage'
+    ),
+)
+const PrintoutManagementPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/operation-management/printout-management/PrintoutManagementPage'
+    ),
+)
+const AssetReturnManagementPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/operation-management/return-management/ReturnManagementPage'
+    ),
+)
+const ReturnRegistrationPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/operation-management/return-management/ReturnRegistrationPage'
+    ),
+)
 
 function App() {
   return (
@@ -46,7 +92,30 @@ function App() {
             <Route path="/return-management" element={<ReturnManagementPage />} />
             <Route path="/disuse-management" element={<DisuseManagementPage />} />
             <Route path="/disposal-management" element={<DisposalManagementPage />} />
-            <Route path="/asset-management/acquisition-management" element={<AcquisitionManagementPage />} />
+            <Route
+              path="/asset-management/acquisition-management"
+              element={<AcquisitionManagementPage />}
+            />
+            <Route
+              path="/asset-management/operation-management/operation-ledger"
+              element={<OperationLedgerPage />}
+            />
+            <Route
+              path="/asset-management/operation-management/operation-ledger/detail"
+              element={<OperationLedgerDetailPage />}
+            />
+            <Route
+              path="/asset-management/operation-management/printout-management"
+              element={<PrintoutManagementPage />}
+            />
+            <Route
+              path="/asset-management/operation-management/return-management"
+              element={<AssetReturnManagementPage />}
+            />
+            <Route
+              path="/asset-management/operation-management/return-management/register"
+              element={<ReturnRegistrationPage />}
+            />
           </Routes>
         </Suspense>
       </AppResetProvider>
