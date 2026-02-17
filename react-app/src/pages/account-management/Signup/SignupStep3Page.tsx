@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import TextField from '../../../components/common/TextField/TextField'
@@ -16,7 +16,7 @@ const SignupStep3Page = () => {
   const [authCode, setAuthCode] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9]/g, '')
     let formatted = rawValue
     if (rawValue.length > 3 && rawValue.length <= 7) {
@@ -28,7 +28,8 @@ const SignupStep3Page = () => {
   }
 
   const handleSendCode = () => {
-    if (!/^[0-9-]{10,13}$/.test(phone)) {
+    const trimmedPhone = phone.replace(/\s/g, '').trim()
+    if (!/^[0-9-]{10,13}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요.')
       return
     }
@@ -36,8 +37,35 @@ const SignupStep3Page = () => {
     // TODO: 전화 인증번호 전송 API 연동
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = (e: FormEvent) => {
     e.preventDefault()
+
+    // 유효성 검사: trim()으로 공백 제거 후 검증
+    const trimmedName = name.trim()
+    const trimmedDepartment = department.trim()
+    const trimmedPhone = phone.replace(/\s/g, '').trim()
+    const trimmedAuthCode = authCode.trim()
+
+    if (!trimmedName) {
+      setError('이름을 입력해 주세요.')
+      return
+    }
+
+    if (!trimmedDepartment) {
+      setError('소속을 선택해 주세요.')
+      return
+    }
+
+    if (!/^[0-9-]{10,13}$/.test(trimmedPhone)) {
+      setError('올바른 전화번호를 입력해 주세요.')
+      return
+    }
+
+    if (!trimmedAuthCode) {
+      setError('인증번호를 입력해 주세요.')
+      return
+    }
+
     setError(null)
     navigate('/signup/complete')
   }

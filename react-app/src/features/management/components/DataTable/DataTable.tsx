@@ -1,24 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type Key, type ReactNode } from 'react'
 import type { ManagementPageKey } from '../../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
 import './DataTable.css'
 
 export interface DataTableColumn<T> {
   key: string
-  header: React.ReactNode
+  header: ReactNode
   width?: number
-  render: (row: T) => React.ReactNode
+  render: (row: T) => ReactNode
 }
 
+/**
+ * 서버 사이드 페이지네이션 모드: currentPage + onPageChange 제공 시 활성화
+ * 클라이언트 사이드 모드: 미제공 시 기존처럼 data 전체를 slice하여 표시
+ */
 interface DataTableProps<T> {
   pageKey: ManagementPageKey | string
   title: string
   data: T[]
   columns: DataTableColumn<T>[]
-  getRowKey: (row: T, index: number) => React.Key
+  getRowKey: (row: T, index: number) => Key
   totalCount?: number
   pageSize?: number
   variant?: 'upper' | 'lower'
-  renderActions?: () => React.ReactNode
+  renderActions?: () => ReactNode
+  /** 서버 사이드 페이지네이션: 현재 페이지 (제어용) */
+  currentPage?: number
+  /** 서버 사이드 페이지네이션: 페이지 변경 시 API 호출을 위해 부모에 알림 */
+  onPageChange?: (page: number) => void
 }
 
 function DataTable<T>({
@@ -27,28 +35,45 @@ function DataTable<T>({
   data,
   columns,
   getRowKey,
-  totalCount,
+  totalCount: propTotalCount,
   pageSize = 10,
   variant,
   renderActions,
+  currentPage: controlledPage,
+  onPageChange,
 }: DataTableProps<T>) {
   const prefix = pageKey
-  const [currentPage, setCurrentPage] = useState(1)
+  const [internalPage, setInternalPage] = useState(1)
+
+  const isServerSide = controlledPage != null && typeof onPageChange === 'function'
+  const currentPage = isServerSide ? controlledPage : internalPage
 
   const { pageData, totalPages } = useMemo(() => {
     const safePageSize = pageSize > 0 ? pageSize : 10
+
+    if (isServerSide && propTotalCount != null) {
+      const pages = Math.max(1, Math.ceil(propTotalCount / safePageSize))
+      return {
+        pageData: data,
+        totalPages: pages,
+      }
+    }
+
     const pages = Math.max(1, Math.ceil(data.length / safePageSize))
-    const clampedPage = Math.min(currentPage, pages)
-    const startIndex = (clampedPage - 1) * safePageSize
+    const startIndex = (Math.min(currentPage, pages) - 1) * safePageSize
     return {
       pageData: data.slice(startIndex, startIndex + safePageSize),
       totalPages: pages,
     }
-  }, [data, pageSize, currentPage])
+  }, [data, pageSize, currentPage, isServerSide, propTotalCount])
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return
-    setCurrentPage(page)
+    if (isServerSide) {
+      onPageChange?.(page)
+    } else {
+      setInternalPage(page)
+    }
   }
 
   const tableClassNames = [
@@ -64,7 +89,7 @@ function DataTable<T>({
   const pageNumActiveClass = `${prefix}-page-num-active`
   const summaryClass = `${prefix}-pagination-summary`
 
-  const effectiveTotal = totalCount ?? data.length
+  const effectiveTotal = propTotalCount ?? data.length
 
   const pageNumbers = useMemo(
     () => Array.from({ length: totalPages }, (_, idx) => idx + 1),

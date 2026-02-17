@@ -1,10 +1,11 @@
+import type { ChangeEvent } from 'react'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
 import './EmailAuthField.css'
 
 interface EmailAuthFieldProps {
   email: string
-  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onEmailChange: (e: ChangeEvent<HTMLInputElement>) => void
   onSendCode: () => void
 }
 

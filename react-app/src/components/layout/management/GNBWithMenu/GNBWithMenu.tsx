@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SystemLogo from '../../../common/SystemLogo/SystemLogo'
 import './GNBWithMenu.css'
@@ -58,9 +58,13 @@ const menuData: MenuSection[] = [
 const GNBWithMenu = () => {
   const navigate = useNavigate()
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1)
+  const menuRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const menuId = useId()
 
   const handleDropdownToggle = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu)
+    setFocusedIndex(activeDropdown === menu ? -1 : 0)
   }
 
   const handleLogout = () => {
@@ -73,6 +77,65 @@ const GNBWithMenu = () => {
       setActiveDropdown(null)
     }
   }
+
+  /** WAI-ARIA: 드롭다운 메뉴 키보드 내비게이션 (ArrowUp, ArrowDown, Enter, Escape) */
+  const flatItems = (section: MenuSection) =>
+    section.items.flatMap((item) =>
+      item.children && item.children.length > 0 ? item.children : [item],
+    )
+
+  const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>, section: MenuSection) => {
+    if (activeDropdown !== section.id) return
+    const items = flatItems(section)
+    const count = items.length
+    if (count === 0) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setFocusedIndex((prev) => (prev < count - 1 ? prev + 1 : 0))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setFocusedIndex((prev) => (prev > 0 ? prev - 1 : count - 1))
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        const item = items[focusedIndex >= 0 ? focusedIndex : 0]
+        if (item?.path) {
+          navigate(item.path)
+          setActiveDropdown(null)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setActiveDropdown(null)
+        setFocusedIndex(-1)
+        break
+      default:
+        break
+    }
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.gnb-with-menu')) {
+        setActiveDropdown(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  /** 접근성: 드롭다운 열릴 때 메뉴에 포커스 이동하여 키보드 내비게이션 활성화 */
+  useEffect(() => {
+    if (activeDropdown) {
+      const el = menuRefs.current.get(activeDropdown)
+      el?.focus()
+    }
+  }, [activeDropdown])
 
   const renderMenuItem = (sectionId: string, item: MenuItem) => {
     const classNames = ['gnb-dropdown-item']
@@ -87,6 +150,7 @@ const GNBWithMenu = () => {
       <button
         key={item.label}
         type="button"
+        role="menuitem"
         className={classNames.join(' ')}
         onClick={() => handleItemClick(item)}
       >
@@ -126,11 +190,23 @@ const GNBWithMenu = () => {
                 type="button"
                 className="gnb-menu-tab"
                 onClick={() => handleDropdownToggle(section.id)}
+                aria-haspopup="menu"
+                aria-expanded={activeDropdown === section.id}
+                aria-controls={`${menuId}-${section.id}`}
+                aria-label={`${section.label} 메뉴`}
               >
                 {section.label}
               </button>
               {activeDropdown === section.id && (
-                <div className="gnb-dropdown-menu">
+                <div
+                  id={`${menuId}-${section.id}`}
+                  ref={(el) => el && menuRefs.current.set(section.id, el)}
+                  className="gnb-dropdown-menu"
+                  role="menu"
+                  aria-label={section.label}
+                  tabIndex={-1}
+                  onKeyDown={(e) => handleMenuKeyDown(e, section)}
+                >
                   {section.items.map((item) => renderMenuItem(section.id, item))}
                 </div>
               )}

@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import './Modal.css'
 
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
   title?: string
-  children: React.ReactNode
+  children: ReactNode
   className?: string
   size?: 'small' | 'medium' | 'large' | 'g2b'
   showCloseButton?: boolean

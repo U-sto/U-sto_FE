@@ -5,6 +5,16 @@
   width: 100%;
 }
 
+.id-check-field--verified {
+  /* ID 중복 확인 완료 시 시각적 피드백 (테두리 색상 등) */
+}
+
+.id-check-verified-text {
+  font-size: 14px;
+  color: var(--usto-primary-300);
+  font-weight: 500;
+}
+
 .id-check-wrapper {
   display: flex;
   flex-direction: row;

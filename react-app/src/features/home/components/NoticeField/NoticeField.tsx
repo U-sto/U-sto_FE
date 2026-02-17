@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './NoticeField.css'
 
 interface Notice {
@@ -7,8 +7,11 @@ interface Notice {
   date: string
 }
 
+const PAGE_SIZE = 5
+
 const NoticeField = () => {
   const [selectedNotice, setSelectedNotice] = useState<number | null>(1)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const notices: Notice[] = [
     { id: 1, title: '시스템 정기 점검 안내', date: '2026.01.10' },
@@ -22,6 +25,21 @@ const NoticeField = () => {
   ]
 
   const hasNotices = notices.length > 0
+
+  /** totalCount 기반 동적 페이지네이션: 하드코딩(1,2,3,4,5) 대신 totalPages 계산 */
+  const totalCount = notices.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalPages }, (_, i) => i + 1),
+    [totalPages],
+  )
+
+  /** currentPage, PAGE_SIZE 기반으로 현재 페이지에 표시할 공지 목록 */
+  const pagedNotices = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE
+    return notices.slice(start, start + PAGE_SIZE)
+  }, [notices, currentPage])
+
   const selectedNoticeData =
     hasNotices && selectedNotice != null
       ? notices.find((n) => n.id === selectedNotice) ?? notices[0]
@@ -35,7 +53,7 @@ const NoticeField = () => {
           <div className="notice-list-divider"></div>
           <div className="notice-list">
             {hasNotices ? (
-              notices.map((notice) => (
+              pagedNotices.map((notice) => (
                 <button
                   key={notice.id}
                   type="button"
@@ -53,18 +71,37 @@ const NoticeField = () => {
             )}
           </div>
           <div className="notice-list-divider"></div>
-          <div className="notice-pagination">
-            <button className="notice-pagination-arrow">
+          <div className="notice-pagination" role="navigation" aria-label="공지사항 페이지네이션">
+            <button
+              type="button"
+              className="notice-pagination-arrow"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              aria-label="이전 페이지"
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-            <span className="notice-pagination-number active">1</span>
-            <span className="notice-pagination-number">2</span>
-            <span className="notice-pagination-number">3</span>
-            <span className="notice-pagination-number">4</span>
-            <span className="notice-pagination-number">5</span>
-            <button className="notice-pagination-arrow">
+            {pageNumbers.map((pageNum) => (
+              <button
+                key={pageNum}
+                type="button"
+                className={`notice-pagination-number ${pageNum === currentPage ? 'active' : ''}`}
+                onClick={() => setCurrentPage(pageNum)}
+                aria-label={`${pageNum}페이지`}
+                aria-current={pageNum === currentPage ? 'page' : undefined}
+              >
+                {pageNum}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="notice-pagination-arrow"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              aria-label="다음 페이지"
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

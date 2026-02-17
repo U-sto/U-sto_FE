@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
 import PasswordField from '../../../../components/common/PasswordField/PasswordField'
@@ -15,7 +15,7 @@ const LoginForm = () => {
 
   const isFormValid = userId.trim().length > 0 && password.trim().length > 0
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     if (!isFormValid) {

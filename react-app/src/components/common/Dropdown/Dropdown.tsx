@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useId, type ChangeEvent, type KeyboardEvent } from 'react'
 import './Dropdown.css'
 
 interface DropdownProps {
@@ -7,17 +7,24 @@ interface DropdownProps {
   onChange: (value: string) => void
   options: string[]
   size?: 'large' | 'small'
+  /** 접근성: 스크린 리더용 레이블 (버튼과 연결) */
+  ariaLabel?: string
 }
 
-const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: DropdownProps) => {
+const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaLabel }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [highlightedIndex, setHighlightedIndex] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const optionRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
+  const listboxId = useId()
+  const triggerId = useId()
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus()
+      setHighlightedIndex(0)
     }
   }, [isOpen])
 
@@ -57,18 +64,54 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
     setIsOpen(!isOpen)
     if (!isOpen) {
       setSearchTerm('')
+      setHighlightedIndex(0)
     }
   }
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
+    setHighlightedIndex(0)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && filteredOptions.length > 0) {
-      handleSelect(filteredOptions[0])
+  /** 키보드 내비게이션: ArrowUp, ArrowDown, Enter, Escape 지원 (WAI-ARIA listbox 패턴) */
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        handleButtonClick()
+      }
+      return
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHighlightedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : 0))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filteredOptions.length - 1))
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (filteredOptions.length > 0) {
+          handleSelect(filteredOptions[highlightedIndex])
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setIsOpen(false)
+        setSearchTerm('')
+        break
+      default:
+        break
     }
   }
+
+  /** Arrow 키로 하이라이트 변경 시 해당 옵션으로 스크롤 */
+  useEffect(() => {
+    optionRefs.current.get(highlightedIndex)?.scrollIntoView({ block: 'nearest' })
+  }, [highlightedIndex])
 
   const isSmall = size === 'small'
   const wrapperClass = isSmall ? 'dropdown-small-wrapper' : 'dropdown-wrapper'
@@ -91,8 +134,15 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
     <div className={wrapperClass} ref={dropdownRef}>
       <button
         type="button"
+        id={triggerId}
         className={buttonClass}
         onClick={handleButtonClick}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-label={ariaLabel ?? (placeholder || '선택')}
+        aria-activedescendant={isOpen && filteredOptions.length > 0 ? `option-${highlightedIndex}` : undefined}
       >
         {isOpen ? (
           <input
@@ -106,6 +156,10 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
             spellCheck={false}
             autoComplete="off"
             onClick={(e) => e.stopPropagation()}
+            aria-controls={listboxId}
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-autocomplete="list"
           />
         ) : (
           <span className={value ? selectedClass : placeholderClass}>
@@ -149,20 +203,36 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large' }: Dro
         )}
       </button>
       {isOpen && (
-        <div className={menuClass}>
+        <div
+          id={listboxId}
+          className={menuClass}
+          role="listbox"
+          aria-labelledby={triggerId}
+          aria-activedescendant={filteredOptions.length > 0 ? `option-${highlightedIndex}` : undefined}
+          tabIndex={-1}
+        >
           {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
+            filteredOptions.map((option, idx) => (
               <button
                 key={option}
+                id={`option-${idx}`}
+                ref={(el) => {
+                  if (el) optionRefs.current.set(idx, el)
+                }}
                 type="button"
-                className={optionClass}
+                role="option"
+                aria-selected={value === option || idx === highlightedIndex}
+                className={`${optionClass} ${idx === highlightedIndex ? 'dropdown-option-highlighted' : ''}`.trim()}
                 onClick={() => handleSelect(option)}
+                onMouseEnter={() => setHighlightedIndex(idx)}
               >
                 {option}
               </button>
             ))
           ) : (
-            <div className={noResultsClass}>검색 결과가 없습니다</div>
+            <div className={noResultsClass} role="status">
+              검색 결과가 없습니다
+            </div>
           )}
         </div>
       )}

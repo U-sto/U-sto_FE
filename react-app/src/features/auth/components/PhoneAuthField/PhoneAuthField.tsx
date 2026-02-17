@@ -1,10 +1,11 @@
+import type { ChangeEvent } from 'react'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
 import './PhoneAuthField.css'
 
 interface PhoneAuthFieldProps {
   phone: string
-  onPhoneChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onPhoneChange: (e: ChangeEvent<HTMLInputElement>) => void
   onSendCode: () => void
 }
 

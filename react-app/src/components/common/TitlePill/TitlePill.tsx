@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react'
 import './TitlePill.css'
 
 interface TitlePillProps {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
 }
 

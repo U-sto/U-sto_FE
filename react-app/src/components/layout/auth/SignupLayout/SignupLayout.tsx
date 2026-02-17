@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import GNB from '../GNB/GNB'
 import ProgressBar from '../../../../components/common/ProgressBar/ProgressBar'
@@ -9,7 +9,7 @@ interface SignupLayoutProps {
   title: string
   subtitle?: ReactNode
   children: ReactNode
-  onSubmit: (e: React.FormEvent) => void
+  onSubmit: (e: FormEvent) => void
   formClassName?: string
 }
 

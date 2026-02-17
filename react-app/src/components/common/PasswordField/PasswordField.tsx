@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import './PasswordField.css'
 
 interface PasswordFieldProps {
   placeholder?: string
   value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
   autoComplete?: string
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import IDCheckField from '../../../features/auth/components/IDCheckField/IDCheckField'
@@ -25,15 +25,24 @@ const SignupStep2Page = () => {
     // TODO: 실제 중복 검사 API 호출
   }
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = (e: FormEvent) => {
     e.preventDefault()
 
-    if (!password.trim() || !passwordConfirm.trim()) {
+    // 데이터 무결성: ID 중복 확인 완료 여부 검증
+    if (!isIdChecked) {
+      setError('아이디 중복 확인을 완료해 주세요.')
+      return
+    }
+
+    const trimmedPassword = password.trim()
+    const trimmedConfirm = passwordConfirm.trim()
+
+    if (!trimmedPassword || !trimmedConfirm) {
       setError('비밀번호를 모두 입력해 주세요.')
       return
     }
 
-    if (password !== passwordConfirm) {
+    if (trimmedPassword !== trimmedConfirm) {
       setError('비밀번호가 일치하지 않습니다.')
       return
     }
@@ -52,6 +61,7 @@ const SignupStep2Page = () => {
             setIsIdChecked(false)
           }}
           onCheckDuplicate={handleCheckDuplicate}
+          isIdChecked={isIdChecked}
         />
         <div className="password-fields">
           <PasswordField

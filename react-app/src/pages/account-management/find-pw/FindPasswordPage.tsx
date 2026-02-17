@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import AuthLayout from '../../../components/layout/auth/AuthLayout/AuthLayout'
 import FindIdTabs from '../../../features/auth/components/FindIdTabs/FindIdTabs'
@@ -15,13 +15,12 @@ const FindPasswordPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   const handleSendCode = () => {
-    console.log('인증번호 전송:', email)
+    // TODO: 인증번호 전송 API 연동
   }
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    console.log('인증하기:', { userId, email, authCode })
     navigate('/find-password/reset')
   }
 

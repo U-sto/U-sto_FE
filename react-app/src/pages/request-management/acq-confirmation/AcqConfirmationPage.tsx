@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
@@ -9,6 +9,10 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
 import { useManagementFilter } from '../../../hooks/useManagementFilter'
+import {
+  fetchAcqConfirmationList,
+  type AcqConfirmationRow,
+} from '../../../api/acqConfirmation'
 import './AcqConfirmationPage.css'
 
 type Filters = {
@@ -35,19 +39,8 @@ const INITIAL_FILTERS: Filters = {
   category: '',
 }
 
-type AcqTableRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  acquireDate: string
-  acquireAmount: string
-  sortDate: string
-  operatingDept: string
-  operatingStatus: string
-  usefulLife: string
-  quantity: number
-  approvalStatus: string
-}
+/** AcqTableRow는 AcqConfirmationRow와 동일 - API 타입과 정렬 */
+type AcqTableRow = AcqConfirmationRow
 
 const AcqConfirmationPage = () => {
   const {
@@ -80,105 +73,42 @@ const AcqConfirmationPage = () => {
     [],
   )
 
-  // 전체 데이터 (초기 데이터)
-  const allTableData = useMemo<AcqTableRow[]>(() => {
-    return Array.from({ length: 15 }).map((_, idx) => {
-      const g2bOption = g2bOptions[idx % g2bOptions.length]
-      // 같은 G2B목록명은 같은 목록번호를 사용
-      const g2bNumber = g2bOption.number
+  /** 서버 사이드 페이지네이션: 현재 페이지 */
+  const [currentPage, setCurrentPage] = useState(1)
+  /** 서버 사이드 페이지네이션: 테이블 데이터 (API 응답) */
+  const [tableData, setTableData] = useState<AcqTableRow[]>([])
+  /** 서버 사이드 페이지네이션: 전체 건수 (API 응답) */
+  const [totalCount, setTotalCount] = useState(0)
 
-      return {
-        id: idx + 1,
-        g2bNumber,
-        g2bName: g2bOption.name,
-        acquireDate: '2026-01-21',
-        acquireAmount: (1000000 * (idx + 1)).toLocaleString() + '원',
-        sortDate: '2026-01-21',
-        operatingDept: `운용부서 ${idx + 1}`,
-        operatingStatus: '운용중',
-        usefulLife: `${5 + idx}년`,
-        quantity: idx + 1,
-        approvalStatus: '대기',
-      }
+  const pageSize = 10
+
+  /** API 호출: currentPage, pageSize, filters를 쿼리 파라미터로 전달하는 구조. searchedFilters가 null이면 초기 필터(전체)로 조회 */
+  const loadData = useCallback(async () => {
+    const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
+    const res = await fetchAcqConfirmationList({
+      page: currentPage,
+      pageSize,
+      filters: effectiveFilters,
     })
-  }, [g2bOptions])
+    setTableData(res.data)
+    setTotalCount(res.totalCount)
+  }, [currentPage, searchedFilters])
 
-  // 필터링된 데이터
-  const filteredData = useMemo(() => {
-    if (!searchedFilters) {
-      return allTableData
-    }
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
-    return allTableData.filter((item) => {
-      // G2B목록명 필터
-      if (searchedFilters.g2bName && item.g2bName !== searchedFilters.g2bName) {
-        return false
-      }
+  /** 조회 시 첫 페이지로 이동 후 API 재호출 (searchedFilters 변경 → loadData 실행) */
+  const handleSearchClick = () => {
+    onSearch()
+    setCurrentPage(1)
+  }
 
-      // G2B목록번호 필터 (범위)
-      if (searchedFilters.g2bNumberFrom || searchedFilters.g2bNumberTo) {
-        const itemNumber = item.g2bNumber
-        // 43211613-26081535 형식에서 앞부분 숫자 추출
-        const itemNumberParts = itemNumber.split('-')
-        const itemNumberValue = itemNumberParts.length > 0 ? itemNumberParts[0] : ''
-        
-        // 범위 필터링
-        if (searchedFilters.g2bNumberFrom && searchedFilters.g2bNumberTo) {
-          // 범위가 지정된 경우
-          const fromNum = parseInt(searchedFilters.g2bNumberFrom, 10)
-          const toNum = parseInt(searchedFilters.g2bNumberTo, 10)
-          const itemNum = parseInt(itemNumberValue, 10)
-          if (isNaN(itemNum) || itemNum < fromNum || itemNum > toNum) {
-            return false
-          }
-        } else if (searchedFilters.g2bNumberFrom) {
-          // 시작값만 있는 경우
-          const fromNum = parseInt(searchedFilters.g2bNumberFrom, 10)
-          const itemNum = parseInt(itemNumberValue, 10)
-          if (isNaN(itemNum) || itemNum < fromNum) {
-            return false
-          }
-        } else if (searchedFilters.g2bNumberTo) {
-          // 종료값만 있는 경우
-          const toNum = parseInt(searchedFilters.g2bNumberTo, 10)
-          const itemNum = parseInt(itemNumberValue, 10)
-          if (isNaN(itemNum) || itemNum > toNum) {
-            return false
-          }
-        }
-      }
-
-      // 정리일자 필터
-      if (searchedFilters.sortDateFrom && item.sortDate < searchedFilters.sortDateFrom) {
-        return false
-      }
-      if (searchedFilters.sortDateTo && item.sortDate > searchedFilters.sortDateTo) {
-        return false
-      }
-
-      // 취득일자 필터
-      if (searchedFilters.acquireDateFrom && item.acquireDate < searchedFilters.acquireDateFrom) {
-        return false
-      }
-      if (searchedFilters.acquireDateTo && item.acquireDate > searchedFilters.acquireDateTo) {
-        return false
-      }
-
-      // 승인상태 필터
-      if (searchedFilters.approvalStatus && searchedFilters.approvalStatus !== '전체') {
-        if (item.approvalStatus !== searchedFilters.approvalStatus) {
-          return false
-        }
-      }
-
-      // 운용부서 필터
-      if (searchedFilters.category && searchedFilters.category !== '전체') {
-        // 운용부서 필터링 로직 (필요시 추가)
-      }
-
-      return true
-    })
-  }, [allTableData, searchedFilters])
+  /** 초기화 시 첫 페이지로 이동 */
+  const handleReset = () => {
+    onReset()
+    setCurrentPage(1)
+  }
 
   const setSortDateError = (err: string) => setDateError('sortDate', err)
   const setAcquireDateError = (err: string) => setDateError('acquireDate', err)
@@ -394,10 +324,10 @@ const AcqConfirmationPage = () => {
               </div>
 
         <div className="acq-filter-actions">
-          <Button className="acq-btn acq-btn-outline" onClick={onReset}>
+          <Button className="acq-btn acq-btn-outline" onClick={handleReset}>
             초기화
           </Button>
-          <Button className="acq-btn acq-btn-primary" onClick={onSearch}>
+          <Button className="acq-btn acq-btn-primary" onClick={handleSearchClick}>
             조회
           </Button>
         </div>
@@ -406,9 +336,11 @@ const AcqConfirmationPage = () => {
       <DataTable<AcqTableRow>
         pageKey="acq"
         title="물품 취득 대장 목록"
-        data={filteredData}
-        totalCount={allTableData.length}
-        pageSize={10}
+        data={tableData}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => row.id}
         renderActions={() => (

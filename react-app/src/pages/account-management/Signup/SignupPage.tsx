@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import EmailAuthField from '../../../features/auth/components/EmailAuthField/EmailAuthField'
@@ -31,7 +31,7 @@ const SignupPage = () => {
     }, 300)
   }
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     navigate('/signup/step2')
