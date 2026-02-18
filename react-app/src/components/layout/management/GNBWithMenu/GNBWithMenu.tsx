@@ -55,8 +55,11 @@ const menuData: MenuSection[] = [
           },
         ],
       },
-      { label: '물품 불용 관리' },
-      { label: '물품 처분 관리' },
+      {
+            label: '물품 불용 관리',
+            path: '/asset-management/disuse-management',
+          },
+      { label: '물품 처분 관리', path: '/asset-management/disposal-management' },
       { label: '보유 현황 조회' },
     ],
   },

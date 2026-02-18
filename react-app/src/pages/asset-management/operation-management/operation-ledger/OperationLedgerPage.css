@@ -335,6 +335,19 @@
   border-right: none;
 }
 
+/* G2B목록번호 열 너비 확대, 물품상태/운용상태 열 너비 축소 (목록번호 한 줄 표시) */
+.operation-ledger-table-el .operation-ledger-th-g2bNumber {
+  width: 190px;
+  min-width: 190px;
+}
+
+.operation-ledger-table-el .operation-ledger-th-operatingStatus,
+.operation-ledger-table-el .operation-ledger-th-itemStatus {
+  width: 90px;
+  min-width: 90px;
+  white-space: nowrap;
+}
+
 .operation-ledger-detail-content {
   width: calc(100% - 160px);
   max-width: 1420px;

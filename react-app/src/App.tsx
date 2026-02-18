@@ -68,6 +68,30 @@ const ReturnRegistrationPage = lazy(
       './pages/asset-management/operation-management/return-management/ReturnRegistrationPage'
     ),
 )
+const AssetDisuseManagementPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/disuse-management/DisuseManagementPage'
+    ),
+)
+const DisuseRegistrationPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/disuse-management/DisuseRegistrationPage'
+    ),
+)
+const AssetDisposalManagementPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/disposal-management/DisposalManagementPage'
+    ),
+)
+const DisposalRegistrationPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/disposal-management/DisposalRegistrationPage'
+    ),
+)
 
 function App() {
   return (
@@ -115,6 +139,22 @@ function App() {
             <Route
               path="/asset-management/operation-management/return-management/register"
               element={<ReturnRegistrationPage />}
+            />
+            <Route
+              path="/asset-management/disuse-management"
+              element={<AssetDisuseManagementPage />}
+            />
+            <Route
+              path="/asset-management/disuse-management/register"
+              element={<DisuseRegistrationPage />}
+            />
+            <Route
+              path="/asset-management/disposal-management"
+              element={<AssetDisposalManagementPage />}
+            />
+            <Route
+              path="/asset-management/disposal-management/register"
+              element={<DisposalRegistrationPage />}
             />
           </Routes>
         </Suspense>
