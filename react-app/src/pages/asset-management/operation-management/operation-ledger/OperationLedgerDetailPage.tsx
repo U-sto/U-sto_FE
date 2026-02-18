@@ -8,6 +8,7 @@ import AssetManagementPageLayout from '../../../../components/layout/management/
 import DataTable, {
   type DataTableColumn,
 } from '../../../../features/management/components/DataTable/DataTable'
+import { useAssetDetailOverrides } from '../../../../contexts/AssetDetailOverridesContext'
 import type { OperationLedgerRow } from './OperationLedgerPage'
 import './OperationLedgerPage.css'
 
@@ -41,6 +42,7 @@ const OperationLedgerDetailPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const state = location.state as LocationState | null
+  const { setOverride } = useAssetDetailOverrides()
 
   const item = useMemo<OperationLedgerDetailItem>(() => {
     if (state?.item) return state.item
@@ -124,8 +126,12 @@ const OperationLedgerDetailPage = () => {
   ]
 
   const handleSave = () => {
-    // TODO: 저장 API 연동 (form 값을 사용)
     setSavedValues(form)
+    setOverride(item.itemUniqueNumber, {
+      acquireAmount: form.acquireAmount,
+      usefulLife: form.usefulLife,
+      remarks: form.remarks,
+    })
     window.alert('저장되었습니다.')
   }
 

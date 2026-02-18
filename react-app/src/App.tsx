@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppResetProvider } from './contexts/AppResetContext'
+import { AssetDetailOverridesProvider } from './contexts/AssetDetailOverridesContext'
 import './styles/variables.css'
 import './App.css'
 
@@ -92,12 +93,25 @@ const DisposalRegistrationPage = lazy(
       './pages/asset-management/disposal-management/DisposalRegistrationPage'
     ),
 )
+const InventoryStatusPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/inventory-status/InventoryStatusPage'
+    ),
+)
+const InventoryStatusDetailPage = lazy(
+  () =>
+    import(
+      './pages/asset-management/inventory-status/InventoryStatusDetailPage'
+    ),
+)
 
 function App() {
   return (
     <BrowserRouter>
       <AppResetProvider>
-        <Suspense fallback={<div className="loading-fallback">로딩 중...</div>}>
+        <AssetDetailOverridesProvider>
+          <Suspense fallback={<div className="loading-fallback">로딩 중...</div>}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
@@ -156,8 +170,17 @@ function App() {
               path="/asset-management/disposal-management/register"
               element={<DisposalRegistrationPage />}
             />
+            <Route
+              path="/asset-management/inventory-status"
+              element={<InventoryStatusPage />}
+            />
+            <Route
+              path="/asset-management/inventory-status/detail"
+              element={<InventoryStatusDetailPage />}
+            />
           </Routes>
         </Suspense>
+        </AssetDetailOverridesProvider>
       </AppResetProvider>
     </BrowserRouter>
   )

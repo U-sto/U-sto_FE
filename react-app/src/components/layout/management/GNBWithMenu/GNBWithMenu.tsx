@@ -60,7 +60,7 @@ const menuData: MenuSection[] = [
             path: '/asset-management/disuse-management',
           },
       { label: '물품 처분 관리', path: '/asset-management/disposal-management' },
-      { label: '보유 현황 조회' },
+      { label: '보유 현황 조회', path: '/asset-management/inventory-status' },
     ],
   },
   {

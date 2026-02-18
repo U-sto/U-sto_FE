@@ -455,6 +455,12 @@
   background: var(--usto-alt-white);
 }
 
+.operation-ledger-detail-textarea.operation-ledger-readonly {
+  background: var(--usto-primary-100);
+  cursor: default;
+  resize: none;
+}
+
 .operation-ledger-pagination {
   margin-top: 14px;
   border: 1px solid var(--usto-gray-200);
