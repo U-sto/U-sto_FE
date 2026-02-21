@@ -116,6 +116,30 @@ const AcqConfirmationPage = () => {
   const setSortDateError = (err: string) => setDateError('sortDate', err)
   const setAcquireDateError = (err: string) => setDateError('acquireDate', err)
 
+  /** G2B 목록명 선택 시 해당 번호로 g2bNumberFrom/To 동기화 */
+  const handleG2bNameChange = useCallback(
+    (value: string) => {
+      const matched = g2bOptions.find((opt) => opt.name === value)
+      if (matched) {
+        const numberPart = matched.number.split('-')[0] ?? ''
+        setFilters((p) => ({
+          ...p,
+          g2bName: value,
+          g2bNumberFrom: numberPart,
+          g2bNumberTo: numberPart,
+        }))
+      } else {
+        setFilters((p) => ({
+          ...p,
+          g2bName: value,
+          g2bNumberFrom: '',
+          g2bNumberTo: '',
+        }))
+      }
+    },
+    [g2bOptions],
+  )
+
   const columns: DataTableColumn<AcqTableRow>[] = [
     {
       key: 'select',
@@ -145,7 +169,10 @@ const AcqConfirmationPage = () => {
       key: 'acquireAmount',
       header: '취득금액',
       width: 120,
-      render: (row) => row.acquireAmount,
+      render: (row) =>
+        typeof row.acquireAmount === 'number'
+          ? row.acquireAmount.toLocaleString('ko-KR') + '원'
+          : String(row.acquireAmount),
     },
     {
       key: 'sortDate',
@@ -195,26 +222,7 @@ const AcqConfirmationPage = () => {
                     size="small"
                     placeholder="목록명을 선택하세요"
                     value={filters.g2bName}
-                    onChange={(value: string) => {
-                      const matched = g2bOptions.find((opt) => opt.name === value)
-                      if (matched) {
-                        const parts = matched.number.split('-')
-                        const numberPart = parts.length > 0 ? parts[0] : ''
-                        setFilters((p) => ({
-                          ...p,
-                          g2bName: value,
-                          g2bNumberFrom: numberPart,
-                          g2bNumberTo: numberPart,
-                        }))
-                      } else {
-                        setFilters((p) => ({
-                          ...p,
-                          g2bName: value,
-                          g2bNumberFrom: '',
-                          g2bNumberTo: '',
-                        }))
-                      }
-                    }}
+                    onChange={handleG2bNameChange}
                     options={g2bOptions.map((opt) => opt.name)}
                   />
                 </div>

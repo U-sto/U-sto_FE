@@ -21,7 +21,7 @@ export type AcqConfirmationRow = {
   g2bNumber: string
   g2bName: string
   acquireDate: string
-  acquireAmount: string
+  acquireAmount: number
   sortDate: string
   operatingDept: string
   operatingStatus: string
@@ -73,7 +73,7 @@ export async function fetchAcqConfirmationList(
       g2bNumber: g2bOption.number,
       g2bName: g2bOption.name,
       acquireDate: '2026-01-21',
-      acquireAmount: (1000000 * (idx + 1)).toLocaleString() + '원',
+      acquireAmount: 1000000 * (idx + 1),
       sortDate: '2026-01-21',
       operatingDept: `운용부서 ${idx + 1}`,
       operatingStatus: '운용중',

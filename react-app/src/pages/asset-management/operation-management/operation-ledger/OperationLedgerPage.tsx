@@ -166,6 +166,33 @@ const OperationLedgerPage = () => {
     })
   }, [allData, filters])
 
+  /** 행 선택/해제 시 선택 상태와 G2B 필터 동기화 */
+  const handleSelectRow = (row: OperationLedgerRow) => {
+    setSelectedRowId((prevSelectedId) => {
+      const nextSelectedId = prevSelectedId === row.id ? null : row.id
+
+      setFilters((prev) => {
+        if (nextSelectedId == null) {
+          return {
+            ...prev,
+            g2bName: '',
+            g2bNumberPrefix: '',
+            g2bNumberSuffix: '',
+          }
+        }
+        const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
+        return {
+          ...prev,
+          g2bName: row.g2bName,
+          g2bNumberPrefix: prefix,
+          g2bNumberSuffix: suffix,
+        }
+      })
+
+      return nextSelectedId
+    })
+  }
+
   const columns: DataTableColumn<OperationLedgerRow>[] = [
     {
       key: 'select',
@@ -174,34 +201,7 @@ const OperationLedgerPage = () => {
         <input
           type="checkbox"
           checked={selectedRowId === row.id}
-          onChange={() => {
-            setSelectedRowId((prevSelectedId) => {
-              const nextSelectedId = prevSelectedId === row.id ? null : row.id
-
-              setFilters((prev) => {
-                // 선택 해제 시: G2B목록명/번호 필터 초기화
-                if (nextSelectedId == null) {
-                  return {
-                    ...prev,
-                    g2bName: '',
-                    g2bNumberPrefix: '',
-                    g2bNumberSuffix: '',
-                  }
-                }
-
-                // 선택 시: 선택한 행의 G2B목록명/번호를 필터에 반영
-                const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-                return {
-                  ...prev,
-                  g2bName: row.g2bName,
-                  g2bNumberPrefix: prefix,
-                  g2bNumberSuffix: suffix,
-                }
-              })
-
-              return nextSelectedId
-            })
-          }}
+          onChange={() => handleSelectRow(row)}
         />
       ),
     },
