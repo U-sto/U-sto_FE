@@ -221,7 +221,7 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaL
                 }}
                 type="button"
                 role="option"
-                aria-selected={value === option || idx === highlightedIndex}
+                aria-selected={value === option}
                 className={`${optionClass} ${idx === highlightedIndex ? 'dropdown-option-highlighted' : ''}`.trim()}
                 onClick={() => handleSelect(option)}
                 onMouseEnter={() => setHighlightedIndex(idx)}

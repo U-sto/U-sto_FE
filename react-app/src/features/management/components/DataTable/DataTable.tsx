@@ -173,7 +173,7 @@ function DataTable<T>({
           </button>
         </div>
         <div className={`${summaryClass} management-pagination-summary`} aria-live="polite">
-          총 {effectiveTotal}건 / 조회 {data.length}건
+          {isServerSide ? `총 ${effectiveTotal}건` : `총 ${effectiveTotal}건 / 조회 ${data.length}건`}
         </div>
       </div>
     </section>

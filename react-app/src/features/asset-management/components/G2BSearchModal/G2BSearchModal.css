@@ -116,30 +116,30 @@
   flex: none;
 }
 
-.g2b-search-btn {
-  width: 53px !important;
-  height: 32px !important;
-  min-width: 53px !important;
-  min-height: 32px !important;
-  max-width: 53px !important;
-  max-height: 32px !important;
-  padding: 0 !important;
-  background: var(--usto-primary-300) !important;
-  border: 1px solid var(--usto-primary-300) !important;
-  color: var(--usto-alt-white) !important;
-  border-radius: 4px !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
+.g2b-search-modal .g2b-search-btn {
+  width: 53px;
+  height: 32px;
+  min-width: 53px;
+  min-height: 32px;
+  max-width: 53px;
+  max-height: 32px;
+  padding: 0;
+  background: var(--usto-primary-300);
+  border: 1px solid var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 400;
   margin-left: auto;
   align-self: flex-end;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  white-space: nowrap !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.g2b-search-btn:hover:not(:disabled) {
-  background: var(--usto-primary-200) !important;
+.g2b-search-modal .g2b-search-btn:hover:not(:disabled) {
+  background: var(--usto-primary-200);
 }
 
 .g2b-table-container {
@@ -205,8 +205,8 @@
   background-color: var(--usto-primary-100);
 }
 
-.g2b-row-selected {
-  background-color: var(--usto-primary-100) !important;
+.g2b-search-modal .g2b-table tbody tr.g2b-row-selected {
+  background-color: var(--usto-primary-100);
 }
 
 .g2b-table td {
@@ -297,31 +297,31 @@
   background: var(--usto-alt-white);
 }
 
-.g2b-confirm-btn {
-  width: 120px !important;
-  height: 60px !important;
-  min-width: 120px !important;
-  min-height: 60px !important;
-  max-width: 120px !important;
-  max-height: 60px !important;
-  padding: 0 !important;
-  background: var(--usto-primary-300) !important;
-  border: 1px solid var(--usto-primary-300) !important;
-  color: var(--usto-alt-white) !important;
-  border-radius: 4px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  white-space: nowrap !important;
+.g2b-search-modal .g2b-modal-footer .g2b-confirm-btn {
+  width: 120px;
+  height: 60px;
+  min-width: 120px;
+  min-height: 60px;
+  max-width: 120px;
+  max-height: 60px;
+  padding: 0;
+  background: var(--usto-primary-300);
+  border: 1px solid var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.g2b-confirm-btn:hover:not(:disabled) {
+.g2b-search-modal .g2b-modal-footer .g2b-confirm-btn:hover:not(:disabled) {
   background: var(--usto-primary-200);
 }
 
-.g2b-confirm-btn:disabled {
+.g2b-search-modal .g2b-modal-footer .g2b-confirm-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

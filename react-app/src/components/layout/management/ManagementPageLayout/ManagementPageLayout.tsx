@@ -34,7 +34,7 @@ const ManagementPageLayout = ({
   const prefix = pageKey
 
   return (
-    <div className={`${prefix}-page`}>
+    <div className={`management-page ${prefix}-page`}>
       <GNBWithMenu />
 
       <div className={`${prefix}-layout`}>

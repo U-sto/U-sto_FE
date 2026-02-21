@@ -82,7 +82,10 @@ const AcqConfirmationPage = () => {
 
   const pageSize = 10
 
-  /** API 호출: currentPage, pageSize, filters를 쿼리 파라미터로 전달하는 구조. searchedFilters가 null이면 초기 필터(전체)로 조회 */
+  /**
+   * 백엔드 API에서 필터·페이지네이션 적용 후 결과만 수신 (서버 사이드 필터링).
+   * searchedFilters가 null이면 초기 필터(전체)로 조회.
+   */
   const loadData = useCallback(async () => {
     const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
     const res = await fetchAcqConfirmationList({

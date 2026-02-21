@@ -112,74 +112,74 @@ function App() {
       <AppResetProvider>
         <AssetDetailOverridesProvider>
           <Suspense fallback={<div className="loading-fallback">로딩 중...</div>}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/signup/step2" element={<SignupStep2Page />} />
-            <Route path="/signup/step3" element={<SignupStep3Page />} />
-            <Route path="/signup/complete" element={<SignupCompletePage />} />
-            <Route path="/find-id" element={<FindIdPage />} />
-            <Route path="/find-id/result" element={<FindIdResultPage />} />
-            <Route path="/find-password" element={<FindPasswordPage />} />
-            <Route path="/find-password/reset" element={<FindPasswordResetPage />} />
-            <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
-            <Route path="/operation-management" element={<OperationManagementPage />} />
-            <Route path="/return-management" element={<ReturnManagementPage />} />
-            <Route path="/disuse-management" element={<DisuseManagementPage />} />
-            <Route path="/disposal-management" element={<DisposalManagementPage />} />
-            <Route
-              path="/asset-management/acquisition-management"
-              element={<AcquisitionManagementPage />}
-            />
-            <Route
-              path="/asset-management/operation-management/operation-ledger"
-              element={<OperationLedgerPage />}
-            />
-            <Route
-              path="/asset-management/operation-management/operation-ledger/detail"
-              element={<OperationLedgerDetailPage />}
-            />
-            <Route
-              path="/asset-management/operation-management/printout-management"
-              element={<PrintoutManagementPage />}
-            />
-            <Route
-              path="/asset-management/operation-management/return-management"
-              element={<AssetReturnManagementPage />}
-            />
-            <Route
-              path="/asset-management/operation-management/return-management/register"
-              element={<ReturnRegistrationPage />}
-            />
-            <Route
-              path="/asset-management/disuse-management"
-              element={<AssetDisuseManagementPage />}
-            />
-            <Route
-              path="/asset-management/disuse-management/register"
-              element={<DisuseRegistrationPage />}
-            />
-            <Route
-              path="/asset-management/disposal-management"
-              element={<AssetDisposalManagementPage />}
-            />
-            <Route
-              path="/asset-management/disposal-management/register"
-              element={<DisposalRegistrationPage />}
-            />
-            <Route
-              path="/asset-management/inventory-status"
-              element={<InventoryStatusPage />}
-            />
-            <Route
-              path="/asset-management/inventory-status/detail"
-              element={<InventoryStatusDetailPage />}
-            />
-          </Routes>
-        </Suspense>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/signup/step2" element={<SignupStep2Page />} />
+              <Route path="/signup/step3" element={<SignupStep3Page />} />
+              <Route path="/signup/complete" element={<SignupCompletePage />} />
+              <Route path="/find-id" element={<FindIdPage />} />
+              <Route path="/find-id/result" element={<FindIdResultPage />} />
+              <Route path="/find-password" element={<FindPasswordPage />} />
+              <Route path="/find-password/reset" element={<FindPasswordResetPage />} />
+              <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
+              <Route path="/operation-management" element={<OperationManagementPage />} />
+              <Route path="/return-management" element={<ReturnManagementPage />} />
+              <Route path="/disuse-management" element={<DisuseManagementPage />} />
+              <Route path="/disposal-management" element={<DisposalManagementPage />} />
+              <Route
+                path="/asset-management/acquisition-management"
+                element={<AcquisitionManagementPage />}
+              />
+              <Route
+                path="/asset-management/operation-management/operation-ledger"
+                element={<OperationLedgerPage />}
+              />
+              <Route
+                path="/asset-management/operation-management/operation-ledger/detail"
+                element={<OperationLedgerDetailPage />}
+              />
+              <Route
+                path="/asset-management/operation-management/printout-management"
+                element={<PrintoutManagementPage />}
+              />
+              <Route
+                path="/asset-management/operation-management/return-management"
+                element={<AssetReturnManagementPage />}
+              />
+              <Route
+                path="/asset-management/operation-management/return-management/register"
+                element={<ReturnRegistrationPage />}
+              />
+              <Route
+                path="/asset-management/disuse-management"
+                element={<AssetDisuseManagementPage />}
+              />
+              <Route
+                path="/asset-management/disuse-management/register"
+                element={<DisuseRegistrationPage />}
+              />
+              <Route
+                path="/asset-management/disposal-management"
+                element={<AssetDisposalManagementPage />}
+              />
+              <Route
+                path="/asset-management/disposal-management/register"
+                element={<DisposalRegistrationPage />}
+              />
+              <Route
+                path="/asset-management/inventory-status"
+                element={<InventoryStatusPage />}
+              />
+              <Route
+                path="/asset-management/inventory-status/detail"
+                element={<InventoryStatusDetailPage />}
+              />
+            </Routes>
+          </Suspense>
         </AssetDetailOverridesProvider>
       </AppResetProvider>
     </BrowserRouter>
