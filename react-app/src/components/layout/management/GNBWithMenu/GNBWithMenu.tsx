@@ -66,7 +66,7 @@ const menuData: MenuSection[] = [
   {
     id: 'ai',
     label: 'AI 예측',
-    items: [{ label: '사용주기 AI 예측' }],
+    items: [{ label: '사용주기 AI 예측', path: '/ai-forecast' }],
   },
 ]
 

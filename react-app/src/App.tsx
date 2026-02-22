@@ -37,6 +37,7 @@ const DisuseManagementPage = lazy(
 const DisposalManagementPage = lazy(
   () => import('./pages/request-management/disposal-management/DisposalManagementPage'),
 )
+const AiForecastPage = lazy(() => import('./pages/ai-forecast/AiForecastPage'))
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
               <Route path="/disuse-management" element={<DisuseManagementPage />} />
               <Route path="/disposal-management" element={<DisposalManagementPage />} />
               <Route path="/asset-management/*" element={<AssetManagementRoutes />} />
+              <Route path="/ai-forecast" element={<AiForecastPage />} />
             </Routes>
           </Suspense>
         </AssetDetailOverridesProvider>

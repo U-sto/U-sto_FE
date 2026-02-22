@@ -1,0 +1,135 @@
+.ai-forecast-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+}
+
+.ai-forecast-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  max-width: 1200px;
+  width: 100%;
+  margin-top: -400px;
+}
+
+.ai-forecast-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 732px;
+}
+
+.ai-forecast-info-icon {
+  flex-shrink: 0;
+}
+
+.ai-forecast-info-icon img {
+  display: block;
+  width: 74px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.ai-forecast-info-heading {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  text-align: center;
+}
+
+.ai-forecast-info-desc {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+  text-align: center;
+}
+
+/* 두 번째 문장 한 라인 유지 */
+.ai-forecast-info-desc-line2 {
+  white-space: nowrap;
+}
+
+.ai-forecast-search-field {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-200);
+  border-radius: 6px;
+}
+
+.ai-forecast-search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  height: 56px;
+}
+
+.ai-forecast-search-input {
+  flex: 1;
+  height: 100%;
+  border: 2px solid var(--usto-primary-300);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  padding: 5px 18px;
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.ai-forecast-search-input::placeholder {
+  color: var(--usto-gray-200);
+}
+
+.ai-forecast-search-btn {
+  width: 76px;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0 21px;
+  background: var(--usto-primary-300);
+  border: 2px solid var(--usto-primary-300);
+  border-radius: 0 4px 4px 0;
+  color: var(--usto-alt-white);
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-forecast-search-btn:hover {
+  background: var(--usto-primary-200);
+  border-color: var(--usto-primary-200);
+}
+
+.ai-forecast-search-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-forecast-search-filter .dropdown-small-wrapper {
+  min-width: 140px;
+}

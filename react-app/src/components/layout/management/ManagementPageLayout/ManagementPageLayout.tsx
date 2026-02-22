@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../GNBWithMenu/GNBWithMenu'
+import '../AssetManagementPageLayout/AssetManagementPageLayout.css'
 import ChatBotButton from '../../../../features/support/components/ChatBotButton/ChatBotButton'
 
 export type ManagementPageKey = 'acq' | 'operation' | 'return' | 'disuse' | 'disposal'
@@ -18,11 +19,11 @@ type SidebarItem = {
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { key: 'acq', label: '물품취득확정관리', path: '/acq-confirmation' },
-  { key: 'operation', label: '물품운용등록관리', path: '/operation-management' },
-  { key: 'return', label: '물품반납등록관리', path: '/return-management' },
-  { key: 'disuse', label: '물품불용등록관리', path: '/disuse-management' },
-  { key: 'disposal', label: '물품처분등록관리', path: '/disposal-management' },
+  { key: 'acq', label: '물품 취득 확정 관리', path: '/acq-confirmation' },
+  { key: 'operation', label: '물품 운용 등록 관리', path: '/operation-management' },
+  { key: 'return', label: '물품 반납 등록 관리', path: '/return-management' },
+  { key: 'disuse', label: '물품 불용 등록 관리', path: '/disuse-management' },
+  { key: 'disposal', label: '물품 처분 등록 관리', path: '/disposal-management' },
 ]
 
 const ManagementPageLayout = ({
@@ -31,10 +32,10 @@ const ManagementPageLayout = ({
   children,
 }: ManagementPageLayoutProps) => {
   const navigate = useNavigate()
-  const prefix = pageKey
+  const prefix = 'asset'
 
   return (
-    <div className={`management-page ${prefix}-page`}>
+    <div className={`${prefix}-page ${pageKey}-page`}>
       <GNBWithMenu />
 
       <div className={`${prefix}-layout`}>
@@ -44,29 +45,26 @@ const ManagementPageLayout = ({
           </div>
 
           <div className={`${prefix}-sidebar-category`}>
-            <div className={`${prefix}-sidebar-category-title`}>관리자 메뉴</div>
             <div className={`${prefix}-sidebar-menu-list`}>
-              {SIDEBAR_ITEMS.map((item) => {
-                const isActive = item.key === pageKey
-                const classNames = [
-                  `${prefix}-sidebar-menu-item`,
-                  isActive ? `${prefix}-sidebar-menu-item-active` : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')
-
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className={classNames}
-                    onClick={() => navigate(item.path)}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </button>
-                )
-              })}
+              <div className={`${prefix}-sidebar-group`}>
+                <div className={`${prefix}-sidebar-group-title`}>관리자 메뉴</div>
+                <div className={`${prefix}-sidebar-group-list`}>
+                  {SIDEBAR_ITEMS.map((item) => {
+                    const isActive = item.key === pageKey
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className={`${prefix}-sidebar-menu-item ${prefix}-sidebar-menu-item-sub ${isActive ? `${prefix}-sidebar-menu-item-active` : ''}`}
+                        onClick={() => navigate(item.path)}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -79,9 +77,7 @@ const ManagementPageLayout = ({
                 <span className={`${prefix}-depth-text`}>관리자 메뉴</span>
               </div>
               <div className={`${prefix}-depth-pill`}>
-                <span
-                  className={`${prefix}-depth-text ${prefix}-depth-text-inactive`}
-                >
+                <span className={`${prefix}-depth-text ${prefix}-depth-text-inactive`}>
                   {depthSecondLabel}
                 </span>
               </div>
