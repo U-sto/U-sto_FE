@@ -8,6 +8,7 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import './DisposalManagementPage.css'
 
 type DisposalFilters = {
   disposalDateFrom: string
@@ -112,8 +113,8 @@ const DisposalManagementPage = () => {
   return (
     <AssetManagementPageLayout
       pageKey="disposal"
-      depthSecondLabel="물품 관리"
-      depthThirdLabel="물품 처분 관리"
+      depthSecondLabel="물품 처분 관리"
+      depthThirdLabel=""
     >
       <section className="operation-ledger-filter">
         <div className="operation-ledger-filter-wrapper">

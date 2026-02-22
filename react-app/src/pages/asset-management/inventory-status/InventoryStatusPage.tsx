@@ -209,8 +209,8 @@ const InventoryStatusPage = () => {
   return (
     <AssetManagementPageLayout
       pageKey="inventory-status"
-      depthSecondLabel="물품 관리"
-      depthThirdLabel="보유 현황 조회"
+      depthSecondLabel="보유 현황 조회"
+      depthThirdLabel=""
     >
       <section className="operation-ledger-filter">
         <div className="operation-ledger-filter-wrapper">

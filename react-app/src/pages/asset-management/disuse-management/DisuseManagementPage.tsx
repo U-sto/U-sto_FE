@@ -8,6 +8,7 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import './DisuseManagementPage.css'
 
 type DisuseFilters = {
   disuseDateFrom: string
@@ -112,8 +113,8 @@ const DisuseManagementPage = () => {
   return (
     <AssetManagementPageLayout
       pageKey="disuse"
-      depthSecondLabel="물품 관리"
-      depthThirdLabel="물품 불용 관리"
+      depthSecondLabel="물품 불용 관리"
+      depthThirdLabel=""
     >
       <section className="operation-ledger-filter">
         <div className="operation-ledger-filter-wrapper">

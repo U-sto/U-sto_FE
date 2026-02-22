@@ -9,6 +9,7 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import './AcquisitionListPage.css'
 
 type AcquisitionListFilters = {
   g2bName: string
@@ -146,7 +147,7 @@ const AcquisitionListPage = () => {
     <AssetManagementPageLayout
       pageKey="acquisition"
       depthSecondLabel="물품 취득 관리"
-      depthThirdLabel="물품 취득 대장 관리"
+      depthThirdLabel=""
     >
       <section className="operation-ledger-filter">
         <div className="operation-ledger-filter-wrapper">

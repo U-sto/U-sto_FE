@@ -157,6 +157,16 @@
   width: 920px;
 }
 
+/* 단일 뎁스: 두 번째 pill과 동일한 345px 너비 */
+.asset-depthbar-track-single {
+  width: 345px;
+}
+
+.asset-depthbar-track-single .asset-depth-pill {
+  flex: 0 0 345px;
+  width: 345px;
+}
+
 .asset-depth-pill {
   flex: 1;
   height: 60px;
@@ -170,8 +180,14 @@
   position: relative;
 }
 
-/* 마지막 뎁스(물품 기본 정보 관리) 오른쪽 끝까지 배경 이어짐 */
-.asset-depth-pill:last-child::after {
+/* 두 번째 pill은 무조건 345px */
+.asset-depthbar-track .asset-depth-pill:nth-child(2) {
+  flex: 0 0 345px;
+  width: 345px;
+}
+
+/* 마지막 뎁스(두 번째 pill)일 때만 오른쪽 끝까지 배경 이어짐. 단일 뎁스일 때는 배경 길어짐 방지 */
+.asset-depthbar-track:not(.asset-depthbar-track-single) .asset-depth-pill:last-child::after {
   content: '';
   position: absolute;
   left: 100%;

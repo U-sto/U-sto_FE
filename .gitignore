@@ -18,7 +18,6 @@
 
 # 5. 기타 루트에 있는 모든 지저분한 파일들 무시
 .changeset/
-.github/
 dist/
 docs/
 node_modules/
