@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
@@ -54,6 +55,7 @@ const SearchIcon = () => (
 )
 
 const AcquisitionManagementPage = () => {
+  const navigate = useNavigate()
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
 
@@ -71,7 +73,7 @@ const AcquisitionManagementPage = () => {
   }
 
   const handleList = () => {
-    // TODO: 목록 화면으로 이동 또는 모달
+    navigate('/asset-management/acquisition-management')
   }
 
   const handleG2BSelect = (item: G2BItem) => {

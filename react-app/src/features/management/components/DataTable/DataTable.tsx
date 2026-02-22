@@ -91,10 +91,28 @@ function DataTable<T>({
 
   const effectiveTotal = propTotalCount ?? data.length
 
-  const pageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, idx) => idx + 1),
-    [totalPages],
-  )
+  /** 현재 페이지 중심으로 일정 범위만 노출, 처음/끝·말줄임으로 레이아웃 보존 */
+  const visiblePageNumbers = useMemo(() => {
+    const total = totalPages
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1)
+    }
+    const current = currentPage
+    const windowSize = 2
+    const start = Math.max(1, current - windowSize)
+    const end = Math.min(total, current + windowSize)
+    const list: (number | 'ellipsis')[] = []
+    if (start > 1) {
+      list.push(1)
+      if (start > 2) list.push('ellipsis')
+    }
+    for (let p = start; p <= end; p++) list.push(p)
+    if (end < total) {
+      if (end < total - 1) list.push('ellipsis')
+      list.push(total)
+    }
+    return list
+  }, [totalPages, currentPage])
 
   return (
     <section className={tableClassNames}>
@@ -151,18 +169,24 @@ function DataTable<T>({
           >
             ‹
           </button>
-          {pageNumbers.map((pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              className={`${pageNumClass} ${
-                pageNumber === currentPage ? pageNumActiveClass : ''
-              }`.trim()}
-              onClick={() => handlePageChange(pageNumber)}
-            >
-              {pageNumber}
-            </button>
-          ))}
+          {visiblePageNumbers.map((pageNumber, idx) =>
+            pageNumber === 'ellipsis' ? (
+              <span key={`ellipsis-${idx}`} className={pageNumClass} aria-hidden>
+                …
+              </span>
+            ) : (
+              <button
+                key={pageNumber}
+                type="button"
+                className={`${pageNumClass} ${
+                  pageNumber === currentPage ? pageNumActiveClass : ''
+                }`.trim()}
+                onClick={() => handlePageChange(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
           <button
             type="button"
             className={pageBtnClass}

@@ -132,19 +132,8 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaL
 
   return (
     <div className={wrapperClass} ref={dropdownRef}>
-      <button
-        type="button"
-        id={triggerId}
-        className={buttonClass}
-        onClick={handleButtonClick}
-        onKeyDown={handleKeyDown}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-controls={listboxId}
-        aria-label={ariaLabel ?? (placeholder || '선택')}
-        aria-activedescendant={isOpen && filteredOptions.length > 0 ? `option-${highlightedIndex}` : undefined}
-      >
-        {isOpen ? (
+      {isOpen ? (
+        <div id={triggerId} className={buttonClass}>
           <input
             ref={searchInputRef}
             type="text"
@@ -156,59 +145,107 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaL
             spellCheck={false}
             autoComplete="off"
             onClick={(e) => e.stopPropagation()}
-            aria-controls={listboxId}
+            aria-label={ariaLabel ?? (placeholder || '선택')}
             role="combobox"
             aria-expanded={isOpen}
+            aria-controls={listboxId}
             aria-autocomplete="list"
+            aria-activedescendant={filteredOptions.length > 0 ? `option-${highlightedIndex}` : undefined}
           />
-        ) : (
+          {isSmall ? (
+            <svg
+              className={`${arrowClass} open`}
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.5 5.25L7 8.75L10.5 5.25"
+                stroke="var(--usto-gray-200)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              className={`${arrowClass} open`}
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.67 12L16 21.33L25.33 12"
+                stroke={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          id={triggerId}
+          className={buttonClass}
+          onClick={handleButtonClick}
+          onKeyDown={handleKeyDown}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-label={ariaLabel ?? (placeholder || '선택')}
+        >
           <span className={value ? selectedClass : placeholderClass}>
             {value || placeholder}
           </span>
-        )}
-        {isSmall ? (
-          <svg
-            className={`${arrowClass} ${isOpen ? 'open' : ''}`}
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M3.5 5.25L7 8.75L10.5 5.25"
-              stroke="var(--usto-gray-200)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : (
-          <svg
-            className={`${arrowClass} ${isOpen ? 'open' : ''}`}
-            width="32"
-            height="32"
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M6.67 12L16 21.33L25.33 12"
-              stroke={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
+          {isSmall ? (
+            <svg
+              className={arrowClass}
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.5 5.25L7 8.75L10.5 5.25"
+                stroke="var(--usto-gray-200)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              className={arrowClass}
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.67 12L16 21.33L25.33 12"
+                stroke={value ? 'var(--usto-primary-300)' : 'var(--usto-gray-100)'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      )}
       {isOpen && (
         <div
           id={listboxId}
           className={menuClass}
           role="listbox"
           aria-labelledby={triggerId}
-          aria-activedescendant={filteredOptions.length > 0 ? `option-${highlightedIndex}` : undefined}
           tabIndex={-1}
         >
           {filteredOptions.length > 0 ? (

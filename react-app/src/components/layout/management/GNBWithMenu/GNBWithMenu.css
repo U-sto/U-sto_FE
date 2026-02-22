@@ -90,7 +90,8 @@
   box-sizing: border-box;
 }
 
-.gnb-dropdown-item:hover {
+.gnb-dropdown-item:hover,
+.gnb-dropdown-item-focused {
   background-color: var(--btn-hover-bg);
   color: var(--usto-primary-300);
 }

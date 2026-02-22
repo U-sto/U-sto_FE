@@ -1,6 +1,9 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 
+const AcquisitionListPage = lazy(
+  () => import('../pages/asset-management/acquisition-management/AcquisitionListPage'),
+)
 const AcquisitionManagementPage = lazy(
   () => import('../pages/asset-management/acquisition-management/AcquisitionManagementPage'),
 )
@@ -56,7 +59,8 @@ const InventoryStatusDetailPage = lazy(
 const AssetManagementRoutes = () => (
   <Suspense fallback={<div className="loading-fallback">로딩 중...</div>}>
     <Routes>
-      <Route path="acquisition-management" element={<AcquisitionManagementPage />} />
+      <Route path="acquisition-management" element={<AcquisitionListPage />} />
+      <Route path="acquisition-management/register" element={<AcquisitionManagementPage />} />
       <Route
         path="operation-management/operation-ledger"
         element={<OperationLedgerPage />}

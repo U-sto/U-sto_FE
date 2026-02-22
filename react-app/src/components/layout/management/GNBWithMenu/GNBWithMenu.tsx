@@ -56,9 +56,9 @@ const menuData: MenuSection[] = [
         ],
       },
       {
-            label: '물품 불용 관리',
-            path: '/asset-management/disuse-management',
-          },
+        label: '물품 불용 관리',
+        path: '/asset-management/disuse-management',
+      },
       { label: '물품 처분 관리', path: '/asset-management/disposal-management' },
       { label: '보유 현황 조회', path: '/asset-management/inventory-status' },
     ],
@@ -79,7 +79,7 @@ const GNBWithMenu = () => {
 
   const handleDropdownToggle = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu)
-    setFocusedIndex(activeDropdown === menu ? -1 : 0)
+    setFocusedIndex(-1)
   }
 
   const handleLogout = () => {
@@ -152,13 +152,25 @@ const GNBWithMenu = () => {
     }
   }, [activeDropdown])
 
-  const renderMenuItem = (sectionId: string, item: MenuItem) => {
+  const renderMenuItem = (
+    sectionId: string,
+    item: MenuItem,
+    selfFlatIndex?: number,
+    childrenStartFlatIndex?: number,
+  ) => {
     const classNames = ['gnb-dropdown-item']
     if (item.isMain) {
       classNames.push('gnb-dropdown-main')
     }
     if (item.isSubItem) {
       classNames.push('gnb-dropdown-subitem')
+    }
+    const isFocused =
+      activeDropdown === sectionId &&
+      selfFlatIndex !== undefined &&
+      focusedIndex === selfFlatIndex
+    if (isFocused) {
+      classNames.push('gnb-dropdown-item-focused')
     }
 
     const button = (
@@ -173,18 +185,32 @@ const GNBWithMenu = () => {
       </button>
     )
 
-    if (item.children && item.children.length > 0) {
+    if (item.children && item.children.length > 0 && childrenStartFlatIndex !== undefined) {
       return (
         <div key={`${sectionId}-${item.label}`}>
           {button}
           <div className="gnb-dropdown-submenu">
-            {item.children.map((child) => renderMenuItem(sectionId, child))}
+            {item.children.map((child, i) =>
+              renderMenuItem(sectionId, child, childrenStartFlatIndex + i, undefined),
+            )}
           </div>
         </div>
       )
     }
 
     return button
+  }
+
+  const renderSectionItems = (section: MenuSection) => {
+    let flatIdx = 0
+    return section.items.map((item) => {
+      if (item.children && item.children.length > 0) {
+        const start = flatIdx
+        flatIdx += item.children.length
+        return renderMenuItem(section.id, item, undefined, start)
+      }
+      return renderMenuItem(section.id, item, flatIdx++, undefined)
+    })
   }
 
   return (
@@ -228,7 +254,7 @@ const GNBWithMenu = () => {
                   tabIndex={-1}
                   onKeyDown={(e) => handleMenuKeyDown(e, section)}
                 >
-                  {section.items.map((item) => renderMenuItem(section.id, item))}
+                  {renderSectionItems(section)}
                 </div>
               )}
             </div>

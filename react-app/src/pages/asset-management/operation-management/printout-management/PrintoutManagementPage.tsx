@@ -384,12 +384,24 @@ const PrintoutManagementPage = () => {
 
       <DataTable<PrintoutRow>
         pageKey="operation-ledger"
-        title="출력물 목록"
+        title="출력 대상 물품 목록"
         data={filteredData}
         totalCount={allData.length}
         pageSize={10}
         columns={columns}
         getRowKey={(row) => row.id}
+        renderActions={() => (
+          <div className="operation-ledger-table-actions">
+            <Button
+              className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
+              onClick={() => {
+                // TODO: 출력 동작
+              }}
+            >
+              출력
+            </Button>
+          </div>
+        )}
       />
     </AssetManagementPageLayout>
   )
