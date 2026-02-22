@@ -190,7 +190,13 @@ const GNBWithMenu = () => {
   return (
     <nav className="gnb-with-menu">
       <div className="gnb-user-section">
-        <span className="gnb-user-text">회원정보</span>
+        <button
+          type="button"
+          className="gnb-user-text"
+          onClick={() => navigate('/user-info')}
+        >
+          회원정보
+        </button>
         <div className="gnb-user-divider"></div>
         <button type="button" className="gnb-user-text" onClick={handleLogout}>
           로그아웃

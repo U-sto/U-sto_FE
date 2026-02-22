@@ -38,6 +38,19 @@ const DisposalManagementPage = lazy(
   () => import('./pages/request-management/disposal-management/DisposalManagementPage'),
 )
 const AiForecastPage = lazy(() => import('./pages/ai-forecast/AiForecastPage'))
+const UserInfoPage = lazy(() => import('./pages/User-Info/UserInfoPage'))
+const ChangePasswordPage = lazy(() => import('./pages/User-Info/ChangePasswordPage'))
+const ChangePasswordCompletePage = lazy(
+  () => import('./pages/User-Info/ChangePasswordCompletePage'),
+)
+const ChangePhonePage = lazy(() => import('./pages/User-Info/ChangePhonePage'))
+const ChangePhoneCompletePage = lazy(
+  () => import('./pages/User-Info/ChangePhoneCompletePage'),
+)
+const WithdrawPage = lazy(() => import('./pages/User-Info/WithdrawPage'))
+const WithdrawCompletePage = lazy(
+  () => import('./pages/User-Info/WithdrawCompletePage'),
+)
 
 function App() {
   return (
@@ -58,6 +71,22 @@ function App() {
               <Route path="/find-password/reset" element={<FindPasswordResetPage />} />
               <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
               <Route path="/home" element={<HomePage />} />
+              <Route path="/user-info" element={<UserInfoPage />} />
+              <Route path="/user-info/change-password" element={<ChangePasswordPage />} />
+              <Route
+                path="/user-info/change-password/complete"
+                element={<ChangePasswordCompletePage />}
+              />
+              <Route path="/user-info/change-phone" element={<ChangePhonePage />} />
+              <Route
+                path="/user-info/change-phone/complete"
+                element={<ChangePhoneCompletePage />}
+              />
+              <Route path="/user-info/withdraw" element={<WithdrawPage />} />
+              <Route
+                path="/user-info/withdraw/complete"
+                element={<WithdrawCompletePage />}
+              />
               <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
               <Route path="/operation-management" element={<OperationManagementPage />} />
               <Route path="/return-management" element={<ReturnManagementPage />} />

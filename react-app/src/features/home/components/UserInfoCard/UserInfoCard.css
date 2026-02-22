@@ -35,8 +35,41 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 41px 0 41px 105px;
+  padding: 41px 24px 41px 105px;
   width: 100%;
+}
+
+.user-info-card-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.user-info-card-btn {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  background: var(--usto-primary-300);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.user-info-card-btn:hover {
+  background: var(--usto-primary-200);
 }
 
 .user-info-card-title {

@@ -1,0 +1,82 @@
+.withdraw-complete-page {
+  min-height: 100vh;
+  background: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.withdraw-complete-content {
+  flex: 1;
+  padding: 32px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.withdraw-complete-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 72px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.withdraw-complete-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.withdraw-complete-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  text-align: center;
+}
+
+.withdraw-complete-btn {
+  width: 100%;
+  max-width: 500px;
+  height: 80px;
+  padding: 14px;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  background: var(--usto-primary-300);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.withdraw-complete-btn:hover {
+  background: var(--usto-primary-200);
+}
+
+@media (max-width: 768px) {
+  .withdraw-complete-title {
+    font-size: 28px;
+  }
+
+  .withdraw-complete-btn {
+    font-size: 24px;
+    height: 64px;
+  }
+
+  .withdraw-complete-cta {
+    gap: 48px;
+  }
+}
