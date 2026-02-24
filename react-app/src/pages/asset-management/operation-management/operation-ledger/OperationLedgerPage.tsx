@@ -471,7 +471,10 @@ const OperationLedgerPage = () => {
             >
               물품상세정보
             </Button>
-            <Button className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table">
+            <Button
+              className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
+              onClick={() => navigate('/asset-management/operation-management/operation-transfer')}
+            >
               물품운용전환
             </Button>
           </div>

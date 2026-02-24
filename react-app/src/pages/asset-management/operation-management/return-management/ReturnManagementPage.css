@@ -20,13 +20,22 @@
   flex-shrink: 0;
 }
 
-/* 반납 등록 정보: 라벨-입력창 간격 100px 줄임 (라벨 너비 100px → 75px, 4필드 기준) */
+/* 반납/운용 전환 등록 정보: 라벨-입력창 간격 (라벨과 흰색 입력창이 딱 붙지 않도록) */
 .return-registration-info-panel .operation-ledger-detail-label {
   width: 75px;
 }
 
 .return-registration-info-panel .operation-ledger-detail-field {
-  gap: 10px;
+  gap: 20px;
+}
+
+/* 반납/운용 전환 등록 정보: 흰색 입력창·드롭다운 너비 줄임, 4개 필드 통일 */
+.return-registration-info-panel .operation-ledger-detail-field .text-field,
+.return-registration-info-panel .operation-ledger-detail-field .dropdown-button,
+.return-registration-info-panel .operation-ledger-detail-field .dropdown-small-button {
+  flex: 0 0 160px;
+  max-width: 160px;
+  min-width: 0;
 }
 
 /* 반납 등록 정보: 물품상태/사유 드롭다운 높이를 옆 입력창(30px)과 동일하게 */

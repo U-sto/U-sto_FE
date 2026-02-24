@@ -19,6 +19,18 @@ const OperationLedgerDetailPage = lazy(
       '../pages/asset-management/operation-management/operation-ledger/OperationLedgerDetailPage'
     ),
 )
+const OperationTransferPage = lazy(
+  () =>
+    import(
+      '../pages/asset-management/operation-management/operation-transfer/OperationTransferPage'
+    ),
+)
+const OperationTransferRegistrationPage = lazy(
+  () =>
+    import(
+      '../pages/asset-management/operation-management/operation-transfer/OperationTransferRegistrationPage'
+    ),
+)
 const PrintoutManagementPage = lazy(
   () =>
     import(
@@ -68,6 +80,14 @@ const AssetManagementRoutes = () => (
       <Route
         path="operation-management/operation-ledger/detail"
         element={<OperationLedgerDetailPage />}
+      />
+      <Route
+        path="operation-management/operation-transfer"
+        element={<OperationTransferPage />}
+      />
+      <Route
+        path="operation-management/operation-transfer/register"
+        element={<OperationTransferRegistrationPage />}
       />
       <Route
         path="operation-management/printout-management"
