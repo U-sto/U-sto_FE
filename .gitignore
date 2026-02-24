@@ -5,6 +5,8 @@
 !/react-app/
 !/react-app/src/
 !/react-app/src/**
+!/react-app/public/
+!/react-app/public/**
 
 # 3. 루트에 있는 src 폴더는 절대 무시 (이게 핵심입니다)
 /src/

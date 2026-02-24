@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './NoticeField.css'
 
 interface Notice {
@@ -39,6 +39,18 @@ const NoticeField = () => {
     const start = (currentPage - 1) * PAGE_SIZE
     return notices.slice(start, start + PAGE_SIZE)
   }, [notices, currentPage])
+
+  /** 선택된 공지가 목록에 없으면(필터/페이지 변경 등) 유효한 값으로 보정 */
+  useEffect(() => {
+    if (!hasNotices) {
+      setSelectedNotice(null)
+      return
+    }
+    const exists = notices.some((n) => n.id === selectedNotice)
+    if (selectedNotice != null && !exists) {
+      setSelectedNotice(notices[0].id)
+    }
+  }, [hasNotices, notices, selectedNotice])
 
   const selectedNoticeData =
     hasNotices && selectedNotice != null

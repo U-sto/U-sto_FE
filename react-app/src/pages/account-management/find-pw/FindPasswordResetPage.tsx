@@ -6,6 +6,8 @@ import PasswordField from '../../../components/common/PasswordField/PasswordFiel
 import Button from '../../../components/common/Button/Button'
 import './FindPasswordResetPage.css'
 
+const MIN_PASSWORD_LENGTH = 8
+
 const FindPasswordResetPage = () => {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
@@ -30,7 +32,7 @@ const FindPasswordResetPage = () => {
     }
 
     // 비밀번호 규칙 검사 (최소 8자, 영문/숫자/특수문자 조합 등 - 추후 API 연동 시 정확 규칙 적용)
-    if (trimmedPassword.length < 8) {
+    if (trimmedPassword.length < MIN_PASSWORD_LENGTH) {
       setError('비밀번호는 8자 이상이어야 합니다.')
       return
     }

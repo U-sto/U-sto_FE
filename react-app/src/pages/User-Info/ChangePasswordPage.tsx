@@ -6,6 +6,8 @@ import Button from '../../components/common/Button/Button'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import './ChangePasswordPage.css'
 
+const MIN_PASSWORD_LENGTH = 8
+
 const ChangePasswordPage = () => {
   const navigate = useNavigate()
   const [currentPassword, setCurrentPassword] = useState('')
@@ -31,7 +33,7 @@ const ChangePasswordPage = () => {
       setError('새 비밀번호가 일치하지 않습니다.')
       return
     }
-    if (trimmedNew.length < 8) {
+    if (trimmedNew.length < MIN_PASSWORD_LENGTH) {
       setError('비밀번호는 8자 이상이어야 합니다.')
       return
     }

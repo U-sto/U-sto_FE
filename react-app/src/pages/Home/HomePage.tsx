@@ -12,8 +12,6 @@ const HomePage = () => {
         <UserInfoCard />
         <NoticeField />
       </div>
-
-      
       <ChatBotButton />
     </div>
   )
