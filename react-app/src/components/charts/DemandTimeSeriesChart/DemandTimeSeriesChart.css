@@ -1,0 +1,27 @@
+.demand-time-series-chart {
+  padding: 16px;
+  background: var(--usto-alt-white);
+  border: 2px solid var(--usto-primary-300);
+  border-radius: 8px;
+}
+
+.demand-time-series-chart__label {
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  background: var(--usto-primary-200);
+  padding: 4px 16px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.demand-time-series-chart__rop-legend {
+  font-family: var(--font-family);
+  font-size: 10px;
+  color: var(--usto-gray-200);
+  margin-top: 4px;
+  text-align: center;
+}

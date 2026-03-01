@@ -51,7 +51,6 @@ const WithdrawPage = lazy(() => import('./pages/User-Info/WithdrawPage'))
 const WithdrawCompletePage = lazy(
   () => import('./pages/User-Info/WithdrawCompletePage'),
 )
-
 function App() {
   return (
     <BrowserRouter>

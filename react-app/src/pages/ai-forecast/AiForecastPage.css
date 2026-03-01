@@ -100,7 +100,7 @@
 }
 
 .ai-forecast-search-btn {
-  width: 76px;
+  width: 79px;
   flex-shrink: 0;
   height: 100%;
   min-height: 0;
@@ -124,12 +124,390 @@
   border-color: var(--usto-primary-200);
 }
 
-.ai-forecast-search-filter {
+/* 분석조건 접이식 패널 */
+.ai-forecast-analysis-condition {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.ai-forecast-analysis-condition-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  text-align: left;
+}
+
+.ai-forecast-analysis-condition-title {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-analysis-condition-caret {
+  font-size: 10px;
+  color: var(--usto-primary-300);
+  line-height: 1;
+}
+
+.ai-forecast-analysis-condition-body {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--usto-primary-200);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-forecast-analysis-condition-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+
+.ai-forecast-analysis-condition-row-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.ai-forecast-analysis-condition-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-forecast-analysis-condition-label {
+  flex-shrink: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: nowrap;
+}
+
+.ai-forecast-analysis-condition-input {
+  width: 220px;
+  min-width: 120px;
+  height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--usto-alt-black);
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-analysis-condition-input::placeholder {
+  color: var(--usto-gray-200);
+}
+
+/* 캠퍼스 읽기 전용: 배경·커서 고정 */
+.ai-forecast-analysis-condition-input--readonly {
+  background: var(--usto-primary-100);
+  cursor: default;
+  color: var(--usto-alt-black);
+}
+
+/* 분석조건 내 드롭다운: 캠퍼스 입력란과 동일 높이(32px) */
+.ai-forecast-analysis-condition .dropdown-small-wrapper {
+  min-width: 100px;
+}
+
+.ai-forecast-analysis-condition .dropdown-small-button {
+  height: 32px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.ai-forecast-analysis-condition .dropdown-small-search-input {
+  font-size: 14px;
+}
+
+.ai-forecast-analysis-condition-reset {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--usto-gray-200);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ai-forecast-analysis-condition-reset:hover {
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-error {
+  color: #d52e2e;
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+
+/* 탭 */
+.ai-forecast-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px 16px;
+  border-bottom: 1px solid var(--usto-primary-200);
+  margin-bottom: 0;
+}
+
+.ai-forecast-tab {
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+}
+
+.ai-forecast-tab:hover {
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-tab--active {
+  color: var(--usto-primary-300);
+  font-weight: 600;
+}
+
+.ai-forecast-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--usto-primary-300);
+}
+
+/* 분석 결과 영역 */
+.ai-forecast-result {
+  flex: 1;
+  padding: 24px 32px 40px;
+  overflow-y: auto;
+}
+
+/* PDF 버튼: 결과 틀 밖, 오른쪽 정렬 */
+.ai-forecast-result-header {
+  max-width: 1420px;
+  margin: 0 auto 12px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ai-forecast-pdf-btn {
+  width: auto;
+  min-height: 0;
+  padding: 6px 14px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--usto-primary-300);
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-300);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-forecast-pdf-btn:hover {
+  background: var(--usto-primary-100);
+}
+
+/* 결과 페이지 틀 (테두리 있는 영역) */
+.ai-forecast-result-inner {
+  max-width: 1420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  border: 2px solid var(--usto-primary-200);
+  border-radius: 16px;
+  padding: 32px;
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-result-banner {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.ai-forecast-search-filter .dropdown-small-wrapper {
-  min-width: 140px;
+.ai-forecast-result-banner-text {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ai-forecast-result-banner-text p {
+  margin: 0;
+}
+
+.ai-forecast-result-row1 {
+  display: flex;
+  gap: 36px;
+  align-items: stretch;
+}
+
+.ai-forecast-query-bubble {
+  flex: 1;
+  min-width: 0;
+  padding: 24px 32px;
+  background: var(--usto-primary-100);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.ai-forecast-query-bubble p {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+}
+
+.ai-forecast-params {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+  min-width: 200px;
+}
+
+.ai-forecast-param {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: var(--usto-primary-100);
+  border-radius: 4px;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+}
+
+.ai-forecast-param-label {
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--usto-primary-300);
+  flex-shrink: 0;
+}
+
+.ai-forecast-param-value {
+  font-family: var(--font-family);
+  font-weight: 400;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.ai-forecast-chart-block {
+  min-width: 0;
+}
+
+.ai-forecast-table-section {
+  margin-top: 8px;
+}
+
+.ai-forecast-result-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px;
+  color: var(--usto-gray-200);
+  font-size: 16px;
+}
+
+/* 분석 결과 테이블 (DataTable pageKey=ai-forecast) */
+.ai-forecast-table-top {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.ai-forecast-table-label {
+  background: var(--usto-primary-200);
+  border-radius: 6px;
+  padding: 4px 16px;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ai-forecast-table-wrap {
+  margin-top: 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-table-wrap-inner {
+  overflow-x: auto;
+}
+
+.ai-forecast-table-el {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-family);
+  table-layout: fixed;
+}
+
+.ai-forecast-table-el thead th {
+  height: 32px;
+  background: var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 16px;
+  border-right: 1px solid var(--usto-primary-200);
+  text-align: left;
+}
+
+.ai-forecast-table-el thead th:last-child {
+  border-right: none;
+}
+
+.ai-forecast-pagination {
+  margin-top: 12px;
 }
