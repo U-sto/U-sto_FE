@@ -99,11 +99,14 @@ const GNBWithMenu = () => {
     }
   }
 
-  /** WAI-ARIA: 드롭다운 메뉴 키보드 내비게이션 (ArrowUp, ArrowDown, Enter, Escape) */
-  const flatItems = (section: MenuSection) =>
-    section.items.flatMap((item) =>
-      item.children && item.children.length > 0 ? item.children : [item],
+  /** WAI-ARIA: 모든 깊이의 메뉴를 평탄화 (재귀)하여 키보드 내비게이션에 사용. 부모(자식 있는 항목)도 포함. */
+  const flattenMenuItems = (items: MenuItem[]): MenuItem[] =>
+    items.flatMap((item) =>
+      item.children && item.children.length > 0
+        ? [item, ...flattenMenuItems(item.children)]
+        : [item],
     )
+  const flatItems = (section: MenuSection) => flattenMenuItems(section.items)
 
   const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>, section: MenuSection) => {
     if (activeDropdown !== section.id) return
@@ -211,9 +214,10 @@ const GNBWithMenu = () => {
     let flatIdx = 0
     return section.items.map((item) => {
       if (item.children && item.children.length > 0) {
-        const start = flatIdx
+        const parentIdx = flatIdx++
+        const childrenStart = flatIdx
         flatIdx += item.children.length
-        return renderMenuItem(section.id, item, undefined, start)
+        return renderMenuItem(section.id, item, parentIdx, childrenStart)
       }
       return renderMenuItem(section.id, item, flatIdx++, undefined)
     })

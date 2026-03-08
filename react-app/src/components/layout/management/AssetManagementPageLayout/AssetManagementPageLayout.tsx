@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../GNBWithMenu/GNBWithMenu'
+import '../ManagementLayoutBase/ManagementLayoutBase.css'
 import './AssetManagementPageLayout.css'
 import ChatBotButton from '../../../../features/support/components/ChatBotButton/ChatBotButton'
 
@@ -58,7 +59,7 @@ const AssetManagementPageLayout = ({
   children,
 }: AssetManagementPageLayoutProps) => {
   const navigate = useNavigate()
-  const prefix = 'asset'
+  const prefix = 'management'
 
   return (
     <div className={`${prefix}-page`}>

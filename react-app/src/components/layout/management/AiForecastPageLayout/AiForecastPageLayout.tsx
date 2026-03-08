@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../GNBWithMenu/GNBWithMenu'
-import '../AssetManagementPageLayout/AssetManagementPageLayout.css'
+import '../ManagementLayoutBase/ManagementLayoutBase.css'
 import './AiForecastPageLayout.css'
 
 interface AiForecastPageLayoutProps {
@@ -15,7 +15,7 @@ const SIDEBAR_ITEMS = [
 
 const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProps) => {
   const navigate = useNavigate()
-  const prefix = 'asset'
+  const prefix = 'management'
 
   return (
     <div className={`${prefix}-page`}>

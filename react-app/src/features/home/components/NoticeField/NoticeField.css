@@ -143,6 +143,15 @@
   color: var(--usto-primary-300);
 }
 
+.notice-pagination-ellipsis {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--usto-primary-200);
+  padding: 0;
+  user-select: none;
+}
+
 .notice-detail-divider {
   width: 2px;
   height: 100%;

@@ -26,13 +26,29 @@ const NoticeField = () => {
 
   const hasNotices = notices.length > 0
 
-  /** totalCount 기반 동적 페이지네이션: 하드코딩(1,2,3,4,5) 대신 totalPages 계산 */
   const totalCount = notices.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const pageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages],
-  )
+
+  /** 현재 페이지 중심 + 말줄임 동적 페이지네이션 (DataTable과 동일 방식) */
+  const visiblePageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const windowSize = 2
+    const start = Math.max(1, currentPage - windowSize)
+    const end = Math.min(totalPages, currentPage + windowSize)
+    const list: (number | 'ellipsis')[] = []
+    if (start > 1) {
+      list.push(1)
+      if (start > 2) list.push('ellipsis')
+    }
+    for (let p = start; p <= end; p++) list.push(p)
+    if (end < totalPages) {
+      if (end < totalPages - 1) list.push('ellipsis')
+      list.push(totalPages)
+    }
+    return list
+  }, [totalPages, currentPage])
 
   /** currentPage, PAGE_SIZE 기반으로 현재 페이지에 표시할 공지 목록 */
   const pagedNotices = useMemo(() => {
@@ -95,18 +111,24 @@ const NoticeField = () => {
                 <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-            {pageNumbers.map((pageNum) => (
-              <button
-                key={pageNum}
-                type="button"
-                className={`notice-pagination-number ${pageNum === currentPage ? 'active' : ''}`}
-                onClick={() => setCurrentPage(pageNum)}
-                aria-label={`${pageNum}페이지`}
-                aria-current={pageNum === currentPage ? 'page' : undefined}
-              >
-                {pageNum}
-              </button>
-            ))}
+            {visiblePageNumbers.map((pageNum, idx) =>
+              pageNum === 'ellipsis' ? (
+                <span key={`ellipsis-${idx}`} className="notice-pagination-ellipsis" aria-hidden>
+                  …
+                </span>
+              ) : (
+                <button
+                  key={pageNum}
+                  type="button"
+                  className={`notice-pagination-number ${pageNum === currentPage ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(pageNum)}
+                  aria-label={`${pageNum}페이지`}
+                  aria-current={pageNum === currentPage ? 'page' : undefined}
+                >
+                  {pageNum}
+                </button>
+              ),
+            )}
             <button
               type="button"
               className="notice-pagination-arrow"
