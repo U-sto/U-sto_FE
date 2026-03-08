@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SystemLogo from '../../../common/SystemLogo/SystemLogo'
+import { logout, clearLoginToken } from '../../../../api/auth'
 import './GNBWithMenu.css'
 
 type MenuItem = {
@@ -82,8 +83,13 @@ const GNBWithMenu = () => {
     setFocusedIndex(-1)
   }
 
-  const handleLogout = () => {
-    navigate('/login')
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } finally {
+      clearLoginToken()
+      navigate('/login')
+    }
   }
 
   const handleItemClick = (item: MenuItem) => {

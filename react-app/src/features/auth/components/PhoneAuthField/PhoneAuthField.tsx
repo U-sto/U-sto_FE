@@ -7,9 +7,11 @@ interface PhoneAuthFieldProps {
   phone: string
   onPhoneChange: (e: ChangeEvent<HTMLInputElement>) => void
   onSendCode: () => void
+  /** 인증번호 전송 API 호출 중 여부 */
+  isSending?: boolean
 }
 
-const PhoneAuthField = ({ phone, onPhoneChange, onSendCode }: PhoneAuthFieldProps) => {
+const PhoneAuthField = ({ phone, onPhoneChange, onSendCode, isSending }: PhoneAuthFieldProps) => {
   return (
     <div className="phone-auth-field">
       <div className="phone-auth-wrapper">
@@ -25,8 +27,9 @@ const PhoneAuthField = ({ phone, onPhoneChange, onSendCode }: PhoneAuthFieldProp
           type="button"
           onClick={onSendCode}
           className="send-code-button"
+          disabled={isSending}
         >
-          인증번호
+          {isSending ? '전송 중...' : '인증번호'}
         </Button>
       </div>
     </div>

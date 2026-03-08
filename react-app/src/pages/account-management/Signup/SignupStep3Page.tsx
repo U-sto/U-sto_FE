@@ -1,20 +1,37 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import PhoneAuthField from '../../../features/auth/components/PhoneAuthField/PhoneAuthField'
 import Button from '../../../components/common/Button/Button'
 import { DEPARTMENTS } from '../../../constants/departments'
+import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../../api/auth'
+import { signUp } from '../../../api/users'
 import './SignupStep3Page.css'
+
+export interface SignupStep2State {
+  userId: string
+  password: string
+}
 
 const SignupStep3Page = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const step2State = location.state as SignupStep2State | null
   const [name, setName] = useState('')
   const [department, setDepartment] = useState('')
   const [phone, setPhone] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [isSendingCode, setIsSendingCode] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!step2State?.userId || !step2State?.password) {
+      navigate('/signup/step2', { replace: true })
+    }
+  }, [step2State, navigate])
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9]/g, '')
@@ -27,20 +44,33 @@ const SignupStep3Page = () => {
     setPhone(formatted)
   }
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     const trimmedPhone = phone.replace(/\s/g, '').trim()
-    if (!/^[0-9-]{10,13}$/.test(trimmedPhone)) {
+    if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요.')
       return
     }
     setError(null)
-    // TODO: 전화 인증번호 전송 API 연동
+    setIsSendingCode(true)
+    try {
+      const target = trimmedPhone.replace(/-/g, '')
+      await sendSmsVerificationCode({ target, purpose: 'SIGNUP' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
+    } finally {
+      setIsSendingCode(false)
+    }
   }
 
-  const handleSignup = (e: FormEvent) => {
+  const handleSignup = async (e: FormEvent) => {
     e.preventDefault()
 
-    // 유효성 검사: trim()으로 공백 제거 후 검증
+    if (!step2State?.userId || !step2State?.password) {
+      setError('이전 단계 정보가 없습니다. 아이디·비밀번호 단계부터 진행해 주세요.')
+      navigate('/signup/step2', { replace: true })
+      return
+    }
+
     const trimmedName = name.trim()
     const trimmedDepartment = department.trim()
     const trimmedPhone = phone.replace(/\s/g, '').trim()
@@ -56,7 +86,7 @@ const SignupStep3Page = () => {
       return
     }
 
-    if (!/^[0-9-]{10,13}$/.test(trimmedPhone)) {
+    if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요.')
       return
     }
@@ -67,7 +97,21 @@ const SignupStep3Page = () => {
     }
 
     setError(null)
-    navigate('/signup/complete')
+    setIsVerifying(true)
+    try {
+      await checkSmsVerificationCode({ code: trimmedAuthCode })
+      await signUp({
+        usrId: step2State.userId,
+        usrNm: trimmedName,
+        pwd: step2State.password,
+        orgCd: trimmedDepartment,
+      })
+      navigate('/signup/complete')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '가입 처리에 실패했습니다.')
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   return (
@@ -105,7 +149,9 @@ const SignupStep3Page = () => {
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
-      <Button type="submit">가입하기</Button>
+      <Button type="submit" disabled={isVerifying}>
+        {isVerifying ? '확인 중...' : '가입하기'}
+      </Button>
     </SignupLayout>
   )
 }

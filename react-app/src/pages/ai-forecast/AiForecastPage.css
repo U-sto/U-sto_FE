@@ -375,14 +375,28 @@
   align-items: stretch;
 }
 
+/* 질문 영역: 흰 배경 + 연한 테두리 + 왼쪽 청록 악센트 바 (2번째 사진 스타일) */
 .ai-forecast-query-bubble {
   flex: 1;
   min-width: 0;
-  padding: 24px 32px;
-  background: var(--usto-primary-100);
+  padding: 24px 32px 24px 40px;
+  background: var(--usto-alt-white);
+  border: 1px solid #c2d4d4;
   border-radius: 8px;
   display: flex;
   align-items: center;
+  position: relative;
+}
+
+.ai-forecast-query-bubble::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: #698f9e;
+  border-radius: 8px 0 0 8px;
 }
 
 .ai-forecast-query-bubble p {
@@ -392,6 +406,9 @@
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
   margin: 0;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
 }
 
 .ai-forecast-params {

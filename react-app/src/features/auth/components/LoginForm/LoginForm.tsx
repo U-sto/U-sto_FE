@@ -4,6 +4,7 @@ import TextField from '../../../../components/common/TextField/TextField'
 import PasswordField from '../../../../components/common/PasswordField/PasswordField'
 import Checkbox from '../../../../components/common/Checkbox/Checkbox'
 import Button from '../../../../components/common/Button/Button'
+import { login, saveLoginToken } from '../../../../api/auth'
 import './LoginForm.css'
 
 const LoginForm = () => {
@@ -11,18 +12,26 @@ const LoginForm = () => {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isFormValid = userId.trim().length > 0 && password.trim().length > 0
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!isFormValid) {
-      return
+    if (!isFormValid) return
+
+    setIsSubmitting(true)
+    try {
+      const res = await login({ usrId: userId.trim(), pwd: password })
+      saveLoginToken(res.data)
+      navigate('/home')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '로그인에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
-    // TODO: API 연동 시 isFormValid 검사 후 로그인 성공 시에만 navigate
-    navigate('/home')
   }
 
   return (
@@ -50,8 +59,8 @@ const LoginForm = () => {
 
       {error && <p className="form-error">{error}</p>}
 
-      <Button type="submit" disabled={!isFormValid}>
-        로그인
+      <Button type="submit" disabled={!isFormValid || isSubmitting}>
+        {isSubmitting ? '로그인 중...' : '로그인'}
       </Button>
 
       <div className="login-form-footer">

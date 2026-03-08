@@ -9,9 +9,11 @@ interface IDCheckFieldProps {
   onCheckDuplicate: () => void
   /** ID 중복 확인 완료 여부 - 시각적 피드백 및 다음 단계 진행 제어용 */
   isIdChecked?: boolean
+  /** 중복확인 API 호출 중 여부 */
+  isChecking?: boolean
 }
 
-const IDCheckField = ({ userId, onUserIdChange, onCheckDuplicate, isIdChecked }: IDCheckFieldProps) => {
+const IDCheckField = ({ userId, onUserIdChange, onCheckDuplicate, isIdChecked, isChecking }: IDCheckFieldProps) => {
   return (
     <div className={`id-check-field ${isIdChecked ? 'id-check-field--verified' : ''}`} aria-describedby={isIdChecked ? 'id-check-status' : undefined}>
       <div className="id-check-wrapper">
@@ -25,8 +27,9 @@ const IDCheckField = ({ userId, onUserIdChange, onCheckDuplicate, isIdChecked }:
           type="button"
           onClick={onCheckDuplicate}
           className="check-duplicate-button"
+          disabled={isChecking}
         >
-          중복확인
+          {isChecking ? '확인 중...' : '중복확인'}
         </Button>
       </div>
       {isIdChecked && (

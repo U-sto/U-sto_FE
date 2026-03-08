@@ -7,6 +7,7 @@ import AssetManagementPageLayout from '../../../components/layout/management/Ass
 import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
+import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import './AcquisitionListPage.css'
@@ -149,8 +150,7 @@ const AcquisitionListPage = () => {
       depthSecondLabel="물품 취득 관리"
       depthThirdLabel=""
     >
-      <section className="operation-ledger-filter">
-        <div className="operation-ledger-filter-wrapper">
+      <FilterPanel pageKey="acq" filterPrefix="operation-ledger">
           <div className="operation-ledger-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">G2B목록명</div>
@@ -246,8 +246,7 @@ const AcquisitionListPage = () => {
               조회
             </Button>
           </div>
-        </div>
-      </section>
+        </FilterPanel>
 
       <DataTable<AcquisitionListRow>
         pageKey="operation-ledger"

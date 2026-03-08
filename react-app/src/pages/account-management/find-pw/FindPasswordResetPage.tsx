@@ -1,23 +1,37 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, type FormEvent } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import AuthLayout from '../../../components/layout/auth/AuthLayout/AuthLayout'
 import FindIdTabs from '../../../features/auth/components/FindIdTabs/FindIdTabs'
 import PasswordField from '../../../components/common/PasswordField/PasswordField'
 import Button from '../../../components/common/Button/Button'
+import { resetPassword } from '../../../api/auth'
 import './FindPasswordResetPage.css'
 
 const MIN_PASSWORD_LENGTH = 8
 
+interface LocationState {
+  _fromFindPassword?: boolean
+}
+
 const FindPasswordResetPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const state = location.state as LocationState | null
+
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: FormEvent) => {
+  useEffect(() => {
+    if (state == null || !state._fromFindPassword) {
+      navigate('/find-password', { replace: true })
+    }
+  }, [state, navigate])
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    // trim()으로 공백 제거 후 검증 - 데이터 무결성 강화
     const trimmedPassword = password.trim()
     const trimmedConfirm = confirmPassword.trim()
 
@@ -31,15 +45,25 @@ const FindPasswordResetPage = () => {
       return
     }
 
-    // 비밀번호 규칙 검사 (최소 8자, 영문/숫자/특수문자 조합 등 - 추후 API 연동 시 정확 규칙 적용)
     if (trimmedPassword.length < MIN_PASSWORD_LENGTH) {
       setError('비밀번호는 8자 이상이어야 합니다.')
       return
     }
 
     setError(null)
-    // TODO: API 연동 시 비밀번호 규칙 검사 후 navigate
-    navigate('/find-password/complete')
+    setIsSubmitting(true)
+    try {
+      await resetPassword({ pwd: trimmedPassword, pwdConfirm: trimmedConfirm })
+      navigate('/find-password/complete')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '비밀번호 변경에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (state == null || !state._fromFindPassword) {
+    return null
   }
 
   return (
@@ -70,7 +94,9 @@ const FindPasswordResetPage = () => {
           />
         </div>
         {error && <p className="form-error">{error}</p>}
-        <Button type="submit">변경하기</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? '변경 중...' : '변경하기'}
+        </Button>
       </form>
     </AuthLayout>
   )

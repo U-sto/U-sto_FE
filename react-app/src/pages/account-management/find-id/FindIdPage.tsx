@@ -5,25 +5,63 @@ import FindIdTabs from '../../../features/auth/components/FindIdTabs/FindIdTabs'
 import TextField from '../../../components/common/TextField/TextField'
 import EmailAuthField from '../../../features/auth/components/EmailAuthField/EmailAuthField'
 import Button from '../../../components/common/Button/Button'
+import { sendEmailVerificationEmail, checkEmailVerificationCode } from '../../../api/auth'
 import './FindIdPage.css'
 
-const DUMMY_USER_ID = 'user_found_id'
+/** @ 앞부분만 검증 (도메인 @hanyang.ac.kr 은 고정) */
+const LOCAL_PART_REGEX = /^[0-9a-zA-Z._%+-]+$/
 
 const FindIdPage = () => {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [isSendingCode, setIsSendingCode] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSendCode = () => {
-    // TODO: 인증번호 전송 API 연동
+  const isEmailValid =
+    email.trim().length > 0 && LOCAL_PART_REGEX.test(email.trim())
+
+  const handleSendCode = async () => {
+    if (!isEmailValid) {
+      setError('이메일 @ 앞부분을 입력해 주세요.')
+      return
+    }
+    setError(null)
+    setIsSendingCode(true)
+    try {
+      const fullEmail = `${email.trim()}@hanyang.ac.kr`
+      await sendEmailVerificationEmail({
+        usrNm: name.trim(),
+        usrId: '',
+        emailId: fullEmail,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
+    } finally {
+      setIsSendingCode(false)
+    }
   }
 
-  const handleAuth = (e: FormEvent) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault()
+    const trimmedCode = authCode.trim()
+    if (!trimmedCode) {
+      setError('인증번호를 입력해 주세요.')
+      return
+    }
+
     setError(null)
-    navigate('/find-id/result', { state: { userId: DUMMY_USER_ID } })
+    setIsVerifying(true)
+    try {
+      await checkEmailVerificationCode({ code: trimmedCode })
+      navigate('/find-id/result', { state: { _fromFindId: true } })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '인증번호 확인에 실패했습니다.')
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   return (
@@ -58,7 +96,9 @@ const FindIdPage = () => {
           />
         </div>
         {error && <p className="form-error">{error}</p>}
-        <Button type="submit">인증하기</Button>
+        <Button type="submit" disabled={isSendingCode || isVerifying}>
+          {isVerifying ? '확인 중...' : isSendingCode ? '전송 중...' : '인증하기'}
+        </Button>
       </form>
     </AuthLayout>
   )

@@ -3,11 +3,13 @@ import type { ManagementPageKey } from '../../../../components/layout/management
 
 interface FilterPanelProps {
   pageKey: ManagementPageKey
+  /** 클래스 prefix 오버라이드 (예: asset 관리 페이지에서 operation-ledger-filter 사용 시) */
+  filterPrefix?: string
   children: ReactNode
 }
 
-const FilterPanel = ({ pageKey, children }: FilterPanelProps) => {
-  const prefix = pageKey
+const FilterPanel = ({ pageKey, filterPrefix, children }: FilterPanelProps) => {
+  const prefix = filterPrefix ?? pageKey
 
   return (
     <section className={`${prefix}-filter`}>

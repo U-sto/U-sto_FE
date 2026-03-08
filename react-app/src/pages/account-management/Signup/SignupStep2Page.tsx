@@ -4,6 +4,7 @@ import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLay
 import IDCheckField from '../../../features/auth/components/IDCheckField/IDCheckField'
 import PasswordField from '../../../components/common/PasswordField/PasswordField'
 import Button from '../../../components/common/Button/Button'
+import { checkUserIdExists } from '../../../api/users'
 import './SignupStep2Page.css'
 
 const SignupStep2Page = () => {
@@ -12,17 +13,32 @@ const SignupStep2Page = () => {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [isIdChecked, setIsIdChecked] = useState(false)
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleCheckDuplicate = () => {
-    if (!userId.trim()) {
+  const handleCheckDuplicate = async () => {
+    const trimmed = userId.trim()
+    if (!trimmed) {
       setError('아이디를 입력해 주세요.')
       setIsIdChecked(false)
       return
     }
     setError(null)
-    setIsIdChecked(true)
-    // TODO: 실제 중복 검사 API 호출
+    setIsCheckingDuplicate(true)
+    try {
+      const { success, message } = await checkUserIdExists(trimmed)
+      if (success && message && !/이미|중복/.test(message)) {
+        setIsIdChecked(true)
+      } else {
+        setIsIdChecked(false)
+        setError(message || '이미 사용 중인 아이디입니다.')
+      }
+    } catch (e) {
+      setIsIdChecked(false)
+      setError(e instanceof Error ? e.message : '중복 확인에 실패했습니다.')
+    } finally {
+      setIsCheckingDuplicate(false)
+    }
   }
 
   const handleNext = (e: FormEvent) => {
@@ -48,7 +64,9 @@ const SignupStep2Page = () => {
     }
 
     setError(null)
-    navigate('/signup/step3')
+    navigate('/signup/step3', {
+      state: { userId: userId.trim(), password: trimmedPassword },
+    })
   }
 
   return (
@@ -62,6 +80,7 @@ const SignupStep2Page = () => {
           }}
           onCheckDuplicate={handleCheckDuplicate}
           isIdChecked={isIdChecked}
+          isChecking={isCheckingDuplicate}
         />
         <div className="password-fields">
           <PasswordField
