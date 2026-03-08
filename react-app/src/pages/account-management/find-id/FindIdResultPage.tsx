@@ -30,10 +30,7 @@ const FindIdResultPage = () => {
     findUserId()
       .then((res) => {
         if (cancelled) return
-        const id =
-          res.data?.usrId ??
-          (res.data && 'userId' in res.data ? String((res.data as { userId?: string }).userId) : '') ??
-          ''
+        const id = res.data?.usrId ?? ''
         setFoundUserId(id)
         if (!id) setError(res.message || '아이디를 찾을 수 없습니다.')
       })
