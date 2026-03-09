@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
 import TextField from '../../components/common/TextField/TextField'
-import PasswordField from '../../components/common/PasswordField/PasswordField'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import './UserInfoPage.css'
 
 const UserInfoPage = () => {
   const navigate = useNavigate()
   const [userId, setUserId] = useState('hyuusto')
-  const [password, setPassword] = useState('')
   const [name, setName] = useState('유스토')
   const [email, setEmail] = useState('usto@hanyang.ac.kr')
   const [org, setOrg] = useState('한양대학교 ERICA캠퍼스')
@@ -88,13 +86,6 @@ const UserInfoPage = () => {
                 >
                   변경
                 </button>
-              </div>
-              <div className="user-info-password-wrap">
-                <PasswordField
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="비밀번호"
-                />
               </div>
             </div>
             <div className="user-info-field">

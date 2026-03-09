@@ -49,7 +49,10 @@ const AiForecastPage = () => {
     setError(null)
     setLoading(true)
     try {
-      const data = await fetchAiForecast(query.trim(), analysisCondition.year)
+      const data = await fetchAiForecast(
+        query.trim(),
+        JSON.stringify(analysisCondition),
+      )
       setResult(data)
       setActiveTab('result')
     } catch (e) {

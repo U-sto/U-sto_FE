@@ -8,6 +8,7 @@ import Button from '../../../components/common/Button/Button'
 import { DEPARTMENTS } from '../../../constants/departments'
 import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../../api/auth'
 import { signUp } from '../../../api/users'
+import { formatPhoneNumber } from '../../../utils/formatPhoneNumber'
 import './SignupStep3Page.css'
 
 export interface SignupStep2State {
@@ -34,14 +35,7 @@ const SignupStep3Page = () => {
   }, [step2State, navigate])
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^0-9]/g, '')
-    let formatted = rawValue
-    if (rawValue.length > 3 && rawValue.length <= 7) {
-      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3)}`
-    } else if (rawValue.length > 7) {
-      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3, 7)}-${rawValue.slice(7, 11)}`
-    }
-    setPhone(formatted)
+    setPhone(formatPhoneNumber(e.target.value))
   }
 
   const handleSendCode = async () => {

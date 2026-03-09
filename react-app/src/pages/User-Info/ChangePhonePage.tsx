@@ -4,6 +4,7 @@ import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithM
 import TextField from '../../components/common/TextField/TextField'
 import Button from '../../components/common/Button/Button'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
+import { formatPhoneNumber } from '../../utils/formatPhoneNumber'
 import './ChangePhonePage.css'
 
 const ChangePhonePage = () => {
@@ -12,16 +13,8 @@ const ChangePhonePage = () => {
   const [authCode, setAuthCode] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  /** SignupStep3Page와 동일: 010-XXXX-XXXX 자동 포맷 */
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^0-9]/g, '')
-    let formatted = rawValue
-    if (rawValue.length > 3 && rawValue.length <= 7) {
-      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3)}`
-    } else if (rawValue.length > 7) {
-      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3, 7)}-${rawValue.slice(7, 11)}`
-    }
-    setPhone(formatted)
+    setPhone(formatPhoneNumber(e.target.value))
   }
 
   const handleSendCode = () => {
