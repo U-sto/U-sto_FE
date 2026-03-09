@@ -43,7 +43,6 @@ const DATE_RANGES = [
   { fromKey: 'sortDateFrom' as const, toKey: 'sortDateTo' as const, errorKey: 'sortDate' },
   { fromKey: 'acquireDateFrom' as const, toKey: 'acquireDateTo' as const, errorKey: 'acquireDate' },
 ]
-const DATE_RANGE_ERROR_MESSAGE = '비교날짜 이 후의 날짜를 선택해주세요 !'
 
 /** AcqTableRow는 AcqConfirmationRow와 동일 - API 타입과 정렬 */
 type AcqTableRow = AcqConfirmationRow
@@ -56,6 +55,7 @@ const AcqConfirmationPage = () => {
     setDateError,
     validateDateRange,
     onReset,
+    onSearch,
   } = useManagementFilter<Filters>({
     initialFilters: INITIAL_FILTERS,
     dateRanges: DATE_RANGES,
@@ -98,21 +98,9 @@ const AcqConfirmationPage = () => {
     loadData()
   }, [loadData])
 
-  /** 조회: 날짜 검증 후 query 한 번만 갱신 → loadData 1회만 실행 */
+  /** 조회: useManagementFilter의 onSearch로 날짜 검증 후, 성공 시에만 query 갱신 → loadData 1회만 실행 */
   const handleSearchClick = () => {
-    const nextErrors: Record<string, string> = {}
-    let hasError = false
-    for (const { fromKey, toKey, errorKey } of DATE_RANGES) {
-      const from = String(filters[fromKey] ?? '')
-      const to = String(filters[toKey] ?? '')
-      if (from && to && to < from) {
-        nextErrors[errorKey] = DATE_RANGE_ERROR_MESSAGE
-        hasError = true
-      }
-    }
-    setDateError('sortDate', nextErrors.sortDate ?? '')
-    setDateError('acquireDate', nextErrors.acquireDate ?? '')
-    if (!hasError) {
+    if (onSearch()) {
       setQuery({ page: 1, filters: { ...filters } })
     }
   }

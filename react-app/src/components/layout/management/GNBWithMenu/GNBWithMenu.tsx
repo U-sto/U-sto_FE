@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SystemLogo from '../../../common/SystemLogo/SystemLogo'
-import { logout, clearLoginToken } from '../../../../api/auth'
+import { logout } from '../../../../api/auth'
 import { menuData, type MenuItem, type MenuSection } from '../../../../constants/menu'
 import './GNBWithMenu.css'
 
@@ -21,7 +21,6 @@ const GNBWithMenu = () => {
     try {
       await logout()
     } finally {
-      clearLoginToken()
       navigate('/login')
     }
   }

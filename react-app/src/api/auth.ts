@@ -40,10 +40,15 @@ export function clearLoginToken(): void {
 /**
  * 로그아웃 (서버에 로그아웃 요청, Authorization 헤더로 사용자 식별)
  * POST /api/auth/logout
+ * 성공/실패와 관계없이 finally에서 토큰 제거하여 클라이언트에 토큰이 남지 않도록 함.
  */
 export async function logout() {
-  const res = await http.post<ApiResponse<null>>('/api/auth/logout')
-  return res.data
+  try {
+    const res = await http.post<ApiResponse<null>>('/api/auth/logout')
+    return res.data
+  } finally {
+    clearLoginToken()
+  }
 }
 
 export interface SendEmailVerificationPayload {

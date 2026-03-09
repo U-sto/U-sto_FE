@@ -42,7 +42,8 @@ export function useManagementFilter<T extends Record<string, unknown>>(options: 
     setSearchedFilters(null)
   }, [initialFilters])
 
-  const onSearch = useCallback(() => {
+  /** 날짜 범위 검증 후 검색 필터 확정. 검증 실패 시 false, 성공 시 true 반환. */
+  const onSearch = useCallback((): boolean => {
     const nextErrors: Record<string, string> = {}
     let hasError = false
     for (const { fromKey, toKey, errorKey } of dateRanges) {
@@ -54,8 +55,9 @@ export function useManagementFilter<T extends Record<string, unknown>>(options: 
       }
     }
     setDateErrors(nextErrors)
-    if (hasError) return
+    if (hasError) return false
     setSearchedFilters({ ...filters })
+    return true
   }, [filters, dateRanges])
 
   return {
