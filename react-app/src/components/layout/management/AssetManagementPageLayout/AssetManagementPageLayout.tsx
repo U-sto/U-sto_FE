@@ -128,11 +128,11 @@ const AssetManagementPageLayout = ({
           <section className={`${prefix}-depthbar`}>
             <div className={`${prefix}-depthbar-bg`} />
             {/* 뎁스: 왼쪽에 물품관리 있으므로 여기선 제거 → 1=물품 취득 관리, 2=물품 기본 정보관리 */}
-            <div className={`${prefix}-depthbar-track ${!(depthThirdLabel != null && depthThirdLabel !== '') ? `${prefix}-depthbar-track-single` : ''}`.trim()}>
+            <div className={`${prefix}-depthbar-track ${!depthThirdLabel ? `${prefix}-depthbar-track-single` : ''}`.trim()}>
               <div className={`${prefix}-depth-pill ${prefix}-depth-pill-active`}>
                 <span className={`${prefix}-depth-text`}>{depthSecondLabel}</span>
               </div>
-              {depthThirdLabel != null && depthThirdLabel !== '' && (
+              {depthThirdLabel && (
                 <div className={`${prefix}-depth-pill`}>
                   <span className={`${prefix}-depth-text ${prefix}-depth-text-inactive`}>
                     {depthThirdLabel}
