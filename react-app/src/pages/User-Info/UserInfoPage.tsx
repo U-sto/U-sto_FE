@@ -48,7 +48,7 @@ const UserInfoPage = () => {
               <label className="user-info-label">이름</label>
               <TextField
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                readOnly
                 className="user-info-input user-info-input-readonly"
               />
             </div>
@@ -56,7 +56,7 @@ const UserInfoPage = () => {
               <label className="user-info-label">소속</label>
               <TextField
                 value={org}
-                onChange={(e) => setOrg(e.target.value)}
+                readOnly
                 className="user-info-input user-info-input-readonly"
               />
             </div>
@@ -64,7 +64,7 @@ const UserInfoPage = () => {
               <label className="user-info-label">역할</label>
               <TextField
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                readOnly
                 className="user-info-input user-info-input-readonly"
               />
             </div>
@@ -74,7 +74,7 @@ const UserInfoPage = () => {
               <label className="user-info-label">이메일</label>
               <TextField
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                readOnly
                 className="user-info-input user-info-input-readonly"
               />
             </div>

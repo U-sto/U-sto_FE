@@ -39,6 +39,12 @@ const INITIAL_FILTERS: Filters = {
   category: '',
 }
 
+const DATE_RANGES = [
+  { fromKey: 'sortDateFrom' as const, toKey: 'sortDateTo' as const, errorKey: 'sortDate' },
+  { fromKey: 'acquireDateFrom' as const, toKey: 'acquireDateTo' as const, errorKey: 'acquireDate' },
+]
+const DATE_RANGE_ERROR_MESSAGE = '비교날짜 이 후의 날짜를 선택해주세요 !'
+
 /** AcqTableRow는 AcqConfirmationRow와 동일 - API 타입과 정렬 */
 type AcqTableRow = AcqConfirmationRow
 
@@ -46,18 +52,19 @@ const AcqConfirmationPage = () => {
   const {
     filters,
     setFilters,
-    searchedFilters,
     dateErrors,
     setDateError,
     validateDateRange,
     onReset,
-    onSearch,
   } = useManagementFilter<Filters>({
     initialFilters: INITIAL_FILTERS,
-    dateRanges: [
-      { fromKey: 'sortDateFrom', toKey: 'sortDateTo', errorKey: 'sortDate' },
-      { fromKey: 'acquireDateFrom', toKey: 'acquireDateTo', errorKey: 'acquireDate' },
-    ],
+    dateRanges: DATE_RANGES,
+  })
+
+  /** 검색 조건·페이지를 하나의 상태로 관리하여 API 이중 호출 방지 */
+  const [query, setQuery] = useState<{ page: number; filters: Filters }>({
+    page: 1,
+    filters: INITIAL_FILTERS,
   })
 
   const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
@@ -73,44 +80,47 @@ const AcqConfirmationPage = () => {
     [],
   )
 
-  /** 서버 사이드 페이지네이션: 현재 페이지 */
-  const [currentPage, setCurrentPage] = useState(1)
-  /** 서버 사이드 페이지네이션: 테이블 데이터 (API 응답) */
   const [tableData, setTableData] = useState<AcqTableRow[]>([])
-  /** 서버 사이드 페이지네이션: 전체 건수 (API 응답) */
   const [totalCount, setTotalCount] = useState(0)
-
   const pageSize = 10
 
-  /**
-   * 백엔드 API에서 필터·페이지네이션 적용 후 결과만 수신 (서버 사이드 필터링).
-   * searchedFilters가 null이면 초기 필터(전체)로 조회.
-   */
   const loadData = useCallback(async () => {
-    const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
     const res = await fetchAcqConfirmationList({
-      page: currentPage,
+      page: query.page,
       pageSize,
-      filters: effectiveFilters,
+      filters: query.filters,
     })
     setTableData(res.data)
     setTotalCount(res.totalCount)
-  }, [currentPage, searchedFilters])
+  }, [query])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
-  /** 조회 시 첫 페이지로 이동 후 API 재호출 (searchedFilters 변경 → loadData 실행) */
+  /** 조회: 날짜 검증 후 query 한 번만 갱신 → loadData 1회만 실행 */
   const handleSearchClick = () => {
-    onSearch()
-    setCurrentPage(1)
+    const nextErrors: Record<string, string> = {}
+    let hasError = false
+    for (const { fromKey, toKey, errorKey } of DATE_RANGES) {
+      const from = String(filters[fromKey] ?? '')
+      const to = String(filters[toKey] ?? '')
+      if (from && to && to < from) {
+        nextErrors[errorKey] = DATE_RANGE_ERROR_MESSAGE
+        hasError = true
+      }
+    }
+    setDateError('sortDate', nextErrors.sortDate ?? '')
+    setDateError('acquireDate', nextErrors.acquireDate ?? '')
+    if (!hasError) {
+      setQuery({ page: 1, filters: { ...filters } })
+    }
   }
 
-  /** 초기화 시 첫 페이지로 이동 */
+  /** 초기화: 폼 리셋 + query 초기값으로 한 번만 갱신 */
   const handleReset = () => {
     onReset()
-    setCurrentPage(1)
+    setQuery({ page: 1, filters: INITIAL_FILTERS })
   }
 
   const setSortDateError = (err: string) => setDateError('sortDate', err)
@@ -350,8 +360,8 @@ const AcqConfirmationPage = () => {
         data={tableData}
         totalCount={totalCount}
         pageSize={pageSize}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        currentPage={query.page}
+        onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))}
         columns={columns}
         getRowKey={(row) => row.id}
         renderActions={() => (

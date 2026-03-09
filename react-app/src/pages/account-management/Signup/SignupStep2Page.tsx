@@ -26,8 +26,14 @@ const SignupStep2Page = () => {
     setError(null)
     setIsCheckingDuplicate(true)
     try {
-      const { success, message } = await checkUserIdExists(trimmed)
-      if (success && message && !/이미|중복/.test(message)) {
+      const res = await checkUserIdExists(trimmed)
+      const { success, message, data } = res
+      // 백엔드가 data.isAvailable을 주면 우선 사용. 없으면 message 문자열에 의존(문구 변경 시 취약).
+      const isAvailable =
+        typeof data?.isAvailable === 'boolean'
+          ? data.isAvailable
+          : Boolean(success && message && !/이미|중복/.test(message))
+      if (isAvailable) {
         setIsIdChecked(true)
       } else {
         setIsIdChecked(false)

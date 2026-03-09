@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
 import TextField from '../../components/common/TextField/TextField'
@@ -12,10 +12,22 @@ const ChangePhonePage = () => {
   const [authCode, setAuthCode] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  /** SignupStep3Page와 동일: 010-XXXX-XXXX 자동 포맷 */
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/[^0-9]/g, '')
+    let formatted = rawValue
+    if (rawValue.length > 3 && rawValue.length <= 7) {
+      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3)}`
+    } else if (rawValue.length > 7) {
+      formatted = `${rawValue.slice(0, 3)}-${rawValue.slice(3, 7)}-${rawValue.slice(7, 11)}`
+    }
+    setPhone(formatted)
+  }
+
   const handleSendCode = () => {
-    const trimmed = phone.trim()
-    if (!trimmed) {
-      setError('전화번호를 입력해 주세요.')
+    const trimmed = phone.replace(/\s/g, '').trim()
+    if (!/^010-\d{4}-\d{4}$/.test(trimmed)) {
+      setError('올바른 전화번호를 입력해 주세요. (010-XXXX-XXXX)')
       return
     }
     setError(null)
@@ -24,11 +36,11 @@ const ChangePhonePage = () => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    const trimmedPhone = phone.trim()
+    const trimmedPhone = phone.replace(/\s/g, '').trim()
     const trimmedCode = authCode.trim()
 
-    if (!trimmedPhone) {
-      setError('전화번호를 입력해 주세요.')
+    if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
+      setError('올바른 전화번호를 입력해 주세요. (010-XXXX-XXXX)')
       return
     }
     if (!trimmedCode) {
@@ -66,9 +78,9 @@ const ChangePhonePage = () => {
                 type="tel"
                 placeholder="전화번호"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
                 className="change-phone-input"
-                inputMode="tel"
+                inputMode="numeric"
               />
               <Button
                 type="button"

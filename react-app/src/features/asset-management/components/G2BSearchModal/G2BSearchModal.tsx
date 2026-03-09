@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useVisiblePageNumbers } from '../../../../hooks/useVisiblePageNumbers'
 import Modal from '../../../../components/common/Modal/Modal'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
@@ -116,46 +117,14 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
 
   const itemDetailTotalPages = Math.ceil(filteredItemDetails.length / pageSize)
 
-  /** DataTable과 동일: 현재 페이지 중심 + 말줄임 동적 페이지네이션 */
-  const classificationVisiblePages = useMemo(() => {
-    const total = Math.max(1, classificationTotalPages)
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-    const current = classificationPage
-    const windowSize = 2
-    const start = Math.max(1, current - windowSize)
-    const end = Math.min(total, current + windowSize)
-    const list: (number | 'ellipsis')[] = []
-    if (start > 1) {
-      list.push(1)
-      if (start > 2) list.push('ellipsis')
-    }
-    for (let p = start; p <= end; p++) list.push(p)
-    if (end < total) {
-      if (end < total - 1) list.push('ellipsis')
-      list.push(total)
-    }
-    return list
-  }, [classificationTotalPages, classificationPage])
-
-  const itemDetailVisiblePages = useMemo(() => {
-    const total = Math.max(1, itemDetailTotalPages)
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-    const current = itemDetailPage
-    const windowSize = 2
-    const start = Math.max(1, current - windowSize)
-    const end = Math.min(total, current + windowSize)
-    const list: (number | 'ellipsis')[] = []
-    if (start > 1) {
-      list.push(1)
-      if (start > 2) list.push('ellipsis')
-    }
-    for (let p = start; p <= end; p++) list.push(p)
-    if (end < total) {
-      if (end < total - 1) list.push('ellipsis')
-      list.push(total)
-    }
-    return list
-  }, [itemDetailTotalPages, itemDetailPage])
+  const classificationVisiblePages = useVisiblePageNumbers(
+    classificationTotalPages,
+    classificationPage,
+  )
+  const itemDetailVisiblePages = useVisiblePageNumbers(
+    itemDetailTotalPages,
+    itemDetailPage,
+  )
 
   const handleClassificationSearch = () => {
     setClassificationPage(1)
