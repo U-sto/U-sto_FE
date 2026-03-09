@@ -136,16 +136,18 @@ const OperationLedgerDetailPage = () => {
   }
 
   const handleBackToList = () => {
-    const base = savedValues ?? form
-    const updatedItem: OperationLedgerRow = {
-      ...item,
-      acquireAmount: base.acquireAmount,
-      usefulLife: base.usefulLife,
+    if (savedValues) {
+      const updatedItem: OperationLedgerRow = {
+        ...item,
+        acquireAmount: savedValues.acquireAmount,
+        usefulLife: savedValues.usefulLife,
+      }
+      navigate('/asset-management/operation-management/operation-ledger', {
+        state: { updatedItem },
+      })
+    } else {
+      navigate('/asset-management/operation-management/operation-ledger')
     }
-
-    navigate('/asset-management/operation-management/operation-ledger', {
-      state: { updatedItem },
-    })
   }
 
   const [g2bPrefix, g2bSuffix] = item.g2bNumber.split('-')
