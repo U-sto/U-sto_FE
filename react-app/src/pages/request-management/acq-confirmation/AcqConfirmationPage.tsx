@@ -39,6 +39,32 @@ const INITIAL_FILTERS: Filters = {
   category: '',
 }
 
+const SearchIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M21 21L16.65 16.65"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 const DATE_RANGES = [
   { fromKey: 'sortDateFrom' as const, toKey: 'sortDateTo' as const, errorKey: 'sortDate' },
   { fromKey: 'acquireDateFrom' as const, toKey: 'acquireDateTo' as const, errorKey: 'acquireDate' },
@@ -69,16 +95,6 @@ const AcqConfirmationPage = () => {
 
   const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
   const categoryOptions = useMemo(() => ['전체', '취득', '기타'], [])
-
-  const g2bOptions = useMemo(
-    () => [
-      { name: '노트북', number: '43211613-26081535' },
-      { name: '데스크탑', number: '43211614-26081536' },
-      { name: '프로젝터', number: '43211615-26081537' },
-      { name: '회의실 의자', number: '43211616-26081538' },
-    ],
-    [],
-  )
 
   const [tableData, setTableData] = useState<AcqTableRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
@@ -113,30 +129,6 @@ const AcqConfirmationPage = () => {
 
   const setSortDateError = (err: string) => setDateError('sortDate', err)
   const setAcquireDateError = (err: string) => setDateError('acquireDate', err)
-
-  /** G2B 목록명 선택 시 해당 번호로 g2bNumberFrom/To 동기화 */
-  const handleG2bNameChange = useCallback(
-    (value: string) => {
-      const matched = g2bOptions.find((opt) => opt.name === value)
-      if (matched) {
-        const numberPart = matched.number.split('-')[0] ?? ''
-        setFilters((p) => ({
-          ...p,
-          g2bName: value,
-          g2bNumberFrom: numberPart,
-          g2bNumberTo: numberPart,
-        }))
-      } else {
-        setFilters((p) => ({
-          ...p,
-          g2bName: value,
-          g2bNumberFrom: '',
-          g2bNumberTo: '',
-        }))
-      }
-    },
-    [g2bOptions],
-  )
 
   const columns: DataTableColumn<AcqTableRow>[] = [
     {
@@ -214,15 +206,26 @@ const AcqConfirmationPage = () => {
     <ManagementPageLayout pageKey="acq" depthSecondLabel="물품 취득 확정 관리">
       <FilterPanel pageKey="acq">
         <div className="acq-filter-grid">
-                <div className="acq-field">
+                <div className="acq-field acq-field-g2b">
                   <div className="acq-label">G2B목록명</div>
-                  <Dropdown
-                    size="small"
-                    placeholder="목록명을 선택하세요"
-                    value={filters.g2bName}
-                    onChange={handleG2bNameChange}
-                    options={g2bOptions.map((opt) => opt.name)}
-                  />
+                  <div className="acq-input-and-search">
+                    <TextField
+                      value={filters.g2bName}
+                      onChange={(e) =>
+                        setFilters((p) => ({ ...p, g2bName: e.target.value }))
+                      }
+                      placeholder="G2B목록명 입력"
+                      className="acq-g2b-input"
+                    />
+                    <button
+                      type="button"
+                      className="acq-search-btn"
+                      aria-label="G2B목록명 검색"
+                      onClick={handleSearchClick}
+                    >
+                      <SearchIcon />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="acq-field">

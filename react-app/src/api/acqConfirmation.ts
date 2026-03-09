@@ -1,8 +1,18 @@
 /**
  * 물품 취득 확정 관리 API 추상화
- * 클라이언트 사이드 필터링/페이지네이션 대신 서버 사이드 방식으로 전환.
- * currentPage, pageSize, filters를 쿼리 파라미터로 전달하는 구조.
+ * 실제 백엔드: GET /api/item/acquisitions (물품취득목록조회)
+ * searchRequest: 필터(취득일/승인일/apprSts 등), pageable: 페이지네이션.
+ * 물품취득관리 페이지도 동일 API 사용 가능.
  */
+
+import http from './http'
+import type { ApiResponse } from './types'
+import type {
+  ItemAcquisitionContent,
+  ItemAcquisitionSearchRequest,
+  ItemAcquisitionPageable,
+  ItemAcquisitionsData,
+} from './itemAcquisitions'
 
 export type AcqConfirmationFilters = {
   g2bName: string
@@ -41,88 +51,78 @@ export type FetchAcqConfirmationResponse = {
   totalCount: number
 }
 
-/** 추상화된 API 호출 함수 - 실제 백엔드 연동 시 이 함수만 교체 */
+/**
+ * GET /api/item/acquisitions 응답 content 한 건 → 취득확정관리 테이블 행으로 변환
+ * 실제 API 연동 시 응답 data.content.map(mapItemAcquisitionToRow) 후 사용
+ */
+export function mapItemAcquisitionToAcqConfirmationRow(
+  item: ItemAcquisitionContent,
+  index: number,
+): AcqConfirmationRow {
+  return {
+    id: index + 1,
+    g2bNumber: item.g2bItemNo,
+    g2bName: item.g2bItemNm,
+    acquireDate: item.acqAt,
+    acquireAmount: item.acqUpr,
+    sortDate: item.apprAt,
+    operatingDept: item.deptNm,
+    operatingStatus: item.operSts,
+    usefulLife: item.drbYr
+      ? item.drbYr.endsWith('년')
+        ? item.drbYr
+        : `${item.drbYr}년`
+      : '',
+    quantity: item.acqQty,
+    approvalStatus: item.apprSts,
+  }
+}
+
+/** 화면 필터 → API searchRequest 변환 */
+function filtersToSearchRequest(filters: AcqConfirmationFilters): ItemAcquisitionSearchRequest {
+  const req: ItemAcquisitionSearchRequest = {}
+  if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
+  if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
+  if (filters.sortDateFrom) req.startApprAt = filters.sortDateFrom
+  if (filters.sortDateTo) req.endApprAt = filters.sortDateTo
+  if (filters.approvalStatus && filters.approvalStatus !== '전체') {
+    req.apprSts = filters.approvalStatus
+  }
+  if (filters.g2bNumberFrom) req.g2bDCd = filters.g2bNumberFrom
+  return req
+}
+
+/** 물품 취득 목록 조회 API 연동 (GET /api/item/acquisitions) */
 export async function fetchAcqConfirmationList(
   params: FetchAcqConfirmationParams
 ): Promise<FetchAcqConfirmationResponse> {
   const { page, pageSize, filters } = params
 
-  // TODO: 실제 API 연동 시 아래와 같이 호출
-  // const query = new URLSearchParams({
-  //   page: String(page),
-  //   pageSize: String(pageSize),
-  //   ...Object.fromEntries(
-  //     Object.entries(filters).filter(([, v]) => v != null && v !== '')
-  //   ),
-  // })
-  // const res = await fetch(`/api/acq-confirmation?${query}`)
-  // return res.json()
-
-  // 목업: 전체 데이터 생성 후 서버 사이드 필터/페이지네이션 시뮬레이션
-  const g2bOptions = [
-    { name: '노트북', number: '43211613-26081535' },
-    { name: '데스크탑', number: '43211614-26081536' },
-    { name: '프로젝터', number: '43211615-26081537' },
-    { name: '회의실 의자', number: '43211616-26081538' },
-  ]
-
-  const allData: AcqConfirmationRow[] = Array.from({ length: 15 }).map((_, idx) => {
-    const g2bOption = g2bOptions[idx % g2bOptions.length]
-    return {
-      id: idx + 1,
-      g2bNumber: g2bOption.number,
-      g2bName: g2bOption.name,
-      acquireDate: '2026-01-21',
-      acquireAmount: 1000000 * (idx + 1),
-      sortDate: '2026-01-21',
-      operatingDept: `운용부서 ${idx + 1}`,
-      operatingStatus: '운용중',
-      usefulLife: `${5 + idx}년`,
-      quantity: idx + 1,
-      approvalStatus: '대기',
-    }
-  })
-
-  // 서버 사이드 필터링 시뮬레이션 (실제로는 API에서 처리)
-  let filtered = allData
-
-  if (filters.g2bName && filters.g2bName !== '전체') {
-    filtered = filtered.filter((item) => item.g2bName === filters.g2bName)
-  }
-  if (filters.g2bNumberFrom || filters.g2bNumberTo) {
-    filtered = filtered.filter((item) => {
-      const parts = item.g2bNumber.split('-')
-      const val = parseInt(parts[0] ?? '0', 10)
-      if (filters.g2bNumberFrom) {
-        const from = parseInt(filters.g2bNumberFrom, 10)
-        if (isNaN(val) || val < from) return false
-      }
-      if (filters.g2bNumberTo) {
-        const to = parseInt(filters.g2bNumberTo, 10)
-        if (isNaN(val) || val > to) return false
-      }
-      return true
-    })
-  }
-  if (filters.sortDateFrom) {
-    filtered = filtered.filter((item) => item.sortDate >= filters.sortDateFrom)
-  }
-  if (filters.sortDateTo) {
-    filtered = filtered.filter((item) => item.sortDate <= filters.sortDateTo)
-  }
-  if (filters.acquireDateFrom) {
-    filtered = filtered.filter((item) => item.acquireDate >= filters.acquireDateFrom)
-  }
-  if (filters.acquireDateTo) {
-    filtered = filtered.filter((item) => item.acquireDate <= filters.acquireDateTo)
-  }
-  if (filters.approvalStatus && filters.approvalStatus !== '전체') {
-    filtered = filtered.filter((item) => item.approvalStatus === filters.approvalStatus)
+  const searchRequest = filtersToSearchRequest(filters)
+  const pageable: ItemAcquisitionPageable = {
+    page: page - 1,
+    size: pageSize,
   }
 
-  const totalCount = filtered.length
-  const start = (page - 1) * pageSize
-  const data = filtered.slice(start, start + pageSize)
+  const res = await http.get<ApiResponse<ItemAcquisitionsData>>(
+    '/api/item/acquisitions',
+    {
+      params: {
+        searchRequest: JSON.stringify(searchRequest),
+        pageable: JSON.stringify(pageable),
+      },
+    },
+  )
+
+  const payload = res.data.data
+  if (!payload) {
+    return { data: [], totalCount: 0 }
+  }
+
+  const data = payload.content.map((item, index) =>
+    mapItemAcquisitionToAcqConfirmationRow(item, index),
+  )
+  const totalCount = payload.totalElements ?? 0
 
   return { data, totalCount }
 }
