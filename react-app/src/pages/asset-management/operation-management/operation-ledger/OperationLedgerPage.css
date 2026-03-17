@@ -11,7 +11,7 @@
 
 .operation-ledger-filter-wrapper {
   border-radius: 10px;
-  background: var(--usto-primary-100);
+  background: var(--usto-primary-200);
   padding: 20px 24px;
   display: flex;
   flex-direction: row;
@@ -36,6 +36,11 @@
 
 .operation-ledger-field-span2 {
   grid-column: span 2;
+}
+
+/* 보유 현황 조회 / 물품 운용 대장 관리: 3열(물품고유번호)만 1.05배 너비 */
+.inventory-status-filter-grid.operation-ledger-filter-grid {
+  grid-template-columns: 1fr 1fr 1.05fr 1fr;
 }
 
 .operation-ledger-label {

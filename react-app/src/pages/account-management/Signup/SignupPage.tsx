@@ -5,6 +5,7 @@ import EmailAuthField from '../../../features/auth/components/EmailAuthField/Ema
 import TextField from '../../../components/common/TextField/TextField'
 import Button from '../../../components/common/Button/Button'
 import { sendEmailVerificationEmail, checkEmailVerificationCode } from '../../../api/auth'
+import { checkEmailExists } from '../../../api/users'
 
 /** @ 앞부분만 검증 (도메인 @hanyang.ac.kr 은 고정) */
 const LOCAL_PART_REGEX = /^[0-9a-zA-Z._%+-]+$/
@@ -28,11 +29,12 @@ const SignupPage = () => {
     setError(null)
     setIsSendingCode(true)
     try {
-      const fullEmail = `${emailLocal.trim()}@hanyang.ac.kr`
+      const emailId = emailLocal.trim()
+      await checkEmailExists(emailId)
       await sendEmailVerificationEmail({
         usrNm: '',
         usrId: '',
-        emailId: fullEmail,
+        emailId,
       })
     } catch (e) {
       const message = e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.'

@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useVisiblePageNumbers } from '../../../../hooks/useVisiblePageNumbers'
 import Modal from '../../../../components/common/Modal/Modal'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
 import TitlePill from '../../../../components/common/TitlePill/TitlePill'
+import { fetchG2BCategories, fetchG2BItems } from '../../../../api/g2b'
+import type { G2BCategoryDto, G2BItemDto } from '../../../../api/g2b'
 import './G2BSearchModal.css'
 
 export type G2BItem = {
@@ -45,31 +47,42 @@ interface G2BSearchModalProps {
   onSelect: (item: G2BItem) => void
 }
 
-// 임시 목업 데이터
-const MOCK_CLASSIFICATION_DATA: ItemClassification[] = [
-  { id: '1', sequence: 1, code: 'CLS001', name: 'IT기기' },
-  { id: '2', sequence: 2, code: 'CLS002', name: '가구' },
-  { id: '3', sequence: 3, code: 'CLS003', name: '영상기기' },
-  { id: '4', sequence: 4, code: 'CLS004', name: '사무용품' },
-]
+const pageSize = 10
 
-const MOCK_ITEM_DETAIL_DATA: ItemDetail[] = [
-  { id: '1', sequence: 1, classificationCode: 'CLS001', identificationCode: '43211613-26081535', name: '노트북', sortDate: '2024-12-01', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '1500000' },
-  { id: '2', sequence: 2, classificationCode: 'CLS001', identificationCode: '43211614-26081536', name: '데스크탑', sortDate: '2024-11-15', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '1200000' },
-  { id: '3', sequence: 3, classificationCode: 'CLS001', identificationCode: '43211615-26081537', name: '모니터', sortDate: '2024-10-20', operatingStatus: '운용중', usefulLife: '3', acquireAmount: '350000' },
-  { id: '4', sequence: 4, classificationCode: 'CLS002', identificationCode: '43211616-26081538', name: '회의실 의자', sortDate: '2024-09-10', operatingStatus: '운용중', usefulLife: '10', acquireAmount: '180000' },
-  { id: '5', sequence: 5, classificationCode: 'CLS002', identificationCode: '43211617-26081539', name: '책상', sortDate: '2024-08-05', operatingStatus: '운용중', usefulLife: '10', acquireAmount: '250000' },
-  { id: '6', sequence: 6, classificationCode: 'CLS003', identificationCode: '43211618-26081540', name: '프로젝터', sortDate: '2024-07-01', operatingStatus: '운용중', usefulLife: '5', acquireAmount: '800000' },
-]
+function mapCategoryToClassification(dto: G2BCategoryDto, index: number): ItemClassification {
+  return {
+    id: dto.id ?? String(index),
+    sequence: dto.sequence ?? index + 1,
+    code: dto.code,
+    name: dto.name,
+  }
+}
+
+function mapItemToDetail(dto: G2BItemDto, index: number): ItemDetail {
+  const identificationCode = dto.identificationCode ?? dto.itemCode ?? ''
+  const name = dto.name ?? dto.itemName ?? ''
+  const classificationCode = dto.classificationCode ?? dto.categoryCode ?? ''
+  return {
+    id: dto.id ?? String(index),
+    sequence: dto.sequence ?? index + 1,
+    classificationCode,
+    identificationCode,
+    name,
+    sortDate: dto.sortDate,
+    operatingStatus: dto.operatingStatus,
+    usefulLife: dto.usefulLife,
+    acquireAmount: dto.acquireAmount,
+  }
+}
 
 const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
   // 물품 분류 상태
-  const [classificationFilters, setClassificationFilters] = useState({
-    code: '',
-    name: '',
-  })
+  const [classificationFilters, setClassificationFilters] = useState({ code: '', name: '' })
   const [classificationPage, setClassificationPage] = useState(1)
   const [selectedClassification, setSelectedClassification] = useState<ItemClassification | null>(null)
+  const [classificationList, setClassificationList] = useState<ItemClassification[]>([])
+  const [classificationTotal, setClassificationTotal] = useState(0)
+  const [loadingClassification, setLoadingClassification] = useState(false)
 
   // 물품 품목 상태
   const [itemDetailFilters, setItemDetailFilters] = useState({
@@ -79,62 +92,98 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
   })
   const [itemDetailPage, setItemDetailPage] = useState(1)
   const [selectedItemDetail, setSelectedItemDetail] = useState<ItemDetail | null>(null)
+  const [itemDetailList, setItemDetailList] = useState<ItemDetail[]>([])
+  const [itemDetailTotal, setItemDetailTotal] = useState(0)
+  const [loadingItemDetail, setLoadingItemDetail] = useState(false)
+  const [hasSearchedItems, setHasSearchedItems] = useState(false)
 
-  const pageSize = 10
-
-  // 물품 분류 필터링 및 페이지네이션
-  const filteredClassifications = useMemo(() => {
-    let filtered = MOCK_CLASSIFICATION_DATA.filter((item) => {
-      const codeMatch = !classificationFilters.code || item.code.toLowerCase().includes(classificationFilters.code.toLowerCase())
-      const nameMatch = !classificationFilters.name || item.name.toLowerCase().includes(classificationFilters.name.toLowerCase())
-      return codeMatch && nameMatch
-    })
-    return filtered
-  }, [classificationFilters])
-
-  const classificationPageData = useMemo(() => {
-    const startIndex = (classificationPage - 1) * pageSize
-    return filteredClassifications.slice(startIndex, startIndex + pageSize)
-  }, [filteredClassifications, classificationPage])
-
-  const classificationTotalPages = Math.ceil(filteredClassifications.length / pageSize)
-
-  // 물품 품목 필터링 및 페이지네이션
-  const filteredItemDetails = useMemo(() => {
-    let filtered = MOCK_ITEM_DETAIL_DATA.filter((item) => {
-      const codeMatch = !itemDetailFilters.classificationCode || item.classificationCode.toLowerCase().includes(itemDetailFilters.classificationCode.toLowerCase())
-      const idMatch = !itemDetailFilters.identificationCode || item.identificationCode.toLowerCase().includes(itemDetailFilters.identificationCode.toLowerCase())
-      const nameMatch = !itemDetailFilters.name || item.name.toLowerCase().includes(itemDetailFilters.name.toLowerCase())
-      return codeMatch && idMatch && nameMatch
-    })
-    return filtered
-  }, [itemDetailFilters])
-
-  const itemDetailPageData = useMemo(() => {
-    const startIndex = (itemDetailPage - 1) * pageSize
-    return filteredItemDetails.slice(startIndex, startIndex + pageSize)
-  }, [filteredItemDetails, itemDetailPage])
-
-  const itemDetailTotalPages = Math.ceil(filteredItemDetails.length / pageSize)
+  const classificationTotalPages = Math.max(1, Math.ceil(classificationTotal / pageSize))
+  const itemDetailTotalPages = Math.max(1, Math.ceil(itemDetailTotal / pageSize))
 
   const classificationVisiblePages = useVisiblePageNumbers(
     classificationTotalPages,
     classificationPage,
   )
-  const itemDetailVisiblePages = useVisiblePageNumbers(
-    itemDetailTotalPages,
-    itemDetailPage,
+  const itemDetailVisiblePages = useVisiblePageNumbers(itemDetailTotalPages, itemDetailPage)
+
+  /** 왼쪽: GET /api/g2b/categories - 물품 분류 조회 */
+  const loadCategories = useCallback(
+    async (page: number) => {
+      setLoadingClassification(true)
+      try {
+        const res = await fetchG2BCategories({
+          code: classificationFilters.code || undefined,
+          name: classificationFilters.name || undefined,
+          page: page - 1,
+          size: pageSize,
+        })
+        setClassificationList((res.content ?? []).map(mapCategoryToClassification))
+        setClassificationTotal(res.totalElements ?? 0)
+      } catch (e) {
+        setClassificationList([])
+        setClassificationTotal(0)
+        console.error('G2B 물품 분류 조회 실패:', e)
+      } finally {
+        setLoadingClassification(false)
+      }
+    },
+    [classificationFilters.code, classificationFilters.name],
   )
+
+  /** 오른쪽: GET /api/g2b/items - 물품 품목 조회 */
+  const loadItems = useCallback(
+    async (page: number) => {
+      setLoadingItemDetail(true)
+      try {
+        const res = await fetchG2BItems({
+          categoryCode: itemDetailFilters.classificationCode || undefined,
+          itemCode: itemDetailFilters.identificationCode || undefined,
+          itemName: itemDetailFilters.name || undefined,
+          page: page - 1,
+          size: pageSize,
+        })
+        setItemDetailList((res.content ?? []).map(mapItemToDetail))
+        setItemDetailTotal(res.totalElements ?? 0)
+      } catch (e) {
+        setItemDetailList([])
+        setItemDetailTotal(0)
+        console.error('G2B 물품 품목 조회 실패:', e)
+      } finally {
+        setLoadingItemDetail(false)
+      }
+    },
+    [
+      itemDetailFilters.classificationCode,
+      itemDetailFilters.identificationCode,
+      itemDetailFilters.name,
+    ],
+  )
+
+  useEffect(() => {
+    if (isOpen) loadCategories(classificationPage)
+  }, [isOpen, classificationPage, loadCategories])
 
   const handleClassificationSearch = () => {
     setClassificationPage(1)
     setSelectedClassification(null)
+    loadCategories(1)
   }
 
   const handleItemDetailSearch = () => {
     setItemDetailPage(1)
     setSelectedItemDetail(null)
+    setHasSearchedItems(true)
+    loadItems(1)
   }
+
+  useEffect(() => {
+    if (!isOpen || !hasSearchedItems || itemDetailPage === 1) return
+    loadItems(itemDetailPage)
+  }, [isOpen, hasSearchedItems, itemDetailPage, loadItems])
+
+  useEffect(() => {
+    if (!isOpen) setHasSearchedItems(false)
+  }, [isOpen])
 
   const handleConfirm = () => {
     if (selectedItemDetail) {
@@ -206,14 +255,20 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {classificationPageData.length === 0 ? (
+                  {loadingClassification ? (
+                    <tr>
+                      <td colSpan={3} className="g2b-empty">
+                        조회 중...
+                      </td>
+                    </tr>
+                  ) : classificationList.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="g2b-empty">
                         조회된 데이터가 없습니다.
                       </td>
                     </tr>
                   ) : (
-                    classificationPageData.map((item) => (
+                    classificationList.map((item) => (
                       <tr
                         key={item.id}
                         className={selectedClassification?.id === item.id ? 'g2b-row-selected' : ''}
@@ -269,7 +324,7 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
                 </button>
               </div>
               <div className="g2b-pagination-summary">
-                총 {filteredClassifications.length}건 / 조회 {filteredClassifications.length}건
+                총 {classificationTotal}건 / 조회 {classificationTotal}건
               </div>
             </div>
             </div>
@@ -325,14 +380,20 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {itemDetailPageData.length === 0 ? (
+                  {loadingItemDetail ? (
+                    <tr>
+                      <td colSpan={3} className="g2b-empty">
+                        조회 중...
+                      </td>
+                    </tr>
+                  ) : itemDetailList.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="g2b-empty">
                         조회된 데이터가 없습니다.
                       </td>
                     </tr>
                   ) : (
-                    itemDetailPageData.map((item) => (
+                    itemDetailList.map((item) => (
                       <tr
                         key={item.id}
                         className={selectedItemDetail?.id === item.id ? 'g2b-row-selected' : ''}
@@ -384,7 +445,7 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
                   </button>
                 </div>
                 <div className="g2b-pagination-summary">
-                  총 {filteredItemDetails.length}건 / 조회 {filteredItemDetails.length}건
+                  총 {itemDetailTotal}건 / 조회 {itemDetailTotal}건
                 </div>
               </div>
             </div>

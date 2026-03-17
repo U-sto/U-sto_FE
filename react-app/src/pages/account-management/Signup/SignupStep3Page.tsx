@@ -5,9 +5,14 @@ import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import PhoneAuthField from '../../../features/auth/components/PhoneAuthField/PhoneAuthField'
 import Button from '../../../components/common/Button/Button'
-import { DEPARTMENTS } from '../../../constants/departments'
+/** 회원가입 소속: 캠퍼스 선택 시 저장되는 orgCd */
+const SIGNUP_ORG_BY_CAMPUS: Record<string, string> = {
+  '한양대학교 서울캠퍼스': '7002282',
+  '한양대학교 ERICA캠퍼스': '7008277',
+}
+const SIGNUP_ORG_OPTIONS = Object.keys(SIGNUP_ORG_BY_CAMPUS)
 import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../../api/auth'
-import { signUp } from '../../../api/users'
+import { signUp, checkSmsExists } from '../../../api/users'
 import { formatPhoneNumber } from '../../../utils/formatPhoneNumber'
 import './SignupStep3Page.css'
 
@@ -48,6 +53,7 @@ const SignupStep3Page = () => {
     setIsSendingCode(true)
     try {
       const target = trimmedPhone.replace(/-/g, '')
+      await checkSmsExists(target)
       await sendSmsVerificationCode({ target, purpose: 'SIGNUP' })
     } catch (e) {
       setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
@@ -80,6 +86,12 @@ const SignupStep3Page = () => {
       return
     }
 
+    const orgCd = SIGNUP_ORG_BY_CAMPUS[trimmedDepartment]
+    if (!orgCd) {
+      setError('소속을 선택해 주세요.')
+      return
+    }
+
     if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요.')
       return
@@ -98,7 +110,7 @@ const SignupStep3Page = () => {
         usrId: step2State.userId,
         usrNm: trimmedName,
         pwd: step2State.password,
-        orgCd: trimmedDepartment,
+        orgCd,
       })
       navigate('/signup/complete')
     } catch (e) {
@@ -126,7 +138,7 @@ const SignupStep3Page = () => {
           placeholder="소속"
           value={department}
           onChange={setDepartment}
-          options={DEPARTMENTS}
+          options={SIGNUP_ORG_OPTIONS}
         />
         <div className="phone-auth-section">
           <PhoneAuthField

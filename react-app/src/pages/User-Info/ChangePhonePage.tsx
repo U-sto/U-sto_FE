@@ -5,6 +5,8 @@ import TextField from '../../components/common/TextField/TextField'
 import Button from '../../components/common/Button/Button'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import { formatPhoneNumber } from '../../utils/formatPhoneNumber'
+import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../api/auth'
+import { updateUserSms } from '../../api/users'
 import './ChangePhonePage.css'
 
 const ChangePhonePage = () => {
@@ -12,22 +14,32 @@ const ChangePhonePage = () => {
   const [phone, setPhone] = useState('')
   const [authCode, setAuthCode] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [isSendingCode, setIsSendingCode] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhoneNumber(e.target.value))
   }
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     const trimmed = phone.replace(/\s/g, '').trim()
     if (!/^010-\d{4}-\d{4}$/.test(trimmed)) {
       setError('올바른 전화번호를 입력해 주세요. (010-XXXX-XXXX)')
       return
     }
     setError(null)
-    // TODO: 인증번호 발송 API 연동
+    setIsSendingCode(true)
+    try {
+      const target = trimmed.replace(/-/g, '')
+      await sendSmsVerificationCode({ target, purpose: 'RESET_PASSWORD' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
+    } finally {
+      setIsSendingCode(false)
+    }
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmedPhone = phone.replace(/\s/g, '').trim()
     const trimmedCode = authCode.trim()
@@ -42,8 +54,16 @@ const ChangePhonePage = () => {
     }
 
     setError(null)
-    // TODO: 전화번호 변경 API 연동
-    navigate('/user-info/change-phone/complete')
+    setIsSubmitting(true)
+    try {
+      await checkSmsVerificationCode({ code: trimmedCode })
+      await updateUserSms({ sms: trimmedPhone.replace(/-/g, '') })
+      navigate('/user-info/change-phone/complete')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '전화번호 변경에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -79,8 +99,9 @@ const ChangePhonePage = () => {
                 type="button"
                 className="change-phone-send-btn"
                 onClick={handleSendCode}
+                disabled={isSendingCode}
               >
-                인증번호
+                {isSendingCode ? '전송 중...' : '인증번호'}
               </Button>
             </div>
             <div className="change-phone-auth-code-wrap">
@@ -93,8 +114,12 @@ const ChangePhonePage = () => {
               {error && <p className="change-phone-error">{error}</p>}
             </div>
           </div>
-          <Button type="submit" className="change-phone-submit-btn">
-            변경
+          <Button
+            type="submit"
+            className="change-phone-submit-btn"
+            disabled={isSendingCode || isSubmitting}
+          >
+            {isSubmitting ? '변경 중...' : '변경'}
           </Button>
         </form>
       </div>

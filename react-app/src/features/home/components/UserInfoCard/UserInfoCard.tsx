@@ -1,8 +1,41 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getUserInfo } from '../../../../api/users'
 import './UserInfoCard.css'
 
 const UserInfoCard = () => {
   const navigate = useNavigate()
+  const [nameAndId, setNameAndId] = useState<string>('')
+  const [org, setOrg] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    getUserInfo()
+      .then((res) => {
+        if (cancelled) return
+        const data = res.data
+        if (data) {
+          const name = data.usrNm ?? ''
+          const id = data.usrId ?? ''
+          setNameAndId(id ? `${name} (${id})` : name || '-')
+          setOrg(data.orgNm ?? '')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNameAndId('-')
+          setOrg('')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="user-info-card">
       <div className="user-info-card-header"></div>
@@ -11,8 +44,10 @@ const UserInfoCard = () => {
           <div>
             <h3 className="user-info-card-title">회원정보</h3>
             <div className="user-info-details">
-              <div className="user-info-name">유스토 (HYUusto)</div>
-              <div className="user-info-org">한양대학교 ERICA캠퍼스</div>
+              <div className="user-info-name">
+                {loading ? '불러오는 중...' : nameAndId || '-'}
+              </div>
+              <div className="user-info-org">{loading ? '' : org || '-'}</div>
             </div>
           </div>
           <button

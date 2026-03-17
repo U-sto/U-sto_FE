@@ -28,8 +28,10 @@ const SignupStep2Page = () => {
     try {
       const res = await checkUserIdExists(trimmed)
       const { message, data } = res
-      // 백엔드가 data.isAvailable boolean으로 주는 것을 권장. 없으면 사용 불가로 처리.
-      const isAvailable = data?.isAvailable === true
+      const d = data as { exists?: boolean; isAvailable?: boolean } | null
+      // data.exists === false → 이용 가능, data.isAvailable === true → 이용 가능
+      const isAvailable =
+        d?.isAvailable === true || (typeof d?.exists === 'boolean' && !d.exists)
       if (isAvailable) {
         setIsIdChecked(true)
       } else {

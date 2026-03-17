@@ -69,15 +69,32 @@ const RAW_DEPARTMENTS: string[] = [
   'SW-AI융합교육원',
 ]
 
+/** 모든 소속 이름 뒤에 (ERICA)가 없으면 붙여서 일관된 표기 사용 */
+const withCampusSuffix = RAW_DEPARTMENTS.map((name) =>
+  name.includes('(ERICA)') ? name : `${name} (ERICA)`,
+)
+
 const isEnglishLeading = (name: string) => /^[A-Za-z]/.test(name)
 
-const koreanDepartments = RAW_DEPARTMENTS.filter((name) => !isEnglishLeading(name)).sort(
+const koreanDepartments = withCampusSuffix.filter((name) => !isEnglishLeading(name)).sort(
   (a, b) => a.localeCompare(b, 'ko-KR'),
 )
 
-const englishDepartments = RAW_DEPARTMENTS.filter((name) => isEnglishLeading(name)).sort((a, b) =>
+const englishDepartments = withCampusSuffix.filter((name) => isEnglishLeading(name)).sort((a, b) =>
   a.localeCompare(b, 'en'),
 )
 
 export const DEPARTMENTS: string[] = [...koreanDepartments, ...englishDepartments]
+
+/** 운용부서 필터용 옵션 (맨 앞에 '전체' 추가) */
+export const OPERATING_DEPARTMENT_FILTER_OPTIONS: string[] = [
+  '전체',
+  ...DEPARTMENTS,
+]
+
+/** 폼 등에서 운용부서 선택용 옵션 (맨 앞에 '선택' 추가) */
+export const OPERATING_DEPARTMENT_SELECT_OPTIONS: string[] = [
+  '선택',
+  ...DEPARTMENTS,
+]
 

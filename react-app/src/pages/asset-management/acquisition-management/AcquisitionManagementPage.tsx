@@ -7,6 +7,7 @@ import TitlePill from '../../../components/common/TitlePill/TitlePill'
 import AssetManagementPageLayout from '../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
 import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import './AcquisitionManagementPage.css'
+import { OPERATING_DEPARTMENT_SELECT_OPTIONS } from '../../../constants/departments'
 
 type FormState = {
   g2bName: string
@@ -39,13 +40,8 @@ const INITIAL_FORM: FormState = {
 }
 
 const ACQUIRE_SORT_OPTIONS = ['선택', '취득', '정리', '기타']
-const OPERATING_DEPT_OPTIONS = ['선택', '운용부서1', '운용부서2', '운용부서3']
-const OPERATING_DEPT_CODE_MAP: Record<string, string> = {
-  선택: '',
-  운용부서1: 'DEPT001',
-  운용부서2: 'DEPT002',
-  운용부서3: 'DEPT003',
-}
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_SELECT_OPTIONS
+const OPERATING_DEPT_CODE_MAP: Record<string, string> = {}
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

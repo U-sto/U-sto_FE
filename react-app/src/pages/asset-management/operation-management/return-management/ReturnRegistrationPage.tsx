@@ -10,6 +10,7 @@ import DataTable, {
 } from '../../../../features/management/components/DataTable/DataTable'
 import '../operation-ledger/OperationLedgerPage.css'
 import './ReturnManagementPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
 
 type RegistrationFilters = {
   g2bName: string
@@ -24,7 +25,7 @@ type RegistrationFilters = {
   sortDateTo: string
 }
 
-const OPERATING_DEPT_OPTIONS = ['전체', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
 const ASSET_STATUS_OPTIONS = ['선택', '운용중', '반납', '불용', '처분']
 const REASON_OPTIONS = ['선택', '교체', '폐기', '기타']

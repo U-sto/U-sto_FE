@@ -8,12 +8,14 @@ import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
+import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import { useManagementFilter } from '../../../hooks/useManagementFilter'
 import {
   fetchAcqConfirmationList,
   type AcqConfirmationRow,
 } from '../../../api/acqConfirmation'
 import './AcqConfirmationPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
 
 type Filters = {
   g2bName: string
@@ -24,7 +26,7 @@ type Filters = {
   acquireDateFrom: string
   acquireDateTo: string
   approvalStatus: string
-  category: string
+  operatingDept: string
 }
 
 const INITIAL_FILTERS: Filters = {
@@ -36,7 +38,7 @@ const INITIAL_FILTERS: Filters = {
   acquireDateFrom: '',
   acquireDateTo: '',
   approvalStatus: '전체',
-  category: '',
+  operatingDept: '전체',
 }
 
 const SearchIcon = () => (
@@ -93,8 +95,13 @@ const AcqConfirmationPage = () => {
     filters: INITIAL_FILTERS,
   })
 
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
+
   const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
-  const categoryOptions = useMemo(() => ['전체', '취득', '기타'], [])
+  const operatingDeptOptions = useMemo(
+    () => OPERATING_DEPARTMENT_FILTER_OPTIONS,
+    [],
+  )
 
   const [tableData, setTableData] = useState<AcqTableRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
@@ -114,14 +121,25 @@ const AcqConfirmationPage = () => {
     loadData()
   }, [loadData])
 
-  /** 조회: useManagementFilter의 onSearch로 날짜 검증 후, 성공 시에만 query 갱신 → loadData 1회만 실행 */
+  /** 조회: 날짜 검증 후 필터 조건으로 query 갱신 → API 재호출 */
   const handleSearchClick = () => {
     if (onSearch()) {
       setQuery({ page: 1, filters: { ...filters } })
     }
   }
 
-  /** 초기화: 폼 리셋 + query 초기값으로 한 번만 갱신 */
+  const handleG2BSelect = (item: G2BItem) => {
+    const [from = '', to = ''] = item.number.split('-')
+    setFilters((p) => ({
+      ...p,
+      g2bName: item.name,
+      g2bNumberFrom: from,
+      g2bNumberTo: to,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
+  /** 초기화: 폼 리셋 후 전체 목록 다시 조회 */
   const handleReset = () => {
     onReset()
     setQuery({ page: 1, filters: INITIAL_FILTERS })
@@ -221,7 +239,7 @@ const AcqConfirmationPage = () => {
                       type="button"
                       className="acq-search-btn"
                       aria-label="G2B목록명 검색"
-                      onClick={handleSearchClick}
+                      onClick={() => setIsG2BModalOpen(true)}
                     >
                       <SearchIcon />
                     </button>
@@ -233,9 +251,12 @@ const AcqConfirmationPage = () => {
                   <Dropdown
                     size="small"
                     placeholder="선택"
-                    value={filters.category}
-                    onChange={(value: string) => setFilters((p) => ({ ...p, category: value }))}
-                    options={categoryOptions}
+                    value={filters.operatingDept}
+                    onChange={(value: string) =>
+                      setFilters((p) => ({ ...p, operatingDept: value }))
+                    }
+                    options={operatingDeptOptions}
+                    ariaLabel="운용부서 선택"
                   />
                 </div>
 
@@ -344,6 +365,12 @@ const AcqConfirmationPage = () => {
           </Button>
         </div>
       </FilterPanel>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
 
       <DataTable<AcqTableRow>
         pageKey="acq"

@@ -1,18 +1,50 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
 import TextField from '../../components/common/TextField/TextField'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
+import { getUserInfo } from '../../api/users'
+import { formatPhoneNumber } from '../../utils/formatPhoneNumber'
 import './UserInfoPage.css'
 
 const UserInfoPage = () => {
   const navigate = useNavigate()
-  const [userId, setUserId] = useState('hyuusto')
-  const [name, setName] = useState('유스토')
-  const [email, setEmail] = useState('usto@hanyang.ac.kr')
-  const [org, setOrg] = useState('한양대학교 ERICA캠퍼스')
-  const [role, setRole] = useState('관리자')
-  const [phone, setPhone] = useState('010-1234-5678')
+  const [userId, setUserId] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [org, setOrg] = useState('')
+  const [role, setRole] = useState('')
+  const [phone, setPhone] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await getUserInfo()
+        if (cancelled) return
+        const data = res.data
+        if (data) {
+          setUserId(data.usrId ?? '')
+          setName(data.usrNm ?? '')
+          setEmail(data.email ?? '')
+          setOrg(data.orgNm ?? '')
+          setRole(data.roleNm ?? '')
+          setPhone(formatPhoneNumber(data.sms ?? ''))
+        }
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : '회원 정보를 불러오지 못했습니다.')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handlePasswordChange = () => {
     navigate('/user-info/change-password')
@@ -87,6 +119,11 @@ const UserInfoPage = () => {
                   변경
                 </button>
               </div>
+              <TextField
+                value="********"
+                readOnly
+                className="user-info-input user-info-input-readonly"
+              />
             </div>
             <div className="user-info-field">
               <div className="user-info-label-row">
@@ -101,12 +138,14 @@ const UserInfoPage = () => {
               </div>
               <TextField
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                readOnly
                 className="user-info-input"
               />
             </div>
           </div>
         </div>
+        {isLoading && <p className="user-info-message">회원 정보를 불러오는 중입니다...</p>}
+        {!isLoading && error && <p className="user-info-message user-info-message-error">{error}</p>}
         <div className="user-info-withdraw-wrap">
           <button
             type="button"

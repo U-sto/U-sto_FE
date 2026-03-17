@@ -31,11 +31,11 @@ const FindIdPage = () => {
     setError(null)
     setIsSendingCode(true)
     try {
-      const fullEmail = `${email.trim()}@hanyang.ac.kr`
+      const emailId = email.trim()
       await sendEmailVerificationEmail({
         usrNm: name.trim(),
         usrId: '',
-        emailId: fullEmail,
+        emailId,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')

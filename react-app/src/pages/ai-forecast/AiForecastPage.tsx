@@ -10,14 +10,16 @@ import DemandTimeSeriesChart from '../../components/charts/DemandTimeSeriesChart
 import PortfolioMatrixChart from '../../components/charts/PortfolioMatrixChart/PortfolioMatrixChart'
 import {
   fetchAiForecast,
+  buildForecastConditions,
   type AiForecastResponse,
   type ProcurementRecommendationRow,
 } from '../../api/aiForecast'
+import { OPERATING_DEPARTMENT_SELECT_OPTIONS } from '../../constants/departments'
 import './AiForecastPage.css'
 
 const YEAR_OPTIONS = ['2024', '2025', '2026', '2027']
 const SEMESTER_OPTIONS = ['1학기', '2학기']
-const OPERATING_DEPT_OPTIONS = ['선택', '공과대학', '자연과학대학', '경영대학', '인문대학']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_SELECT_OPTIONS
 const RISK_OPTIONS = ['필수', '권장', '선택']
 
 const DEFAULT_ANALYSIS_CONDITION = {
@@ -49,10 +51,8 @@ const AiForecastPage = () => {
     setError(null)
     setLoading(true)
     try {
-      const data = await fetchAiForecast(
-        query.trim(),
-        JSON.stringify(analysisCondition),
-      )
+      const conditions = buildForecastConditions(analysisCondition)
+      const data = await fetchAiForecast(query.trim(), conditions)
       setResult(data)
       setActiveTab('result')
     } catch (e) {

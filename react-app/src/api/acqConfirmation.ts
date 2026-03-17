@@ -78,17 +78,24 @@ export function mapItemAcquisitionToAcqConfirmationRow(
   }
 }
 
+/** 승인상태 한글 → API 코드 */
+const APPR_STS_MAP: Record<string, string> = {
+  대기: 'WAIT',
+  반려: 'REJECT',
+  확정: 'CONFIRM',
+}
+
 /** 화면 필터 → API searchRequest 변환 */
 function filtersToSearchRequest(filters: AcqConfirmationFilters): ItemAcquisitionSearchRequest {
   const req: ItemAcquisitionSearchRequest = {}
+  if (filters.g2bNumberFrom?.trim()) req.g2bDCd = filters.g2bNumberFrom.trim()
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
   if (filters.sortDateFrom) req.startApprAt = filters.sortDateFrom
   if (filters.sortDateTo) req.endApprAt = filters.sortDateTo
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
-    req.apprSts = filters.approvalStatus
+    req.apprSts = APPR_STS_MAP[filters.approvalStatus] ?? filters.approvalStatus
   }
-  if (filters.g2bNumberFrom) req.g2bDCd = filters.g2bNumberFrom
   return req
 }
 

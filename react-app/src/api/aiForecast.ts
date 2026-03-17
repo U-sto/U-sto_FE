@@ -1,6 +1,59 @@
+import http from './http'
+import type { ApiResponse } from './types'
+
+/** POST /api/ai/forecast 요청 body */
+export interface AiForecastRequestConditions {
+  year: number
+  semester: number
+  org_cd: string
+  dept_cd: string
+  category: string
+  risk_level: string
+}
+
+export interface AiForecastRequest {
+  prompt: string
+  conditions: AiForecastRequestConditions
+}
+
+/** POST /api/ai/forecast 200 응답 data 구조 (백엔드 스펙) */
+export interface AiForecastApiSummary {
+  target_text: string
+  risk_text: string
+  period_text: string
+}
+
+export interface AiForecastApiChartForecastItem {
+  label: string
+  demand: number
+  threshold: number
+}
+
+export interface AiForecastApiChartPortfolioItem {
+  item_name: string
+  x_rul: number
+  y_importance: number
+  group: string
+}
+
+export interface AiForecastApiRecommendationItem {
+  item_name: string
+  quantity: number
+  budget: number
+  order_date: string
+  comment: string
+}
+
+export interface AiForecastApiData {
+  summary: AiForecastApiSummary
+  chart_forecast: AiForecastApiChartForecastItem[]
+  chart_portfolio: AiForecastApiChartPortfolioItem[]
+  recommendations: AiForecastApiRecommendationItem[]
+}
+
 /**
- * AI 비서 응답 JSON 타입.
- * AI 팀에서 이 구조로 JSON을 내려주면 차트/테이블에 반영합니다.
+ * AI 비서 응답 JSON 타입 (페이지/차트용).
+ * API 응답을 이 구조로 변환해 사용합니다.
  */
 export interface AiForecastSummary {
   /** 사용자 질문 텍스트 */
@@ -59,85 +112,118 @@ export interface AiForecastResponse {
   recommendations: ProcurementRecommendationRow[]
 }
 
-const MOCK_RESPONSE: AiForecastResponse = {
-  summary: {
-    query:
-      '이번 학기 컴퓨터공학과 실습실 장비 얼마나 교체해야 해? 수업에 지장 없게 넉넉하게 잡아줘',
-    target: '컴퓨터공학과',
-    risk: 'Low (95% Service Level)',
-    period: '2026-1학기',
-  },
-  demandTimeSeries: {
-    data: [
-      { period: 1, quantity: 10 },
-      { period: 2, quantity: 15 },
-      { period: 3, quantity: 20 },
-      { period: 4, quantity: 25 },
-      { period: 5, quantity: 30 },
-      { period: 6, quantity: 38 },
-      { period: 7, quantity: 45 },
-      { period: 8, quantity: 52 },
-      { period: 9, quantity: 60 },
-      { period: 10, quantity: 72 },
-      { period: 11, quantity: 85 },
-      { period: 12, quantity: 95 },
-    ],
-    reorderPointPeriod: 10,
-  },
-  portfolioMatrix: {
-    data: [
-      { rul: 12, importance: 90, category: 'high' },
-      { rul: 8, importance: 85, category: 'high' },
-      { rul: 6, importance: 70, category: 'medium' },
-      { rul: 4, importance: 65, category: 'medium' },
-      { rul: 2, importance: 95, category: 'high' },
-      { rul: 10, importance: 45, category: 'low' },
-      { rul: 7, importance: 55, category: 'low' },
-      { rul: 3, importance: 80, category: 'high' },
-      { rul: 5, importance: 50, category: 'medium' },
-      { rul: 9, importance: 40, category: 'low' },
-    ],
-  },
-  recommendationTitle: '2026학년도 1학기 조달권고안',
-  recommendations: [
-    {
-      no: 1,
-      itemName: '데스크탑 PC',
-      quantity: 15,
-      estimatedBudget: '22,500,000원',
-      recommendedOrderDeadline: '2025-12-15',
-      aiComment: '실습실 A동 교체 우선 권장',
+function formatBudget(value: number): string {
+  return `${value.toLocaleString('ko-KR')}원`
+}
+
+/** API 응답 data + 사용자 질문을 페이지/차트용 AiForecastResponse로 변환 */
+function mapApiDataToResponse(
+  prompt: string,
+  data: AiForecastApiData,
+): AiForecastResponse {
+  const summary = data.summary
+  const forecast = data.chart_forecast ?? []
+  const portfolio = data.chart_portfolio ?? []
+  const recs = data.recommendations ?? []
+
+  const demandTimeSeriesData = forecast.map((d, i) => ({
+    period: i + 1,
+    quantity: d.demand,
+  }))
+  const reorderIndex = forecast.findIndex((d) => d.threshold != null && d.demand >= d.threshold)
+  const reorderPointPeriod =
+    reorderIndex >= 0 ? reorderIndex + 1 : (forecast.length >= 1 ? forecast.length : undefined)
+
+  return {
+    summary: {
+      query: prompt,
+      target: summary?.target_text ?? '',
+      risk: summary?.risk_text ?? '',
+      period: summary?.period_text ?? '',
     },
-    {
-      no: 2,
-      itemName: '모니터 27인치',
-      quantity: 20,
-      estimatedBudget: '8,000,000원',
-      recommendedOrderDeadline: '2026-01-10',
-      aiComment: '재고 소진 시점 고려 발주',
+    demandTimeSeries: {
+      data: demandTimeSeriesData,
+      reorderPointPeriod,
     },
-    {
-      no: 3,
-      itemName: '키보드/마우스 세트',
-      quantity: 30,
-      estimatedBudget: '1,500,000원',
-      recommendedOrderDeadline: '2026-01-20',
-      aiComment: '일괄 발주 시 단가 절감 가능',
+    portfolioMatrix: {
+      data: portfolio.map((p) => ({
+        rul: p.x_rul,
+        importance: p.y_importance,
+        category: p.group || undefined,
+      })),
     },
-  ],
+    recommendationTitle: `${summary?.period_text ?? ''} 조달권고안`,
+    recommendations: recs.map((r, i) => ({
+      no: i + 1,
+      itemName: r.item_name,
+      quantity: r.quantity,
+      estimatedBudget: formatBudget(r.budget),
+      recommendedOrderDeadline: r.order_date,
+      aiComment: r.comment,
+    })),
+  }
+}
+
+/** UI 분석조건 (페이지에서 사용) -> API conditions 변환용 */
+export interface AiForecastUiCondition {
+  year: string
+  semester: string
+  campus: string
+  operatingDept: string
+  itemCategoryName: string
+  riskPropensity: string
+}
+
+const ORG_CD_BY_CAMPUS: Record<string, string> = {
+  '한양대학교 ERICA캠퍼스': '7008277',
+  '한양대학교 서울캠퍼스': '7002282',
+}
+
+const RISK_LEVEL_BY_PROPENSITY: Record<string, string> = {
+  필수: 'HIGH',
+  권장: 'MEDIUM',
+  선택: 'LOW',
+}
+
+export function buildForecastConditions(
+  ui: AiForecastUiCondition,
+): AiForecastRequestConditions {
+  const year = parseInt(ui.year, 10) || new Date().getFullYear()
+  const semester = ui.semester === '2학기' ? 2 : 1
+  const org_cd = ORG_CD_BY_CAMPUS[ui.campus] ?? '7008277'
+  const dept_cd = ui.operatingDept === '선택' ? '' : ui.operatingDept
+  const category = ui.itemCategoryName?.trim() ?? ''
+  const risk_level = RISK_LEVEL_BY_PROPENSITY[ui.riskPropensity] ?? 'MEDIUM'
+  return {
+    year,
+    semester,
+    org_cd,
+    dept_cd,
+    category,
+    risk_level,
+  }
 }
 
 /**
- * AI 비서 API 호출.
- * 실제 연동 시엔 백엔드/AI 팀 엔드포인트로 교체하고, 응답을 AiForecastResponse로 파싱하면 됩니다.
+ * 통계 예측 분석 API
+ * POST /api/ai/forecast
+ * 질문(prompt)과 조건(conditions)으로 수요 예측·조달 권고안을 받아, 차트/테이블용 형식으로 반환합니다.
  */
 export async function fetchAiForecast(
-  _query: string,
-  _analysisCondition?: string,
+  prompt: string,
+  conditions: AiForecastRequestConditions,
 ): Promise<AiForecastResponse> {
-  // TODO: 실제 AI 비서 API URL로 교체
-  // const res = await fetch('/api/ai-forecast', { method: 'POST', body: JSON.stringify({ query, analysisCondition }) })
-  // const json = await res.json(); return json as AiForecastResponse
-  await new Promise((r) => setTimeout(r, 800))
-  return MOCK_RESPONSE
+  const payload: AiForecastRequest = {
+    prompt: prompt.trim(),
+    conditions,
+  }
+  const res = await http.post<ApiResponse<AiForecastApiData>>(
+    '/api/ai/forecast',
+    payload,
+  )
+  const body = res.data
+  if (!body?.data) {
+    throw new Error(body?.message ?? '분석 결과를 불러오지 못했습니다.')
+  }
+  return mapApiDataToResponse(prompt.trim(), body.data)
 }

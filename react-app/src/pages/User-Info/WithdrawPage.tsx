@@ -5,6 +5,8 @@ import TextField from '../../components/common/TextField/TextField'
 import PasswordField from '../../components/common/PasswordField/PasswordField'
 import Button from '../../components/common/Button/Button'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
+import { withdrawUser } from '../../api/users'
+import { clearLoginToken } from '../../api/auth'
 import './WithdrawPage.css'
 
 const WithdrawPage = () => {
@@ -13,8 +15,9 @@ const WithdrawPage = () => {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmedId = userId.trim()
     const trimmedPw = password.trim()
@@ -34,8 +37,16 @@ const WithdrawPage = () => {
     }
 
     setError(null)
-    // TODO: 회원탈퇴 API 연동
-    navigate('/user-info/withdraw/complete')
+    setIsSubmitting(true)
+    try {
+      await withdrawUser({ currentPw: trimmedPw })
+      clearLoginToken()
+      navigate('/user-info/withdraw/complete')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '회원 탈퇴에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -81,7 +92,9 @@ const WithdrawPage = () => {
             />
           </div>
           {error && <p className="withdraw-error">{error}</p>}
-          <Button type="submit" className="withdraw-btn">탈퇴</Button>
+          <Button type="submit" className="withdraw-btn" disabled={isSubmitting}>
+            {isSubmitting ? '처리 중...' : '탈퇴'}
+          </Button>
         </form>
       </div>
       <ChatBotButton />

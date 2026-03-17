@@ -4,6 +4,7 @@ import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithM
 import PasswordField from '../../components/common/PasswordField/PasswordField'
 import Button from '../../components/common/Button/Button'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
+import { updatePassword } from '../../api/users'
 import './ChangePasswordPage.css'
 
 const MIN_PASSWORD_LENGTH = 8
@@ -14,8 +15,9 @@ const ChangePasswordPage = () => {
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmedCurrent = currentPassword.trim()
     const trimmedNew = newPassword.trim()
@@ -39,8 +41,15 @@ const ChangePasswordPage = () => {
     }
 
     setError(null)
-    // TODO: 비밀번호 변경 API 연동
-    navigate('/user-info/change-password/complete')
+    setIsSubmitting(true)
+    try {
+      await updatePassword({ oldPwd: trimmedCurrent, newPwd: trimmedNew })
+      navigate('/user-info/change-password/complete')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '비밀번호 변경에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -86,7 +95,9 @@ const ChangePasswordPage = () => {
             />
           </div>
           {error && <p className="change-password-error">{error}</p>}
-          <Button type="submit" className="change-password-btn">변경</Button>
+          <Button type="submit" className="change-password-btn" disabled={isSubmitting}>
+            {isSubmitting ? '변경 중...' : '변경'}
+          </Button>
         </form>
       </div>
       <ChatBotButton />

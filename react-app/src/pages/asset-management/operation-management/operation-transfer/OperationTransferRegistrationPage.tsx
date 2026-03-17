@@ -10,6 +10,10 @@ import DataTable, {
 } from '../../../../features/management/components/DataTable/DataTable'
 import '../operation-ledger/OperationLedgerPage.css'
 import '../return-management/ReturnManagementPage.css'
+import {
+  OPERATING_DEPARTMENT_FILTER_OPTIONS,
+  OPERATING_DEPARTMENT_SELECT_OPTIONS,
+} from '../../../../constants/departments'
 
 type RegistrationFilters = {
   g2bName: string
@@ -24,11 +28,11 @@ type RegistrationFilters = {
   sortDateTo: string
 }
 
-const OPERATING_DEPT_OPTIONS = ['전체', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
 const ASSET_STATUS_OPTIONS = ['선택', '운용중', '반납', '불용', '처분']
 /** 운용 전환 정보 폼의 운용부서 선택 옵션 */
-const TRANSFER_OPERATING_DEPT_OPTIONS = ['선택', '운용부서1', '운용부서2', '운용부서3']
+const TRANSFER_OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_SELECT_OPTIONS
 
 type LedgerRow = {
   id: number

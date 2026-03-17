@@ -6,7 +6,9 @@ import AssetManagementPageLayout from '../../../../components/layout/management/
 import DataTable, {
   type DataTableColumn,
 } from '../../../../features/management/components/DataTable/DataTable'
+import G2BSearchModal, { type G2BItem } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../../operation-management/operation-ledger/OperationLedgerPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
 
 type PrintoutFilters = {
   g2bName: string
@@ -21,7 +23,7 @@ type PrintoutFilters = {
   sortDateTo: string
 }
 
-const OPERATING_DEPT_OPTIONS = ['전체', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const PRINT_STATUS_OPTIONS = ['전체', '미출력', '출력']
 
 type PrintoutRow = {
@@ -63,6 +65,7 @@ const SearchIcon = () => (
 )
 
 const PrintoutManagementPage = () => {
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<PrintoutFilters>({
     g2bName: '',
     g2bNumberPrefix: '',
@@ -216,6 +219,17 @@ const PrintoutManagementPage = () => {
     // 현재는 클라이언트 필터만 사용하므로 별도 처리 없음
   }
 
+  const handleG2BSelect = (item: G2BItem) => {
+    const [prefix = '', suffix = ''] = item.number.split('-')
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name,
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
   return (
     <AssetManagementPageLayout
       pageKey="printout"
@@ -240,13 +254,14 @@ const PrintoutManagementPage = () => {
                   type="button"
                   className="operation-ledger-search-btn"
                   aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
                 >
                   <SearchIcon />
                 </button>
               </div>
             </div>
 
-            <div className="operation-ledger-field">
+            <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">운용부서</div>
               <Dropdown
                 size="small"
@@ -381,6 +396,12 @@ const PrintoutManagementPage = () => {
           </div>
         </div>
       </section>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
 
       <DataTable<PrintoutRow>
         pageKey="operation-ledger"

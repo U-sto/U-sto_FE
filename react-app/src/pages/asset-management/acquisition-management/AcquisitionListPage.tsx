@@ -8,9 +8,11 @@ import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
+import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import './AcquisitionListPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
 
 type AcquisitionListFilters = {
   g2bName: string
@@ -24,7 +26,7 @@ type AcquisitionListFilters = {
   operatingDept: string
 }
 
-const OPERATING_DEPT_OPTIONS = ['전체', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const APPROVAL_STATUS_OPTIONS = ['전체', '대기', '반려', '확정']
 
 export type AcquisitionListRow = {
@@ -67,6 +69,7 @@ const SearchIcon = () => (
 
 const AcquisitionListPage = () => {
   const navigate = useNavigate()
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<AcquisitionListFilters>({
     g2bName: '',
     g2bNumberPrefix: '',
@@ -140,6 +143,17 @@ const AcquisitionListPage = () => {
 
   const handleSearch = () => {}
 
+  const handleG2BSelect = (item: G2BItem) => {
+    const [prefix = '', suffix = ''] = item.number.split('-')
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name,
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
   const handleRegister = () => {
     navigate('/asset-management/acquisition-management/register')
   }
@@ -150,7 +164,8 @@ const AcquisitionListPage = () => {
       depthSecondLabel="물품 취득 관리"
       depthThirdLabel=""
     >
-      <FilterPanel pageKey="acq" filterPrefix="operation-ledger">
+      <div className="acquisition-filter">
+        <FilterPanel pageKey="acq" filterPrefix="operation-ledger">
           <div className="operation-ledger-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">G2B목록명</div>
@@ -161,7 +176,12 @@ const AcquisitionListPage = () => {
                   placeholder="G2B목록명 입력"
                   className="operation-ledger-g2b-input"
                 />
-                <button type="button" className="operation-ledger-search-btn" aria-label="G2B목록명 검색">
+                <button
+                  type="button"
+                  className="operation-ledger-search-btn"
+                  aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
+                >
                   <SearchIcon />
                 </button>
               </div>
@@ -184,7 +204,7 @@ const AcquisitionListPage = () => {
                 />
               </div>
             </div>
-            <div className="operation-ledger-field">
+            <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">운용부서</div>
               <Dropdown
                 size="small"
@@ -247,6 +267,13 @@ const AcquisitionListPage = () => {
             </Button>
           </div>
         </FilterPanel>
+      </div>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
 
       <DataTable<AcquisitionListRow>
         pageKey="operation-ledger"

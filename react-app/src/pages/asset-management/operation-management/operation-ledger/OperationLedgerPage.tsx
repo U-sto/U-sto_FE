@@ -7,7 +7,9 @@ import AssetManagementPageLayout from '../../../../components/layout/management/
 import DataTable, {
   type DataTableColumn,
 } from '../../../../features/management/components/DataTable/DataTable'
+import G2BSearchModal, { type G2BItem } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import './OperationLedgerPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
 
 type OperationLedgerFilters = {
   g2bName: string
@@ -22,7 +24,7 @@ type OperationLedgerFilters = {
   sortDateTo: string
 }
 
-const OPERATING_DEPT_OPTIONS = ['전체', '운용부서1', '운용부서2', '운용부서3']
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
 
 export type OperationLedgerRow = {
@@ -67,6 +69,7 @@ const SearchIcon = () => (
 const OperationLedgerPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<OperationLedgerFilters>({
     g2bName: '',
     g2bNumberPrefix: '',
@@ -276,6 +279,17 @@ const OperationLedgerPage = () => {
     // 현재는 클라이언트 필터만 사용하므로 별도 처리 없음
   }
 
+  const handleG2BSelect = (item: G2BItem) => {
+    const [prefix = '', suffix = ''] = item.number.split('-')
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name,
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
   const handleOpenDetail = () => {
     const selected =
       selectedRowId != null
@@ -308,7 +322,7 @@ const OperationLedgerPage = () => {
     >
       <section className="operation-ledger-filter">
         <div className="operation-ledger-filter-wrapper">
-          <div className="operation-ledger-filter-grid">
+          <div className="operation-ledger-filter-grid inventory-status-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">G2B목록명</div>
               <div className="operation-ledger-input-and-search">
@@ -324,12 +338,13 @@ const OperationLedgerPage = () => {
                   type="button"
                   className="operation-ledger-search-btn"
                   aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
                 >
                   <SearchIcon />
                 </button>
               </div>
             </div>
-            <div className="operation-ledger-field">
+            <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">운용부서</div>
               <Dropdown
                 size="small"
@@ -341,19 +356,6 @@ const OperationLedgerPage = () => {
                 options={OPERATING_DEPT_OPTIONS}
               />
             </div>
-            <div className="operation-ledger-field">
-              <div className="operation-ledger-label">운용상태</div>
-              <Dropdown
-                size="small"
-                placeholder="전체"
-                value={filters.operatingStatus}
-                onChange={(value: string) =>
-                  setFilters((prev) => ({ ...prev, operatingStatus: value }))
-                }
-                options={OPERATING_STATUS_OPTIONS}
-              />
-            </div>
-
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">G2B목록번호</div>
               <div className="operation-ledger-g2b-number-split">
@@ -370,7 +372,7 @@ const OperationLedgerPage = () => {
                 />
               </div>
             </div>
-            <div className="operation-ledger-field operation-ledger-field-span2">
+            <div className="operation-ledger-field">
               <div className="operation-ledger-label">물품고유번호</div>
               <TextField
                 value={filters.itemUniqueNumber}
@@ -381,6 +383,18 @@ const OperationLedgerPage = () => {
                   }))
                 }
                 placeholder="물품고유번호 입력"
+              />
+            </div>
+            <div className="operation-ledger-field">
+              <div className="operation-ledger-label">운용상태</div>
+              <Dropdown
+                size="small"
+                placeholder="전체"
+                value={filters.operatingStatus}
+                onChange={(value: string) =>
+                  setFilters((prev) => ({ ...prev, operatingStatus: value }))
+                }
+                options={OPERATING_STATUS_OPTIONS}
               />
             </div>
 
@@ -454,6 +468,12 @@ const OperationLedgerPage = () => {
           </div>
         </div>
       </section>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
 
       <DataTable<OperationLedgerRow>
         pageKey="operation-ledger"
