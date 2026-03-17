@@ -37,6 +37,26 @@ http.interceptors.response.use(
     return response
   },
   (error: AxiosError<{ success?: boolean; message?: string; data?: unknown }>) => {
+    const status = error.response?.status
+
+    // 인증 만료 또는 로그인 필요 (401) 시 토큰 삭제 후 로그인 페이지로 이동
+    if (status === 401) {
+      try {
+        localStorage.removeItem(ACCESS_TOKEN_KEY)
+      } catch {
+        // ignore
+      }
+
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        const shouldRedirect = window.confirm(
+          '로그인 정보가 만료되었습니다.\n다시 로그인 페이지로 이동하시겠습니까?',
+        )
+        if (shouldRedirect) {
+          window.location.href = '/login'
+        }
+      }
+    }
+
     const message =
       error.response?.data?.message ??
       error.message ??
