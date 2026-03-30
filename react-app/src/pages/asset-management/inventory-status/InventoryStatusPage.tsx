@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
@@ -7,38 +7,22 @@ import AssetManagementPageLayout from '../../../components/layout/management/Ass
 import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
-import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingStatusFilterOptions } from '../../../hooks/useCommonCodeOptions'
+import {
+  fetchAssetInventoryStatus,
+  type AssetInventoryStatusRow,
+  type AssetInventoryStatusFilters as InventoryStatusFilters,
+} from '../../../api/itemAssetInventoryStatus'
 
-export type InventoryStatusRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  acquireAmount: string
-  sortDate: string
-  operatingDept: string
-  operatingStatus: string
-  usefulLife: string
-}
-
-type InventoryStatusFilters = {
-  g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
-}
+export type InventoryStatusRow = AssetInventoryStatusRow
 
 const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
 
 const SearchIcon = () => (
   <svg
@@ -68,7 +52,7 @@ const SearchIcon = () => (
 
 const InventoryStatusPage = () => {
   const navigate = useNavigate()
-  const location = useLocation()
+  const { options: operatingStatusOptions } = useOperatingStatusFilterOptions()
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<InventoryStatusFilters>({
     g2bName: '',
@@ -84,50 +68,45 @@ const InventoryStatusPage = () => {
   })
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null)
 
-  const [allData, setAllData] = useState<InventoryStatusRow[]>(() =>
-    Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      sortDate: '2026-01-20',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      operatingStatus: idx % 2 === 0 ? '운용중' : '반납',
-      usefulLife: `${3 + (idx % 3)}년`,
-    })),
-  )
+  const [searchedFilters, setSearchedFilters] = useState<InventoryStatusFilters>(() => ({
+    g2bName: '',
+    g2bNumberPrefix: '',
+    g2bNumberSuffix: '',
+    itemUniqueNumber: '',
+    operatingDept: '전체',
+    operatingStatus: '전체',
+    acquireDateFrom: '',
+    acquireDateTo: '',
+    sortDateFrom: '',
+    sortDateTo: '',
+  }))
+  const [currentPage, setCurrentPage] = useState(1)
+  const [tableData, setTableData] = useState<InventoryStatusRow[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoadError(null)
+      const res = await fetchAssetInventoryStatus({
+        page: currentPage,
+        pageSize: 10,
+        filters: searchedFilters,
+      })
+      setTableData(res.data)
+      setTotalCount(res.totalCount)
+      setSelectedRowId(null)
+    } catch (e) {
+      setTableData([])
+      setTotalCount(0)
+      setSelectedRowId(null)
+      setLoadError(e instanceof Error ? e.message : '보유 현황 목록을 불러오지 못했습니다.')
+    }
+  }, [currentPage, searchedFilters])
 
   useEffect(() => {
-    const state = location.state as { updatedItem?: InventoryStatusRow } | null
-    if (!state?.updatedItem) return
-    setAllData((prev) =>
-      prev.map((row) =>
-        row.id === state.updatedItem!.id ? { ...row, ...state.updatedItem } : row,
-      ),
-    )
-    navigate(location.pathname, { replace: true })
-  }, [location.pathname, location.state, navigate])
-
-  const filteredData = useMemo(() => {
-    return allData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) return false
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [numPrefix = '', numSuffix = ''] = row.g2bNumber.split('-')
-        if (filters.g2bNumberPrefix && !numPrefix.startsWith(filters.g2bNumberPrefix)) return false
-        if (filters.g2bNumberSuffix && !numSuffix.startsWith(filters.g2bNumberSuffix)) return false
-      }
-      if (filters.itemUniqueNumber && !row.itemUniqueNumber.includes(filters.itemUniqueNumber)) return false
-      if (filters.operatingDept !== '전체' && row.operatingDept !== filters.operatingDept) return false
-      if (filters.operatingStatus !== '전체' && row.operatingStatus !== filters.operatingStatus) return false
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) return false
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) return false
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) return false
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) return false
-      return true
-    })
-  }, [allData, filters])
+    void loadData()
+  }, [loadData])
 
   const columns: DataTableColumn<InventoryStatusRow>[] = [
     {
@@ -187,10 +166,24 @@ const InventoryStatusPage = () => {
       sortDateFrom: '',
       sortDateTo: '',
     })
+    setSearchedFilters({
+      g2bName: '',
+      g2bNumberPrefix: '',
+      g2bNumberSuffix: '',
+      itemUniqueNumber: '',
+      operatingDept: '전체',
+      operatingStatus: '전체',
+      acquireDateFrom: '',
+      acquireDateTo: '',
+      sortDateFrom: '',
+      sortDateTo: '',
+    })
+    setCurrentPage(1)
+    setSelectedRowId(null)
   }
 
   const handleG2BSelect = (item: G2BItem) => {
-    const [prefix = '', suffix = ''] = item.number.split('-')
+    const { prefix, suffix } = getG2BListNumberParts(item)
     setFilters((prev) => ({
       ...prev,
       g2bName: item.name,
@@ -202,20 +195,14 @@ const InventoryStatusPage = () => {
 
   const handleOpenDetail = () => {
     const selected =
-      selectedRowId != null ? filteredData.find((row) => row.id === selectedRowId) : null
+      selectedRowId != null ? tableData.find((row) => row.id === selectedRowId) : null
     if (!selected) {
       window.alert('물품상세정보를 보려면 행을 하나 선택해주세요.')
       return
     }
     navigate('/asset-management/inventory-status/detail', {
       state: {
-        item: {
-          ...selected,
-          quantity: '1',
-          acquireSortType: '취득',
-          operatingDeptCode: 'DEPT001',
-          remarks: '',
-        },
+        item: selected,
       },
     })
   }
@@ -295,7 +282,7 @@ const InventoryStatusPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingStatus: value }))
                 }
-                options={OPERATING_STATUS_OPTIONS}
+                options={operatingStatusOptions}
               />
             </div>
             <div className="operation-ledger-field operation-ledger-field-span2">
@@ -346,7 +333,13 @@ const InventoryStatusPage = () => {
             >
               초기화
             </Button>
-            <Button className="operation-ledger-btn operation-ledger-btn-primary" onClick={() => {}}>
+            <Button
+              className="operation-ledger-btn operation-ledger-btn-primary"
+              onClick={() => {
+                setSearchedFilters({ ...filters })
+                setCurrentPage(1)
+              }}
+            >
               조회
             </Button>
           </div>
@@ -359,12 +352,20 @@ const InventoryStatusPage = () => {
         onSelect={handleG2BSelect}
       />
 
+      {loadError ? (
+        <div style={{ margin: '8px 0', color: '#d52e2e', fontSize: 14 }}>
+          {loadError}
+        </div>
+      ) : null}
+
       <DataTable<InventoryStatusRow>
         pageKey="operation-ledger"
         title="보유 현황 목록"
-        data={filteredData}
-        totalCount={allData.length}
+        data={tableData}
+        totalCount={totalCount}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => row.id}
         renderActions={() => (

@@ -2,11 +2,23 @@ import { useMemo, useState, type Key, type ReactNode } from 'react'
 import type { ManagementPageKey } from '../../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
 import './DataTable.css'
 
+/** 행 클릭과 체크박스·버튼 등이 겹치지 않도록 */
+function isInteractiveRowClickTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return (
+    target.closest(
+      'input, button, textarea, select, a[href], [role="button"], [role="checkbox"], label',
+    ) != null
+  )
+}
+
 export interface DataTableColumn<T> {
   key: string
   header: ReactNode
   width?: number
   render: (row: T) => ReactNode
+  /** true면 해당 셀 클릭이 tr의 onRowClick으로 전파되지 않음(체크박스 열 권장) */
+  stopRowClickPropagation?: boolean
 }
 
 /**
@@ -27,6 +39,10 @@ interface DataTableProps<T> {
   currentPage?: number
   /** 서버 사이드 페이지네이션: 페이지 변경 시 API 호출을 위해 부모에 알림 */
   onPageChange?: (page: number) => void
+  /** 행 클릭 (목록 행 선택 등) */
+  onRowClick?: (row: T, index: number) => void
+  /** 선택된 행 스타일 */
+  isRowSelected?: (row: T, index: number) => boolean
 }
 
 function DataTable<T>({
@@ -41,6 +57,8 @@ function DataTable<T>({
   renderActions,
   currentPage: controlledPage,
   onPageChange,
+  onRowClick,
+  isRowSelected,
 }: DataTableProps<T>) {
   const prefix = pageKey
   const [internalPage, setInternalPage] = useState(1)
@@ -147,9 +165,49 @@ function DataTable<T>({
                 </tr>
               ) : (
                 pageData.map((row, rowIndex) => (
-                  <tr key={getRowKey(row, rowIndex)}>
+                  <tr
+                    key={getRowKey(row, rowIndex)}
+                    role={onRowClick ? 'button' : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    className={[
+                      onRowClick ? 'management-table-row-clickable' : '',
+                      isRowSelected?.(row, rowIndex) ? 'management-table-row-selected' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    onClick={
+                      onRowClick
+                        ? (e) => {
+                            if (isInteractiveRowClickTarget(e.target)) return
+                            onRowClick(row, rowIndex)
+                          }
+                        : undefined
+                    }
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              if (isInteractiveRowClickTarget(e.target)) return
+                              e.preventDefault()
+                              onRowClick(row, rowIndex)
+                            }
+                          }
+                        : undefined
+                    }
+                  >
                     {columns.map((column) => (
-                      <td key={column.key}>{column.render(row)}</td>
+                      <td
+                        key={column.key}
+                        onClick={
+                          column.stopRowClickPropagation
+                            ? (e) => {
+                                e.stopPropagation()
+                              }
+                            : undefined
+                        }
+                      >
+                        {column.render(row)}
+                      </td>
                     ))}
                   </tr>
                 ))

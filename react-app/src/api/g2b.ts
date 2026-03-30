@@ -31,8 +31,11 @@ type ApiPageResponse<T> = {
 export type G2BCategoryDto = {
   id?: string
   sequence?: number
-  code: string
-  name: string
+  code?: string
+  name?: string
+  mCd?: string
+  mNm?: string
+  [key: string]: unknown
 }
 
 /** G2B 물품 품목 한 건 (API 응답) */
@@ -43,12 +46,16 @@ export type G2BItemDto = {
   classificationCode?: string
   itemCode?: string
   identificationCode?: string
+  dCd?: string
   itemName?: string
   name?: string
+  dNm?: string
+  upr?: number
   sortDate?: string
   operatingStatus?: string
   usefulLife?: string
   acquireAmount?: string
+  [key: string]: unknown
 }
 
 /** GET /api/g2b/categories - 물품분류코드·분류명으로 G2B 물품 분류 조회 */

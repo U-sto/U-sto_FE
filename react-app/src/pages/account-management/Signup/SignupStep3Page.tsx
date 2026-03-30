@@ -5,13 +5,8 @@ import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import PhoneAuthField from '../../../features/auth/components/PhoneAuthField/PhoneAuthField'
 import Button from '../../../components/common/Button/Button'
-/** 회원가입 소속: 캠퍼스 선택 시 저장되는 orgCd */
-const SIGNUP_ORG_BY_CAMPUS: Record<string, string> = {
-  '한양대학교 서울캠퍼스': '7002282',
-  '한양대학교 ERICA캠퍼스': '7008277',
-}
-const SIGNUP_ORG_OPTIONS = Object.keys(SIGNUP_ORG_BY_CAMPUS)
 import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../../api/auth'
+import { fetchOrganizations, buildOrganizationSelect } from '../../../api/organization'
 import { signUp, checkSmsExists } from '../../../api/users'
 import { formatPhoneNumber } from '../../../utils/formatPhoneNumber'
 import './SignupStep3Page.css'
@@ -20,6 +15,13 @@ export interface SignupStep2State {
   userId: string
   password: string
 }
+
+/** API 실패 시에만 사용하는 소속 폴백 (기존 하드코딩) */
+const SIGNUP_ORG_FALLBACK_BY_CAMPUS: Record<string, string> = {
+  '한양대학교 서울캠퍼스': '7002282',
+  '한양대학교 ERICA캠퍼스': '7008277',
+}
+const SIGNUP_ORG_FALLBACK_OPTIONS = Object.keys(SIGNUP_ORG_FALLBACK_BY_CAMPUS)
 
 const SignupStep3Page = () => {
   const navigate = useNavigate()
@@ -32,12 +34,40 @@ const SignupStep3Page = () => {
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [orgOptions, setOrgOptions] = useState<string[]>(() => [...SIGNUP_ORG_FALLBACK_OPTIONS])
+  const [orgLabelToCd, setOrgLabelToCd] = useState<Record<string, string>>(() => ({
+    ...SIGNUP_ORG_FALLBACK_BY_CAMPUS,
+  }))
 
   useEffect(() => {
     if (!step2State?.userId || !step2State?.password) {
       navigate('/signup/step2', { replace: true })
     }
   }, [step2State, navigate])
+
+  /** GET /api/organization/organizations — 회원가입 소속 목록 */
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const rows = await fetchOrganizations()
+        if (cancelled) return
+        const { options, labelToOrgCd } = buildOrganizationSelect(rows)
+        if (options.length > 0) {
+          setOrgOptions(options)
+          setOrgLabelToCd(labelToOrgCd)
+        }
+      } catch {
+        if (!cancelled) {
+          setOrgOptions([...SIGNUP_ORG_FALLBACK_OPTIONS])
+          setOrgLabelToCd({ ...SIGNUP_ORG_FALLBACK_BY_CAMPUS })
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhoneNumber(e.target.value))
@@ -86,7 +116,7 @@ const SignupStep3Page = () => {
       return
     }
 
-    const orgCd = SIGNUP_ORG_BY_CAMPUS[trimmedDepartment]
+    const orgCd = orgLabelToCd[trimmedDepartment]
     if (!orgCd) {
       setError('소속을 선택해 주세요.')
       return
@@ -138,7 +168,7 @@ const SignupStep3Page = () => {
           placeholder="소속"
           value={department}
           onChange={setDepartment}
-          options={SIGNUP_ORG_OPTIONS}
+          options={orgOptions}
         />
         <div className="phone-auth-section">
           <PhoneAuthField

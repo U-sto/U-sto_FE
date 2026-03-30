@@ -9,9 +9,19 @@ interface DropdownProps {
   size?: 'large' | 'small'
   /** 접근성: 스크린 리더용 레이블 (버튼과 연결) */
   ariaLabel?: string
+  /** 메뉴가 열리는 방향 */
+  menuPlacement?: 'bottom' | 'top'
 }
 
-const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaLabel }: DropdownProps) => {
+const Dropdown = ({
+  placeholder,
+  value,
+  onChange,
+  options,
+  size = 'large',
+  ariaLabel,
+  menuPlacement = 'bottom',
+}: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
@@ -124,7 +134,11 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaL
     ? 'dropdown-small-placeholder'
     : 'dropdown-placeholder'
   const arrowClass = isSmall ? 'dropdown-small-arrow' : 'dropdown-arrow'
-  const menuClass = isSmall ? 'dropdown-small-menu' : 'dropdown-menu'
+  const menuClassBase = isSmall ? 'dropdown-small-menu' : 'dropdown-menu'
+  const menuClass =
+    menuPlacement === 'top'
+      ? `${menuClassBase} dropdown-menu--top`
+      : menuClassBase
   const optionClass = isSmall ? 'dropdown-small-option' : 'dropdown-option'
   const noResultsClass = isSmall
     ? 'dropdown-small-no-results'
@@ -133,7 +147,19 @@ const Dropdown = ({ placeholder, value, onChange, options, size = 'large', ariaL
   return (
     <div className={wrapperClass} ref={dropdownRef}>
       {isOpen ? (
-        <div id={triggerId} className={buttonClass}>
+        <div
+          id={triggerId}
+          className={buttonClass}
+          role="button"
+          tabIndex={-1}
+          onClick={handleButtonClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleButtonClick()
+            }
+          }}
+        >
           <input
             ref={searchInputRef}
             type="text"

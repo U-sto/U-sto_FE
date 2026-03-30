@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
@@ -10,40 +10,97 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
 import {
-  OPERATING_DEPARTMENT_FILTER_OPTIONS,
-  OPERATING_DEPARTMENT_SELECT_OPTIONS,
-} from '../../../constants/departments'
-
-type RegistrationFilters = {
-  g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
-}
+  useOperatingStatusFilterOptions,
+  useItemStatusSelectOptions,
+  resolveOperatingStatusFilterValue,
+} from '../../../hooks/useCommonCodeOptions'
+import {
+  fetchItemAssets,
+  type AssetLedgerFilters,
+  type AssetLedgerRow,
+} from '../../../api/itemAssets'
+import {
+  createItemDisuse,
+  updateItemDisuse,
+  fetchItemDisuseByDsuMId,
+  fetchItemDisuseAllItems,
+} from '../../../api/itemDisuses'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
+import {
+  CODE_GROUP,
+  buildDescriptionToCodeMap,
+  buildSelectOptionsWithPlaceholder,
+} from '../../../api/codes'
 
 const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
-const ASSET_STATUS_OPTIONS = ['선택', '운용중', '반납', '불용', '처분']
-const REASON_OPTIONS = ['선택', '교체', '폐기', '기타']
+const REASON_OPTIONS_FALLBACK = ['선택', '교체', '폐기', '기타']
 
-type LedgerRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  sortDate: string
-  acquireAmount: string
-  operatingDept: string
-  operatingStatus: string
-  usefulLife: string
+/** 공통코드 미로딩 시 불용 사유 라벨 → API 코드 */
+const FALLBACK_DISUSE_REASON_DESC_TO_CODE: Record<string, string> = {
+  교체: 'REPLACE',
+  폐기: 'DISPOSE',
+  기타: 'ETC',
+}
+
+/** 공통코드 미로딩 시 물품상태(등록 폼) → API 코드 */
+const FALLBACK_ITEM_STS_FORM_TO_CODE: Record<string, string> = {
+  운용중: 'USED',
+  반납: 'RTN',
+  불용: 'DSU',
+  처분: 'DSP',
+}
+
+const INITIAL_FILTERS: AssetLedgerFilters = {
+  g2bName: '',
+  g2bNumberPrefix: '',
+  g2bNumberSuffix: '',
+  itemUniqueNumber: '',
+  operatingDept: '전체',
+  operatingStatus: '전체',
+  acquireDateFrom: '',
+  acquireDateTo: '',
+  sortDateFrom: '',
+  sortDateTo: '',
+}
+
+/** 물품고유번호 기준 키 (체크·선택 목록 동기화) */
+function assetRowKey(row: AssetLedgerRow): string {
+  const k = (row.itemUniqueNumber || row.itmNo || '').trim()
+  return k || `row-${row.id}`
+}
+
+function codeToDropdownLabel(
+  code: string,
+  codeToDesc: Record<string, string>,
+  descToCode: Record<string, string>,
+): string {
+  const c = code.trim()
+  if (!c) return '선택'
+  const fromMap = codeToDesc[c]
+  if (fromMap) return fromMap
+  for (const [label, v] of Object.entries(descToCode)) {
+    if (v === c) return label
+  }
+  return '선택'
+}
+
+function mapDisuseItemToLedgerRow(item: Awaited<ReturnType<typeof fetchItemDisuseAllItems>>[number], index: number): AssetLedgerRow {
+  const acqUprValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
+  return {
+    id: index + 1,
+    g2bNumber: String(item.g2bItemNo ?? ''),
+    g2bName: String(item.g2bItemNm ?? ''),
+    itmNo: String(item.itmNo ?? item.itemUnqNo ?? ''),
+    itemUniqueNumber: String(item.itmNo ?? item.itemUnqNo ?? ''),
+    acquireDate: String(item.acqAt ?? ''),
+    sortDate: '',
+    acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
+    operatingDept: String(item.deptNm ?? item.oprDeptNm ?? ''),
+    operatingStatus: String(item.itmSts ?? item.operSts ?? ''),
+    usefulLife: '',
+  }
 }
 
 const SearchIcon = () => (
@@ -74,22 +131,50 @@ const SearchIcon = () => (
 
 const DisuseRegistrationPage = () => {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<RegistrationFilters>({
-    g2bName: '',
-    g2bNumberPrefix: '',
-    g2bNumberSuffix: '',
-    itemUniqueNumber: '',
-    operatingDept: '전체',
-    operatingStatus: '전체',
-    acquireDateFrom: '',
-    acquireDateTo: '',
-    sortDateFrom: '',
-    sortDateTo: '',
-  })
+  const { dsuMId: dsuMIdParam } = useParams<{ dsuMId?: string }>()
+  const dsuMId = dsuMIdParam?.trim() ?? ''
+  const isEditMode = dsuMId.length > 0
+  const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
+    useOperatingStatusFilterOptions()
+  const {
+    options: assetStatusOptions,
+    descToCode: itemStatusDescToCode,
+    codeToDesc: itemStsCodeToLabel,
+  } =
+    useItemStatusSelectOptions()
+  const { group: disuseReasonGroup } = useCommonCodeGroup(CODE_GROUP.DISUSE_REASON)
+  const disuseReasonDescToCode = useMemo(() => {
+    const fromApi = buildDescriptionToCodeMap(disuseReasonGroup ?? undefined)
+    if (Object.keys(fromApi).length > 0) return fromApi
+    return FALLBACK_DISUSE_REASON_DESC_TO_CODE
+  }, [disuseReasonGroup])
+  const reasonOptions = useMemo(() => {
+    if (Object.keys(disuseReasonDescToCode).length > 0) {
+      return buildSelectOptionsWithPlaceholder(disuseReasonDescToCode)
+    }
+    return REASON_OPTIONS_FALLBACK
+  }, [disuseReasonDescToCode])
+  const reasonCodeToLabel = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const [label, code] of Object.entries(disuseReasonDescToCode)) {
+      m[code] = label
+    }
+    return m
+  }, [disuseReasonDescToCode])
 
-  const [ledgerCheckedIds, setLedgerCheckedIds] = useState<Set<number>>(new Set())
-  const [selectedRows, setSelectedRows] = useState<LedgerRow[]>([])
-  const [selectedTableCheckedIds, setSelectedTableCheckedIds] = useState<Set<number>>(new Set())
+  const [filters, setFilters] = useState<AssetLedgerFilters>({ ...INITIAL_FILTERS })
+  /** GET /api/item/assets 조회에 적용된 조건 (물품 운용 대장과 동일) */
+  const [searchedFilters, setSearchedFilters] = useState<AssetLedgerFilters>(() => ({
+    ...INITIAL_FILTERS,
+  }))
+  const [ledgerPage, setLedgerPage] = useState(1)
+  const [ledgerData, setLedgerData] = useState<AssetLedgerRow[]>([])
+  const [ledgerTotalCount, setLedgerTotalCount] = useState(0)
+
+  const [selectedRows, setSelectedRows] = useState<AssetLedgerRow[]>([])
+  const [selectedTableCheckedKeys, setSelectedTableCheckedKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
 
   const [disuseInfo, setDisuseInfo] = useState({
     disuseDate: '',
@@ -97,62 +182,105 @@ const DisuseRegistrationPage = () => {
     assetStatus: '선택',
     reason: '선택',
   })
+  const [saving, setSaving] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const ledgerData = useMemo<LedgerRow[]>(() => {
-    return Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      sortDate: '2026-01-20',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      operatingStatus: idx % 2 === 0 ? '운용중' : '불용',
-      usefulLife: `${3 + (idx % 3)}년`,
-    }))
-  }, [])
+  const loadLedger = useCallback(async () => {
+    try {
+      const res = await fetchItemAssets({
+        page: ledgerPage,
+        pageSize: 10,
+        filters: {
+          ...searchedFilters,
+          operatingStatus: resolveOperatingStatusFilterValue(
+            searchedFilters.operatingStatus,
+            operStatusDescToCode,
+          ),
+        },
+      })
+      setLedgerData(res.data)
+      setLedgerTotalCount(res.totalCount)
+    } catch {
+      setLedgerData([])
+      setLedgerTotalCount(0)
+    }
+  }, [ledgerPage, searchedFilters, operStatusDescToCode])
 
-  const filteredLedgerData = useMemo(() => {
-    return ledgerData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) return false
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-        if (filters.g2bNumberPrefix && !prefix.startsWith(filters.g2bNumberPrefix)) return false
-        if (filters.g2bNumberSuffix && !suffix.startsWith(filters.g2bNumberSuffix)) return false
+  useEffect(() => {
+    void loadLedger()
+  }, [loadLedger])
+
+  useEffect(() => {
+    if (!isEditMode || !dsuMId) return
+    let cancelled = false
+    setLoadingDetail(true)
+    ;(async () => {
+      try {
+        const master = await fetchItemDisuseByDsuMId(dsuMId)
+        const items = await fetchItemDisuseAllItems(dsuMId)
+        if (cancelled) return
+        if (!master && items.length === 0) {
+          window.alert('불용 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/disuse-management')
+          return
+        }
+        setSelectedRows(items.map((item, i) => mapDisuseItemToLedgerRow(item, i)))
+        setSelectedTableCheckedKeys(new Set())
+        setDisuseInfo({
+          disuseDate: master?.aplyAt ?? '',
+          registrantId: master?.aplyUsrId ?? '',
+          assetStatus: codeToDropdownLabel(
+            String(master?.itemSts ?? ''),
+            itemStsCodeToLabel,
+            itemStatusDescToCode,
+          ),
+          reason:
+            reasonCodeToLabel[String(master?.dsuRsn ?? '')] ??
+            codeToDropdownLabel(String(master?.dsuRsn ?? ''), reasonCodeToLabel, disuseReasonDescToCode),
+        })
+      } catch (e) {
+        if (cancelled) return
+        window.alert(e instanceof Error ? e.message : '불용 정보를 불러오지 못했습니다.')
+        navigate('/asset-management/disuse-management')
+      } finally {
+        if (!cancelled) setLoadingDetail(false)
       }
-      if (filters.itemUniqueNumber && !row.itemUniqueNumber.includes(filters.itemUniqueNumber)) return false
-      if (filters.operatingDept !== '전체' && row.operatingDept !== filters.operatingDept) return false
-      if (filters.operatingStatus !== '전체' && row.operatingStatus !== filters.operatingStatus) return false
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) return false
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) return false
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) return false
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) return false
-      return true
-    })
-  }, [ledgerData, filters])
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isEditMode,
+    dsuMId,
+    navigate,
+    itemStatusDescToCode,
+    itemStsCodeToLabel,
+    reasonCodeToLabel,
+    disuseReasonDescToCode,
+  ])
 
-  const ledgerColumns: DataTableColumn<LedgerRow>[] = [
+  const isInSelectedList = (row: AssetLedgerRow) =>
+    selectedRows.some((r) => assetRowKey(r) === assetRowKey(row))
+
+  const toggleLedgerRow = (row: AssetLedgerRow) => {
+    const k = assetRowKey(row)
+    setSelectedRows((prev) => {
+      if (prev.some((r) => assetRowKey(r) === k)) {
+        return prev.filter((r) => assetRowKey(r) !== k)
+      }
+      return [...prev, row]
+    })
+  }
+
+  const ledgerColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
       header: '',
       render: (row) => (
         <input
           type="checkbox"
-          checked={ledgerCheckedIds.has(row.id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setLedgerCheckedIds((prev) => new Set(prev).add(row.id))
-              setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
-            } else {
-              setLedgerCheckedIds((prev) => {
-                const next = new Set(prev)
-                next.delete(row.id)
-                return next
-              })
-              setSelectedRows((prev) => prev.filter((r) => r.id !== row.id))
-            }
-          }}
+          checked={isInSelectedList(row)}
+          onChange={() => toggleLedgerRow(row)}
         />
       ),
     },
@@ -167,21 +295,22 @@ const DisuseRegistrationPage = () => {
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
   ]
 
-  const selectedColumns: DataTableColumn<LedgerRow>[] = [
+  const selectedColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
       header: '',
       render: (row) => (
         <input
           type="checkbox"
-          checked={selectedTableCheckedIds.has(row.id)}
+          checked={selectedTableCheckedKeys.has(assetRowKey(row))}
           onChange={(e) => {
+            const k = assetRowKey(row)
             if (e.target.checked) {
-              setSelectedTableCheckedIds((prev) => new Set(prev).add(row.id))
+              setSelectedTableCheckedKeys((prev) => new Set(prev).add(k))
             } else {
-              setSelectedTableCheckedIds((prev) => {
+              setSelectedTableCheckedKeys((prev) => {
                 const next = new Set(prev)
-                next.delete(row.id)
+                next.delete(k)
                 return next
               })
             }
@@ -201,48 +330,99 @@ const DisuseRegistrationPage = () => {
   ]
 
   const handleReset = () => {
-    setFilters({
-      g2bName: '',
-      g2bNumberPrefix: '',
-      g2bNumberSuffix: '',
-      itemUniqueNumber: '',
-      operatingDept: '전체',
-      operatingStatus: '전체',
-      acquireDateFrom: '',
-      acquireDateTo: '',
-      sortDateFrom: '',
-      sortDateTo: '',
-    })
+    setFilters({ ...INITIAL_FILTERS })
+    setSearchedFilters({ ...INITIAL_FILTERS })
+    setLedgerPage(1)
+    setSelectedRows([])
+    setSelectedTableCheckedKeys(new Set())
+  }
+
+  const handleSearch = () => {
+    setSearchedFilters({ ...filters })
+    setLedgerPage(1)
   }
 
   const handleDeleteSelected = useCallback(() => {
-    setSelectedRows((prev) => prev.filter((r) => !selectedTableCheckedIds.has(r.id)))
-    setSelectedTableCheckedIds(new Set())
-    setLedgerCheckedIds((prev) => {
-      const next = new Set(prev)
-      selectedTableCheckedIds.forEach((id) => next.delete(id))
-      return next
-    })
-  }, [selectedTableCheckedIds])
+    setSelectedRows((prev) => prev.filter((r) => !selectedTableCheckedKeys.has(assetRowKey(r))))
+    setSelectedTableCheckedKeys(new Set())
+  }, [selectedTableCheckedKeys])
 
   const handleDeleteAll = useCallback(() => {
     setSelectedRows([])
-    setSelectedTableCheckedIds(new Set())
-    setLedgerCheckedIds(new Set())
+    setSelectedTableCheckedKeys(new Set())
   }, [])
 
-  const handleSave = () => {
-    alert('불용 등록이 완료되었습니다.')
-    navigate('/asset-management/disuse-management')
+  const handleSave = async () => {
+    const aplyAt = disuseInfo.disuseDate.trim()
+    if (!aplyAt) {
+      window.alert('불용일자를 입력해 주세요.')
+      return
+    }
+
+    const itmNos = selectedRows
+      .map((row) => (row.itmNo || row.itemUniqueNumber || '').trim())
+      .filter(Boolean)
+    if (itmNos.length === 0) {
+      window.alert('불용할 물품을 선택 물품 목록에 담아 주세요.')
+      return
+    }
+
+    if (!disuseInfo.assetStatus || disuseInfo.assetStatus === '선택') {
+      window.alert('물품상태를 선택해 주세요.')
+      return
+    }
+    if (!disuseInfo.reason || disuseInfo.reason === '선택') {
+      window.alert('사유를 선택해 주세요.')
+      return
+    }
+
+    const itemSts =
+      itemStatusDescToCode[disuseInfo.assetStatus] ??
+      FALLBACK_ITEM_STS_FORM_TO_CODE[disuseInfo.assetStatus] ??
+      disuseInfo.assetStatus
+    const dsuRsn = disuseReasonDescToCode[disuseInfo.reason] ?? disuseInfo.reason
+
+    setSaving(true)
+    try {
+      if (isEditMode) {
+        await updateItemDisuse(dsuMId, {
+          aplyAt,
+          itemSts,
+          dsuRsn,
+          itmNos,
+        })
+        window.alert('불용 수정이 완료되었습니다.')
+      } else {
+        await createItemDisuse({
+          aplyAt,
+          itemSts,
+          dsuRsn,
+          itmNos,
+        })
+        window.alert('불용 등록이 완료되었습니다.')
+      }
+      navigate('/asset-management/disuse-management')
+    } catch (e) {
+      window.alert(
+        e instanceof Error ? e.message : isEditMode ? '불용 수정에 실패했습니다.' : '불용 등록에 실패했습니다.',
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <AssetManagementPageLayout
       pageKey="disuse"
       depthSecondLabel="물품 관리"
-      depthThirdLabel="물품 불용 관리"
+      depthThirdLabel={isEditMode ? '물품 불용 수정' : '물품 불용 관리'}
     >
-      <section className="operation-ledger-filter">
+      {isEditMode && loadingDetail ? (
+        <div className="return-registration-detail-loading" role="status">
+          불용 정보를 불러오는 중...
+        </div>
+      ) : null}
+      <section className="operation-ledger-filter" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-filter-wrapper">
           <div className="operation-ledger-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
@@ -286,7 +466,7 @@ const DisuseRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingStatus: value }))
                 }
-                options={OPERATING_STATUS_OPTIONS}
+                options={operatingStatusOptions}
               />
             </div>
 
@@ -370,7 +550,7 @@ const DisuseRegistrationPage = () => {
             </Button>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary"
-              onClick={() => {}}
+              onClick={handleSearch}
             >
               조회
             </Button>
@@ -378,26 +558,29 @@ const DisuseRegistrationPage = () => {
         </div>
       </section>
 
-      <div className="return-registration-ledger-table-wrap">
-        <DataTable<LedgerRow>
+      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
+        <DataTable<AssetLedgerRow>
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
-          data={filteredLedgerData}
-          totalCount={filteredLedgerData.length}
+          data={ledgerData}
+          totalCount={ledgerTotalCount}
           pageSize={10}
+          currentPage={ledgerPage}
+          onPageChange={setLedgerPage}
           columns={ledgerColumns}
-          getRowKey={(row) => row.id}
+          getRowKey={(row) => assetRowKey(row)}
         />
       </div>
 
-      <DataTable<LedgerRow>
+      <div hidden={isEditMode && loadingDetail}>
+      <DataTable<AssetLedgerRow>
         pageKey="operation-ledger"
         title="선택 물품 목록"
         data={selectedRows}
         totalCount={selectedRows.length}
         pageSize={10}
         columns={selectedColumns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => assetRowKey(row)}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button
@@ -415,10 +598,11 @@ const DisuseRegistrationPage = () => {
           </div>
         )}
       />
+      </div>
 
-      <div className="operation-ledger-detail-content">
+      <div className="operation-ledger-detail-content" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-detail-header-row">
-          <TitlePill>불용 등록 정보</TitlePill>
+          <TitlePill>{isEditMode ? '불용 수정 정보' : '불용 등록 정보'}</TitlePill>
         </div>
         <section className="operation-ledger-detail-panel return-registration-info-panel">
           <div className="return-registration-info-inner">
@@ -454,7 +638,7 @@ const DisuseRegistrationPage = () => {
                   onChange={(value: string) =>
                     setDisuseInfo((prev) => ({ ...prev, assetStatus: value }))
                   }
-                  options={ASSET_STATUS_OPTIONS}
+                  options={assetStatusOptions}
                 />
               </div>
               <div className="operation-ledger-detail-field">
@@ -466,15 +650,16 @@ const DisuseRegistrationPage = () => {
                   onChange={(value: string) =>
                     setDisuseInfo((prev) => ({ ...prev, reason: value }))
                   }
-                  options={REASON_OPTIONS}
+                  options={reasonOptions}
                 />
               </div>
             </div>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
               onClick={handleSave}
+              disabled={saving || (isEditMode && loadingDetail)}
             >
-              저장
+              {saving ? '저장 중...' : '저장'}
             </Button>
           </div>
         </section>

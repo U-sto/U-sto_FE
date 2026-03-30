@@ -1,6 +1,13 @@
+.return-registration-detail-loading {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--usto-text-secondary, #5c5c5c);
+}
+
 /* 반납 등록 페이지: 물품 운용 대장 목록 테이블 최대 3행 노출, 나머지 스크롤 */
 .return-registration-ledger-table-wrap .operation-ledger-table-wrap-inner {
-  max-height: 245px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
@@ -23,10 +30,17 @@
 /* 반납/운용 전환 등록 정보: 라벨-입력창 간격 (라벨과 흰색 입력창이 딱 붙지 않도록) */
 .return-registration-info-panel .operation-ledger-detail-label {
   width: 75px;
+  padding-top: 0; /* date/text/dropdown 수직정렬 통일 */
 }
 
 .return-registration-info-panel .operation-ledger-detail-field {
   gap: 20px;
+  align-items: center; /* 라벨/컨트롤 세로 정렬 통일 */
+}
+
+/* 처분 등록 정보: '처분정리구분' 라벨만 폭 확장 */
+.return-registration-info-panel .operation-ledger-detail-label--disposal-sort {
+  width: 110px;
 }
 
 /* 반납/운용 전환 등록 정보: 흰색 입력창·드롭다운 너비 줄임, 4개 필드 통일 */
@@ -36,6 +50,16 @@
   flex: 0 0 160px;
   max-width: 160px;
   min-width: 0;
+}
+
+/* 처분/반납 등록 정보: 드롭다운 선택 텍스트 크기(16px) → 입력창(14px)과 통일 */
+.return-registration-info-panel .dropdown-small-button {
+  font-size: 14px;
+}
+
+.return-registration-info-panel .dropdown-small-selected,
+.return-registration-info-panel .dropdown-small-placeholder {
+  font-size: 14px;
 }
 
 /* 반납 등록 정보: 물품상태/사유 드롭다운 높이를 옆 입력창(30px)과 동일하게 */

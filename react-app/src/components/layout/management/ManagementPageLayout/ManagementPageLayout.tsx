@@ -84,7 +84,7 @@ const ManagementPageLayout = ({
             </div>
           </section>
 
-          {children}
+          <div className={`${prefix}-main-body`}>{children}</div>
         </main>
       </div>
 

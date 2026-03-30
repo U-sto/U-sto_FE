@@ -14,7 +14,9 @@
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
-  padding: 0 368px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 400px;
   height: 40px;
   background-color: var(--usto-primary-200);
 }
@@ -44,6 +46,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0 400px;
   min-height: 80px;
   background-color: var(--usto-alt-white);
@@ -172,12 +176,10 @@
 }
 
 @media (max-width: 1920px) {
+  .gnb-user-section,
   .gnb-menu-content {
-    padding: 0 40px;
-  }
-  
-  .gnb-user-section {
-    padding: 0 40px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 }
 

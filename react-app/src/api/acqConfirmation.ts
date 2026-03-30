@@ -13,6 +13,8 @@ import type {
   ItemAcquisitionPageable,
   ItemAcquisitionsData,
 } from './itemAcquisitions'
+import { applyDeptLabelToSearchRequest } from '../constants/departments'
+import { buildAcquisitionG2bSearchFields } from './g2bFilterNormalize'
 
 export type AcqConfirmationFilters = {
   g2bName: string
@@ -23,11 +25,14 @@ export type AcqConfirmationFilters = {
   acquireDateFrom: string
   acquireDateTo: string
   approvalStatus: string
-  category: string
+  /** 운용부서(드롭다운 표시명, 전체 제외 시 API deptCd/deptNm으로 전달) */
+  operatingDept: string
 }
 
 export type AcqConfirmationRow = {
   id: number
+  /** 취득 건 UUID — 승인요청 API path */
+  acqId: string
   g2bNumber: string
   g2bName: string
   acquireDate: string
@@ -44,6 +49,8 @@ export type FetchAcqConfirmationParams = {
   page: number
   pageSize: number
   filters: AcqConfirmationFilters
+  /** GET /api/codes 승인상태 그룹 기준 description→code (없으면 DEFAULT 사용) */
+  approvalDescToCode?: Record<string, string>
 }
 
 export type FetchAcqConfirmationResponse = {
@@ -58,9 +65,11 @@ export type FetchAcqConfirmationResponse = {
 export function mapItemAcquisitionToAcqConfirmationRow(
   item: ItemAcquisitionContent,
   index: number,
+  offset = 0,
 ): AcqConfirmationRow {
   return {
-    id: index + 1,
+    id: offset + index + 1,
+    acqId: item.acqId ?? '',
     g2bNumber: item.g2bItemNo,
     g2bName: item.g2bItemNm,
     acquireDate: item.acqAt,
@@ -78,23 +87,41 @@ export function mapItemAcquisitionToAcqConfirmationRow(
   }
 }
 
-/** 승인상태 한글 → API 코드 */
-const APPR_STS_MAP: Record<string, string> = {
+/** 승인상태 화면 라벨 → API 코드 (공통코드 API 실패 시 폴백) */
+export const DEFAULT_APPR_STS_DESCRIPTION_TO_CODE: Record<string, string> = {
   대기: 'WAIT',
   반려: 'REJECT',
   확정: 'CONFIRM',
 }
 
-/** 화면 필터 → API searchRequest 변환 */
-function filtersToSearchRequest(filters: AcqConfirmationFilters): ItemAcquisitionSearchRequest {
+/** 화면 필터 → API searchRequest 변환 (물품 취득 목록 조회 스웨거 기준) */
+function filtersToSearchRequest(
+  filters: AcqConfirmationFilters,
+  approvalDescToCode: Record<string, string> = DEFAULT_APPR_STS_DESCRIPTION_TO_CODE,
+): ItemAcquisitionSearchRequest {
   const req: ItemAcquisitionSearchRequest = {}
-  if (filters.g2bNumberFrom?.trim()) req.g2bDCd = filters.g2bNumberFrom.trim()
+  const from = filters.g2bNumberFrom?.trim() ?? ''
+  const to = filters.g2bNumberTo?.trim() ?? ''
+
+  const g2bParts = buildAcquisitionG2bSearchFields(from, to)
+  if (g2bParts.g2b0Cd) req.g2b0Cd = g2bParts.g2b0Cd
+  if (g2bParts.g2bDCd) req.g2bDCd = g2bParts.g2bDCd
+  if (g2bParts.g2bCd) req.g2bCd = g2bParts.g2bCd
+
+  if (filters.g2bName?.trim()) {
+    req.g2bItemNm = filters.g2bName.trim()
+  }
+
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
   if (filters.sortDateFrom) req.startApprAt = filters.sortDateFrom
   if (filters.sortDateTo) req.endApprAt = filters.sortDateTo
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
-    req.apprSts = APPR_STS_MAP[filters.approvalStatus] ?? filters.approvalStatus
+    req.apprSts =
+      approvalDescToCode[filters.approvalStatus] ?? filters.approvalStatus
+  }
+  if (filters.operatingDept && filters.operatingDept !== '전체') {
+    applyDeptLabelToSearchRequest(req, filters.operatingDept)
   }
   return req
 }
@@ -103,9 +130,12 @@ function filtersToSearchRequest(filters: AcqConfirmationFilters): ItemAcquisitio
 export async function fetchAcqConfirmationList(
   params: FetchAcqConfirmationParams
 ): Promise<FetchAcqConfirmationResponse> {
-  const { page, pageSize, filters } = params
+  const { page, pageSize, filters, approvalDescToCode } = params
 
-  const searchRequest = filtersToSearchRequest(filters)
+  const searchRequest = filtersToSearchRequest(
+    filters,
+    approvalDescToCode ?? DEFAULT_APPR_STS_DESCRIPTION_TO_CODE,
+  )
   const pageable: ItemAcquisitionPageable = {
     page: page - 1,
     size: pageSize,
@@ -117,6 +147,8 @@ export async function fetchAcqConfirmationList(
       params: {
         searchRequest: JSON.stringify(searchRequest),
         pageable: JSON.stringify(pageable),
+        ...searchRequest,
+        ...pageable,
       },
     },
   )
@@ -126,8 +158,9 @@ export async function fetchAcqConfirmationList(
     return { data: [], totalCount: 0 }
   }
 
+  const offset = (page - 1) * pageSize
   const data = payload.content.map((item, index) =>
-    mapItemAcquisitionToAcqConfirmationRow(item, index),
+    mapItemAcquisitionToAcqConfirmationRow(item, index, offset),
   )
   const totalCount = payload.totalElements ?? 0
 

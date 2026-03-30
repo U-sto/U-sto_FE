@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
 import Dropdown from '../../../../components/common/Dropdown/Dropdown'
@@ -7,37 +7,39 @@ import AssetManagementPageLayout from '../../../../components/layout/management/
 import DataTable, {
   type DataTableColumn,
 } from '../../../../features/management/components/DataTable/DataTable'
-import G2BSearchModal, { type G2BItem } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import {
+  fetchItemAssets,
+  type AssetLedgerFilters,
+  type AssetLedgerRow,
+} from '../../../../api/itemAssets'
+import { useAssetDetailOverrides } from '../../../../contexts/AssetDetailOverridesContext'
 import './OperationLedgerPage.css'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
+import {
+  useOperatingStatusFilterOptions,
+  resolveOperatingStatusFilterValue,
+} from '../../../../hooks/useCommonCodeOptions'
 
-type OperationLedgerFilters = {
-  g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
-}
+/** 상세 페이지 등 기존 import 호환용 — GET /api/item/assets 매핑 결과와 동일 */
+export type OperationLedgerRow = AssetLedgerRow
 
 const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
 
-export type OperationLedgerRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  acquireAmount: string
-  sortDate: string
-  operatingDept: string
-  operatingStatus: string
-  usefulLife: string
+const INITIAL_FILTERS: AssetLedgerFilters = {
+  g2bName: '',
+  g2bNumberPrefix: '',
+  g2bNumberSuffix: '',
+  itemUniqueNumber: '',
+  operatingDept: '전체',
+  operatingStatus: '전체',
+  acquireDateFrom: '',
+  acquireDateTo: '',
+  sortDateFrom: '',
+  sortDateTo: '',
 }
 
 const SearchIcon = () => (
@@ -69,105 +71,85 @@ const SearchIcon = () => (
 const OperationLedgerPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { getOverride } = useAssetDetailOverrides()
+  const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
+    useOperatingStatusFilterOptions()
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
-  const [filters, setFilters] = useState<OperationLedgerFilters>({
-    g2bName: '',
-    g2bNumberPrefix: '',
-    g2bNumberSuffix: '',
-    itemUniqueNumber: '',
-    operatingDept: '전체',
-    operatingStatus: '전체',
-    acquireDateFrom: '',
-    acquireDateTo: '',
-    sortDateFrom: '',
-    sortDateTo: '',
-  })
+  const [filters, setFilters] = useState<AssetLedgerFilters>({ ...INITIAL_FILTERS })
+  /** 조회 적용 조건 — GET /api/item/assets searchRequest */
+  const [searchedFilters, setSearchedFilters] = useState<AssetLedgerFilters>(() => ({
+    ...INITIAL_FILTERS,
+  }))
+  const [currentPage, setCurrentPage] = useState(1)
+  const [tableData, setTableData] = useState<OperationLedgerRow[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null)
 
-  const [allData, setAllData] = useState<OperationLedgerRow[]>(() =>
-    Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      sortDate: '2026-01-20',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      operatingStatus: idx % 2 === 0 ? '운용중' : '반납',
-      usefulLife: `${3 + (idx % 3)}년`,
-    })),
-  )
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetchItemAssets({
+        page: currentPage,
+        pageSize: 10,
+        filters: {
+          ...searchedFilters,
+          operatingStatus: resolveOperatingStatusFilterValue(
+            searchedFilters.operatingStatus,
+            operStatusDescToCode,
+          ),
+        },
+      })
+      setTableData(res.data)
+      setTotalCount(res.totalCount)
+    } catch {
+      setTableData([])
+      setTotalCount(0)
+    }
+  }, [currentPage, searchedFilters, operStatusDescToCode])
 
-  // 상세 화면에서 돌아올 때 수정된 값을 반영
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
+
+  /** 조회 조건이 바뀌면 행 선택 초기화 */
+  useEffect(() => {
+    setSelectedRowId(null)
+  }, [searchedFilters])
+
+  // 상세 화면에서 돌아올 때 수정된 값을 목록에 반영 후 state 초기화
   useEffect(() => {
     const state = location.state as { updatedItem?: OperationLedgerRow } | null
     if (!state?.updatedItem) return
 
-    setAllData((prev) =>
+    setTableData((prev) =>
       prev.map((row) =>
         row.id === state.updatedItem!.id ? { ...row, ...state.updatedItem } : row,
       ),
     )
 
-    // state 초기화 (뒤로가기 시 중복 반영 방지)
     navigate(location.pathname, { replace: true })
   }, [location.pathname, location.state, navigate])
 
-  const filteredData = useMemo(() => {
-    return allData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) {
-        return false
-      }
-
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [numPrefix = '', numSuffix = ''] = row.g2bNumber.split('-')
-        if (
-          filters.g2bNumberPrefix &&
-          !numPrefix.startsWith(filters.g2bNumberPrefix)
-        ) {
-          return false
-        }
-        if (
-          filters.g2bNumberSuffix &&
-          !numSuffix.startsWith(filters.g2bNumberSuffix)
-        ) {
-          return false
-        }
-      }
-
-      if (
-        filters.itemUniqueNumber &&
-        !row.itemUniqueNumber.includes(filters.itemUniqueNumber)
-      ) {
-        return false
-      }
-
-      if (filters.operatingDept !== '전체') {
-        if (row.operatingDept !== filters.operatingDept) return false
-      }
-
-      if (filters.operatingStatus !== '전체') {
-        if (row.operatingStatus !== filters.operatingStatus) return false
-      }
-
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) {
-        return false
-      }
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) {
-        return false
-      }
-
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) {
-        return false
-      }
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) {
-        return false
-      }
-
-      return true
+  /** 상세 저장(로컬 오버라이드) 반영 — `filteredData` 대신 이 값을 테이블에 사용 */
+  const displayRows = useMemo(() => {
+    return tableData.map((row) => {
+      const o = getOverride(row.itemUniqueNumber)
+      if (!o) return row
+      const digits = String(o.acquireAmount ?? '').replace(/\D/g, '')
+      const acquireAmount =
+        digits !== ''
+          ? `${Number(digits).toLocaleString('ko-KR')}원`
+          : row.acquireAmount
+      const u = String(o.usefulLife ?? '').trim()
+      const usefulLife =
+        u === ''
+          ? row.usefulLife
+          : u.endsWith('년')
+            ? u
+            : `${u.replace(/[^\d]/g, '') || u}년`
+      return { ...row, acquireAmount, usefulLife }
     })
-  }, [allData, filters])
+  }, [tableData, getOverride])
 
   /** 행 선택/해제 시 선택 상태와 G2B 필터 동기화 */
   const handleSelectRow = (row: OperationLedgerRow) => {
@@ -261,26 +243,18 @@ const OperationLedgerPage = () => {
   ]
 
   const handleReset = () => {
-    setFilters({
-      g2bName: '',
-      g2bNumberPrefix: '',
-      g2bNumberSuffix: '',
-      itemUniqueNumber: '',
-      operatingDept: '전체',
-      operatingStatus: '전체',
-      acquireDateFrom: '',
-      acquireDateTo: '',
-      sortDateFrom: '',
-      sortDateTo: '',
-    })
+    setFilters({ ...INITIAL_FILTERS })
+    setSearchedFilters({ ...INITIAL_FILTERS })
+    setCurrentPage(1)
   }
 
   const handleSearch = () => {
-    // 현재는 클라이언트 필터만 사용하므로 별도 처리 없음
+    setSearchedFilters({ ...filters })
+    setCurrentPage(1)
   }
 
   const handleG2BSelect = (item: G2BItem) => {
-    const [prefix = '', suffix = ''] = item.number.split('-')
+    const { prefix, suffix } = getG2BListNumberParts(item)
     setFilters((prev) => ({
       ...prev,
       g2bName: item.name,
@@ -293,7 +267,7 @@ const OperationLedgerPage = () => {
   const handleOpenDetail = () => {
     const selected =
       selectedRowId != null
-        ? filteredData.find((row) => row.id === selectedRowId)
+        ? displayRows.find((row) => row.id === selectedRowId)
         : null
 
     if (!selected) {
@@ -394,7 +368,7 @@ const OperationLedgerPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingStatus: value }))
                 }
-                options={OPERATING_STATUS_OPTIONS}
+                options={operatingStatusOptions}
               />
             </div>
 
@@ -478,9 +452,11 @@ const OperationLedgerPage = () => {
       <DataTable<OperationLedgerRow>
         pageKey="operation-ledger"
         title="물품 운용 대장 목록"
-        data={filteredData}
-        totalCount={allData.length}
+        data={displayRows}
+        totalCount={totalCount}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => row.id}
         renderActions={() => (

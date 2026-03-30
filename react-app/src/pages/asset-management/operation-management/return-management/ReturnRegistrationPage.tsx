@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
 import Dropdown from '../../../../components/common/Dropdown/Dropdown'
 import Button from '../../../../components/common/Button/Button'
@@ -10,37 +10,99 @@ import DataTable, {
 } from '../../../../features/management/components/DataTable/DataTable'
 import '../operation-ledger/OperationLedgerPage.css'
 import './ReturnManagementPage.css'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
-
-type RegistrationFilters = {
-  g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
-}
+import {
+  useOperatingStatusFilterOptions,
+  useItemStatusSelectOptions,
+  resolveOperatingStatusFilterValue,
+} from '../../../../hooks/useCommonCodeOptions'
+import {
+  fetchItemAssets,
+  mapOperStsToLabel,
+  type AssetLedgerFilters,
+  type AssetLedgerRow,
+} from '../../../../api/itemAssets'
+import {
+  createItemReturning,
+  updateItemReturning,
+  fetchItemReturningByRtrnMid,
+  fetchItemReturningAllItems,
+  formatReturningDateOnly,
+  type ItemReturningItem,
+} from '../../../../api/itemReturnings'
+import { useCommonCodeGroup } from '../../../../hooks/useCommonCodeGroup'
+import {
+  CODE_GROUP,
+  buildDescriptionToCodeMap,
+  buildSelectOptionsWithPlaceholder,
+} from '../../../../api/codes'
 
 const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
-const ASSET_STATUS_OPTIONS = ['선택', '운용중', '반납', '불용', '처분']
 const REASON_OPTIONS = ['선택', '교체', '폐기', '기타']
 
-type LedgerRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  sortDate: string
-  acquireAmount: string
-  operatingDept: string
-  operatingStatus: string
-  usefulLife: string
+/** 공통코드 미로딩 시 반납 사유 라벨 → API 코드 */
+const FALLBACK_RETURN_REASON_DESC_TO_CODE: Record<string, string> = {
+  교체: 'REPLACE',
+  폐기: 'DISPOSE',
+  기타: 'ETC',
+}
+
+/** 공통코드 미로딩 시 물품상태(등록 폼) → API 코드 (스웨거 itemSts 예시 참고) */
+const FALLBACK_ITEM_STS_FORM_TO_CODE: Record<string, string> = {
+  운용중: 'USED',
+  반납: 'RTN',
+  불용: 'DSU',
+  처분: 'DSP',
+}
+
+const INITIAL_FILTERS: AssetLedgerFilters = {
+  g2bName: '',
+  g2bNumberPrefix: '',
+  g2bNumberSuffix: '',
+  itemUniqueNumber: '',
+  operatingDept: '전체',
+  operatingStatus: '전체',
+  acquireDateFrom: '',
+  acquireDateTo: '',
+  sortDateFrom: '',
+  sortDateTo: '',
+}
+
+/** 공통코드 code → 드롭다운 라벨 */
+function codeToDropdownLabel(
+  code: string,
+  codeToDesc: Record<string, string>,
+  descToCode: Record<string, string>,
+): string {
+  const c = code.trim()
+  if (!c) return '선택'
+  const fromMap = codeToDesc[c]
+  if (fromMap) return fromMap
+  for (const [label, v] of Object.entries(descToCode)) {
+    if (v === c) return label
+  }
+  return '선택'
+}
+
+function mapReturningItemToLedgerRow(item: ItemReturningItem, index: number): AssetLedgerRow {
+  const acqUprValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
+  return {
+    id: index + 1,
+    g2bNumber: String(item.g2bItemNo ?? ''),
+    g2bName: String(item.g2bNm ?? ''),
+    itmNo: String(item.itmNo ?? ''),
+    itemUniqueNumber: String(item.itmNo ?? ''),
+    acquireDate: formatReturningDateOnly(item.acqAt),
+    sortDate: '',
+    acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString('ko-KR')}원` : '',
+    operatingDept: String(item.deptNm ?? ''),
+    operatingStatus: mapOperStsToLabel(String(item.itemSts ?? '')) || String(item.itemSts ?? ''),
+    usefulLife: '',
+  }
 }
 
 const SearchIcon = () => (
@@ -71,22 +133,52 @@ const SearchIcon = () => (
 
 const ReturnRegistrationPage = () => {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<RegistrationFilters>({
-    g2bName: '',
-    g2bNumberPrefix: '',
-    g2bNumberSuffix: '',
-    itemUniqueNumber: '',
-    operatingDept: '전체',
-    operatingStatus: '전체',
-    acquireDateFrom: '',
-    acquireDateTo: '',
-    sortDateFrom: '',
-    sortDateTo: '',
-  })
+  const { rtrnMid: rtrnMidParam } = useParams<{ rtrnMid?: string }>()
+  const rtrnMid = rtrnMidParam?.trim() ?? ''
+  const isEditMode = rtrnMid.length > 0
 
-  const [ledgerCheckedIds, setLedgerCheckedIds] = useState<Set<number>>(new Set())
-  const [selectedRows, setSelectedRows] = useState<LedgerRow[]>([])
-  const [selectedTableCheckedIds, setSelectedTableCheckedIds] = useState<Set<number>>(new Set())
+  const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
+    useOperatingStatusFilterOptions()
+  const {
+    options: assetStatusOptions,
+    descToCode: itemStatusDescToCode,
+    codeToDesc: itemStsCodeToLabel,
+  } = useItemStatusSelectOptions()
+  const { group: returnReasonGroup } = useCommonCodeGroup(CODE_GROUP.RETURNING_REASON)
+  const returnReasonDescToCode = useMemo(() => {
+    const fromApi = buildDescriptionToCodeMap(returnReasonGroup ?? undefined)
+    if (Object.keys(fromApi).length > 0) return fromApi
+    return FALLBACK_RETURN_REASON_DESC_TO_CODE
+  }, [returnReasonGroup])
+  const reasonOptions = useMemo(() => {
+    if (Object.keys(returnReasonDescToCode).length > 0) {
+      return buildSelectOptionsWithPlaceholder(returnReasonDescToCode)
+    }
+    return REASON_OPTIONS
+  }, [returnReasonDescToCode])
+
+  const returnReasonCodeToLabel = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const [d, c] of Object.entries(returnReasonDescToCode)) {
+      m[c] = d
+    }
+    return m
+  }, [returnReasonDescToCode])
+  const [filters, setFilters] = useState<AssetLedgerFilters>({ ...INITIAL_FILTERS })
+  const [searchedFilters, setSearchedFilters] = useState<AssetLedgerFilters>(() => ({
+    ...INITIAL_FILTERS,
+  }))
+  const [currentPage, setCurrentPage] = useState(1)
+  const [tableData, setTableData] = useState<AssetLedgerRow[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
+
+  /** 대장 목록 체크 — 물품고유번호(itmNo) 기준 (페이지 바뀌어도 유지) */
+  const [ledgerCheckedItmNos, setLedgerCheckedItmNos] = useState<Set<string>>(() => new Set())
+  const [selectedRows, setSelectedRows] = useState<AssetLedgerRow[]>([])
+  const [selectedTableCheckedItmNos, setSelectedTableCheckedItmNos] = useState<Set<string>>(
+    () => new Set(),
+  )
 
   const [returnInfo, setReturnInfo] = useState({
     returnDate: '',
@@ -94,60 +186,130 @@ const ReturnRegistrationPage = () => {
     assetStatus: '선택',
     reason: '선택',
   })
+  const [saving, setSaving] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const ledgerData = useMemo<LedgerRow[]>(() => {
-    return Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      sortDate: '2026-01-20',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      operatingStatus: idx % 2 === 0 ? '운용중' : '반납',
-      usefulLife: `${3 + (idx % 3)}년`,
-    }))
-  }, [])
+  useEffect(() => {
+    if (!isEditMode) {
+      setSelectedRows([])
+      setLedgerCheckedItmNos(new Set())
+      setSelectedTableCheckedItmNos(new Set())
+      setReturnInfo({
+        returnDate: '',
+        registrantId: '',
+        assetStatus: '선택',
+        reason: '선택',
+      })
+    }
+  }, [isEditMode])
 
-  const filteredLedgerData = useMemo(() => {
-    return ledgerData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) return false
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-        if (filters.g2bNumberPrefix && !prefix.startsWith(filters.g2bNumberPrefix)) return false
-        if (filters.g2bNumberSuffix && !suffix.startsWith(filters.g2bNumberSuffix)) return false
+  useEffect(() => {
+    if (!isEditMode || !rtrnMid) return
+    let cancelled = false
+    setLoadingDetail(true)
+    ;(async () => {
+      try {
+        const master = await fetchItemReturningByRtrnMid(rtrnMid)
+        const items = await fetchItemReturningAllItems(rtrnMid)
+        if (cancelled) return
+        if (!master && items.length === 0) {
+          window.alert('반납 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/operation-management/return-management')
+          return
+        }
+        const rows = items.map((it, i) => mapReturningItemToLedgerRow(it, i))
+        setSelectedRows(rows)
+        setLedgerCheckedItmNos(new Set(rows.map((r) => r.itmNo).filter(Boolean)))
+
+        const itemStsCode = master?.itemSts ?? items[0]?.itemSts ?? ''
+        const rtrnRsnCode = master?.rtrnRsn ?? items[0]?.rtrnRsn ?? ''
+        setReturnInfo({
+          returnDate: formatReturningDateOnly(master?.aplyAt ?? ''),
+          registrantId: master?.aplyUsrId ?? '',
+          assetStatus: codeToDropdownLabel(
+            itemStsCode,
+            itemStsCodeToLabel,
+            itemStatusDescToCode,
+          ),
+          reason: codeToDropdownLabel(
+            rtrnRsnCode,
+            returnReasonCodeToLabel,
+            returnReasonDescToCode,
+          ),
+        })
+      } catch (e) {
+        if (!cancelled) {
+          window.alert(e instanceof Error ? e.message : '반납 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/operation-management/return-management')
+        }
+      } finally {
+        if (!cancelled) setLoadingDetail(false)
       }
-      if (filters.itemUniqueNumber && !row.itemUniqueNumber.includes(filters.itemUniqueNumber)) return false
-      if (filters.operatingDept !== '전체' && row.operatingDept !== filters.operatingDept) return false
-      if (filters.operatingStatus !== '전체' && row.operatingStatus !== filters.operatingStatus) return false
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) return false
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) return false
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) return false
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) return false
-      return true
-    })
-  }, [ledgerData, filters])
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isEditMode,
+    rtrnMid,
+    navigate,
+    itemStsCodeToLabel,
+    itemStatusDescToCode,
+    returnReasonCodeToLabel,
+    returnReasonDescToCode,
+  ])
 
-  const ledgerColumns: DataTableColumn<LedgerRow>[] = [
+  const loadLedgerData = useCallback(async () => {
+    try {
+      const res = await fetchItemAssets({
+        page: currentPage,
+        pageSize: 10,
+        filters: {
+          ...searchedFilters,
+          operatingStatus: resolveOperatingStatusFilterValue(
+            searchedFilters.operatingStatus,
+            operStatusDescToCode,
+          ),
+        },
+      })
+      setTableData(res.data)
+      setTotalCount(res.totalCount)
+    } catch {
+      setTableData([])
+      setTotalCount(0)
+    }
+  }, [currentPage, searchedFilters, operStatusDescToCode])
+
+  useEffect(() => {
+    void loadLedgerData()
+  }, [loadLedgerData])
+
+  /** 조회 조건이 바뀌면 대장 쪽 체크만 초기화 (선택 물품 목록은 유지) */
+  useEffect(() => {
+    setLedgerCheckedItmNos(new Set())
+  }, [searchedFilters])
+
+  const ledgerColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
       header: '',
       render: (row) => (
         <input
           type="checkbox"
-          checked={ledgerCheckedIds.has(row.id)}
+          checked={ledgerCheckedItmNos.has(row.itmNo)}
           onChange={(e) => {
+            const key = row.itmNo
+            if (!key) return
             if (e.target.checked) {
-              setLedgerCheckedIds((prev) => new Set(prev).add(row.id))
-              setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
+              setLedgerCheckedItmNos((prev) => new Set(prev).add(key))
+              setSelectedRows((prev) => (prev.some((r) => r.itmNo === key) ? prev : [...prev, row]))
             } else {
-              setLedgerCheckedIds((prev) => {
+              setLedgerCheckedItmNos((prev) => {
                 const next = new Set(prev)
-                next.delete(row.id)
+                next.delete(key)
                 return next
               })
-              setSelectedRows((prev) => prev.filter((r) => r.id !== row.id))
+              setSelectedRows((prev) => prev.filter((r) => r.itmNo !== key))
             }
           }}
         />
@@ -164,21 +326,23 @@ const ReturnRegistrationPage = () => {
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
   ]
 
-  const selectedColumns: DataTableColumn<LedgerRow>[] = [
+  const selectedColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
       header: '',
       render: (row) => (
         <input
           type="checkbox"
-          checked={selectedTableCheckedIds.has(row.id)}
+          checked={selectedTableCheckedItmNos.has(row.itmNo)}
           onChange={(e) => {
+            const key = row.itmNo
+            if (!key) return
             if (e.target.checked) {
-              setSelectedTableCheckedIds((prev) => new Set(prev).add(row.id))
+              setSelectedTableCheckedItmNos((prev) => new Set(prev).add(key))
             } else {
-              setSelectedTableCheckedIds((prev) => {
+              setSelectedTableCheckedItmNos((prev) => {
                 const next = new Set(prev)
-                next.delete(row.id)
+                next.delete(key)
                 return next
               })
             }
@@ -196,50 +360,118 @@ const ReturnRegistrationPage = () => {
     { key: 'operatingStatus', header: '운용상태', render: (row) => row.operatingStatus },
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
   ]
+
+  const handleG2BSelect = (item: G2BItem) => {
+    const { prefix, suffix } = getG2BListNumberParts(item)
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name,
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
+  const handleSearch = () => {
+    setSearchedFilters({ ...filters })
+    setCurrentPage(1)
+  }
 
   const handleReset = () => {
-    setFilters({
-      g2bName: '',
-      g2bNumberPrefix: '',
-      g2bNumberSuffix: '',
-      itemUniqueNumber: '',
-      operatingDept: '전체',
-      operatingStatus: '전체',
-      acquireDateFrom: '',
-      acquireDateTo: '',
-      sortDateFrom: '',
-      sortDateTo: '',
-    })
+    const next = { ...INITIAL_FILTERS }
+    setFilters(next)
+    setSearchedFilters(next)
+    setCurrentPage(1)
   }
 
   const handleDeleteSelected = useCallback(() => {
-    setSelectedRows((prev) => prev.filter((r) => !selectedTableCheckedIds.has(r.id)))
-    setSelectedTableCheckedIds(new Set())
-    setLedgerCheckedIds((prev) => {
+    setSelectedRows((prev) => prev.filter((r) => !selectedTableCheckedItmNos.has(r.itmNo)))
+    setSelectedTableCheckedItmNos(new Set())
+    setLedgerCheckedItmNos((prev) => {
       const next = new Set(prev)
-      selectedTableCheckedIds.forEach((id) => next.delete(id))
+      selectedTableCheckedItmNos.forEach((itmNo) => next.delete(itmNo))
       return next
     })
-  }, [selectedTableCheckedIds])
+  }, [selectedTableCheckedItmNos])
 
   const handleDeleteAll = useCallback(() => {
     setSelectedRows([])
-    setSelectedTableCheckedIds(new Set())
-    setLedgerCheckedIds(new Set())
+    setSelectedTableCheckedItmNos(new Set())
+    setLedgerCheckedItmNos(new Set())
   }, [])
 
-  const handleSave = () => {
-    alert('반납 등록이 완료되었습니다.')
-    navigate('/asset-management/operation-management/return-management')
+  const handleSave = async () => {
+    const aplyAt = returnInfo.returnDate.trim()
+    if (!aplyAt) {
+      window.alert('반납일자를 입력해 주세요.')
+      return
+    }
+    const itmNos = selectedRows.map((r) => r.itmNo.trim()).filter(Boolean)
+    if (itmNos.length === 0) {
+      window.alert('반납할 물품을 선택 물품 목록에 담아 주세요.')
+      return
+    }
+    if (!returnInfo.assetStatus || returnInfo.assetStatus === '선택') {
+      window.alert('물품상태를 선택해 주세요.')
+      return
+    }
+    if (!returnInfo.reason || returnInfo.reason === '선택') {
+      window.alert('사유를 선택해 주세요.')
+      return
+    }
+
+    const itemSts =
+      itemStatusDescToCode[returnInfo.assetStatus] ??
+      FALLBACK_ITEM_STS_FORM_TO_CODE[returnInfo.assetStatus] ??
+      returnInfo.assetStatus
+    const rtrnRsn =
+      returnReasonDescToCode[returnInfo.reason] ?? returnInfo.reason
+
+    setSaving(true)
+    try {
+      if (isEditMode) {
+        await updateItemReturning(rtrnMid, {
+          aplyAt,
+          itemSts,
+          rtrnRsn,
+          itmNos,
+        })
+        window.alert('반납 수정이 완료되었습니다.')
+      } else {
+        await createItemReturning({
+          aplyAt,
+          itemSts,
+          rtrnRsn,
+          itmNos,
+        })
+        window.alert('반납 등록이 완료되었습니다.')
+      }
+      navigate('/asset-management/operation-management/return-management')
+    } catch (e) {
+      window.alert(
+        e instanceof Error
+          ? e.message
+          : isEditMode
+            ? '반납 수정에 실패했습니다.'
+            : '반납 등록에 실패했습니다.',
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <AssetManagementPageLayout
       pageKey="return"
       depthSecondLabel="물품 운용 관리"
-      depthThirdLabel="물품 반납 관리"
+      depthThirdLabel={isEditMode ? '반납 수정' : '물품 반납 관리'}
     >
-      <section className="operation-ledger-filter">
+      {isEditMode && loadingDetail ? (
+        <div className="return-registration-detail-loading" role="status">
+          반납 정보를 불러오는 중…
+        </div>
+      ) : null}
+      <section className="operation-ledger-filter" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-filter-wrapper">
           <div className="operation-ledger-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
@@ -252,11 +484,14 @@ const ReturnRegistrationPage = () => {
                   }
                   placeholder="G2B목록명 입력"
                   className="operation-ledger-g2b-input"
+                  readOnly={isEditMode}
                 />
                 <button
                   type="button"
                   className="operation-ledger-search-btn"
                   aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
+                  disabled={isEditMode}
                 >
                   <SearchIcon />
                 </button>
@@ -283,7 +518,7 @@ const ReturnRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingStatus: value }))
                 }
-                options={OPERATING_STATUS_OPTIONS}
+                options={operatingStatusOptions}
               />
             </div>
 
@@ -367,7 +602,7 @@ const ReturnRegistrationPage = () => {
             </Button>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary"
-              onClick={() => {}}
+              onClick={handleSearch}
             >
               조회
             </Button>
@@ -375,26 +610,29 @@ const ReturnRegistrationPage = () => {
         </div>
       </section>
 
-      <div className="return-registration-ledger-table-wrap">
-        <DataTable<LedgerRow>
+      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
+        <DataTable<AssetLedgerRow>
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
-          data={filteredLedgerData}
-          totalCount={filteredLedgerData.length}
+          data={tableData}
+          totalCount={totalCount}
           pageSize={10}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
           columns={ledgerColumns}
-          getRowKey={(row) => row.id}
+          getRowKey={(row) => row.itmNo || String(row.id)}
         />
       </div>
 
-      <DataTable<LedgerRow>
+      <div hidden={isEditMode && loadingDetail}>
+      <DataTable<AssetLedgerRow>
         pageKey="operation-ledger"
         title="선택 물품 목록"
         data={selectedRows}
         totalCount={selectedRows.length}
         pageSize={10}
         columns={selectedColumns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => row.itmNo || String(row.id)}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button
@@ -412,10 +650,11 @@ const ReturnRegistrationPage = () => {
           </div>
         )}
       />
+      </div>
 
-      <div className="operation-ledger-detail-content">
+      <div className="operation-ledger-detail-content" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-detail-header-row">
-          <TitlePill>반납 등록 정보</TitlePill>
+          <TitlePill>{isEditMode ? '반납 수정 정보' : '반납 등록 정보'}</TitlePill>
         </div>
         <section className="operation-ledger-detail-panel return-registration-info-panel">
           <div className="return-registration-info-inner">
@@ -451,7 +690,7 @@ const ReturnRegistrationPage = () => {
                   onChange={(value: string) =>
                     setReturnInfo((prev) => ({ ...prev, assetStatus: value }))
                   }
-                  options={ASSET_STATUS_OPTIONS}
+                  options={assetStatusOptions}
                 />
               </div>
               <div className="operation-ledger-detail-field">
@@ -463,19 +702,26 @@ const ReturnRegistrationPage = () => {
                   onChange={(value: string) =>
                     setReturnInfo((prev) => ({ ...prev, reason: value }))
                   }
-                  options={REASON_OPTIONS}
+                  options={reasonOptions}
                 />
               </div>
             </div>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
+              disabled={saving || (isEditMode && loadingDetail)}
             >
-              저장
+              {saving ? '저장 중…' : '저장'}
             </Button>
           </div>
         </section>
       </div>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
     </AssetManagementPageLayout>
   )
 }

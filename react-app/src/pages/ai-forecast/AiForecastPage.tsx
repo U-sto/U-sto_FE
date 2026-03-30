@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AiForecastPageLayout from '../../components/layout/management/AiForecastPageLayout/AiForecastPageLayout'
 import TextField from '../../components/common/TextField/TextField'
 import Button from '../../components/common/Button/Button'
@@ -11,15 +11,20 @@ import PortfolioMatrixChart from '../../components/charts/PortfolioMatrixChart/P
 import {
   fetchAiForecast,
   buildForecastConditions,
+  fetchAiForecastHistory,
+  fetchAiForecastHistoryDetail,
   type AiForecastResponse,
   type ProcurementRecommendationRow,
+  type AiForecastHistoryItem,
 } from '../../api/aiForecast'
-import { OPERATING_DEPARTMENT_SELECT_OPTIONS } from '../../constants/departments'
+import {
+  fetchOperatingDepartments,
+  buildOperatingDepartmentSelect,
+} from '../../api/organization'
 import './AiForecastPage.css'
 
 const YEAR_OPTIONS = ['2024', '2025', '2026', '2027']
-const SEMESTER_OPTIONS = ['1학기', '2학기']
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_SELECT_OPTIONS
+const SEMESTER_OPTIONS = ['1학기', '여름학기', '2학기', '겨울학기']
 const RISK_OPTIONS = ['필수', '권장', '선택']
 
 const DEFAULT_ANALYSIS_CONDITION = {
@@ -31,27 +36,99 @@ const DEFAULT_ANALYSIS_CONDITION = {
   riskPropensity: '필수',
 } as const
 
-type TabId = 'query' | 'result'
+type TabId = 'query' | 'result' | 'history'
 
 const AiForecastPage = () => {
   const [query, setQuery] = useState('')
-  const [analysisConditionOpen, setAnalysisConditionOpen] = useState(false)
+  const [analysisConditionOpen, setAnalysisConditionOpen] = useState(true)
   const [analysisCondition, setAnalysisCondition] = useState(DEFAULT_ANALYSIS_CONDITION)
   const [activeTab, setActiveTab] = useState<TabId>('query')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AiForecastResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<AiForecastHistoryItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [operatingDeptOptions, setOperatingDeptOptions] = useState<string[]>(['선택'])
+  const [deptLabelToCd, setDeptLabelToCd] = useState<Record<string, string>>({})
+  const [orgCdForForecast, setOrgCdForForecast] = useState('7008277')
+
+  const getFirstSelectableDept = (options: string[]) => options.find((opt) => opt !== '선택') ?? '선택'
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const rows = await fetchOperatingDepartments()
+        if (cancelled) return
+        const { options, labelToDeptCd } = buildOperatingDepartmentSelect(rows)
+        setOperatingDeptOptions(options)
+        setDeptLabelToCd(labelToDeptCd)
+        const firstDept = getFirstSelectableDept(options)
+        setAnalysisCondition((prev) =>
+          prev.operatingDept === '선택' && firstDept !== '선택'
+            ? { ...prev, operatingDept: firstDept }
+            : prev,
+        )
+        const orgCd = rows.find((r) => typeof r.orgCd === 'string' && r.orgCd.trim())?.orgCd
+        if (orgCd) setOrgCdForForecast(orgCd)
+      } catch {
+        if (cancelled) return
+        setOperatingDeptOptions(['선택'])
+        setDeptLabelToCd({})
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // 히스토리 탭이 처음 켜질 때 서버에서 기록 목록을 불러온다.
+  useEffect(() => {
+    if (activeTab !== 'history' || historyLoaded || historyLoading) return
+    ;(async () => {
+      setHistoryError(null)
+      setHistoryLoading(true)
+      try {
+        const list = await fetchAiForecastHistory()
+        setHistory(list)
+      } catch (e) {
+        setHistoryError(
+          e instanceof Error ? e.message : '이전 예측 이력을 불러오지 못했습니다.',
+        )
+      } finally {
+        setHistoryLoading(false)
+        setHistoryLoaded(true)
+      }
+    })()
+  }, [activeTab, historyLoaded, historyLoading])
 
   const handleResetCondition = () => {
-    setAnalysisCondition({ ...DEFAULT_ANALYSIS_CONDITION })
+    const firstDept = getFirstSelectableDept(operatingDeptOptions)
+    setAnalysisCondition({
+      ...DEFAULT_ANALYSIS_CONDITION,
+      operatingDept: firstDept,
+    })
   }
 
   const handleSearch = async () => {
     if (!query.trim()) return
+    if (!analysisCondition.operatingDept || analysisCondition.operatingDept === '선택') {
+      setError('운용부서를 선택해주세요.')
+      return
+    }
     setError(null)
     setLoading(true)
     try {
-      const conditions = buildForecastConditions(analysisCondition)
+      const conditions = buildForecastConditions(analysisCondition, {
+        campusOrgCd: orgCdForForecast,
+        deptLabelToCd,
+      })
+      if (!conditions.dept_cd?.trim()) {
+        setError('운용부서를 다시 선택해주세요.')
+        return
+      }
       const data = await fetchAiForecast(query.trim(), conditions)
       setResult(data)
       setActiveTab('result')
@@ -97,7 +174,26 @@ const AiForecastPage = () => {
         >
           분석 결과
         </button>
+        <button
+          type="button"
+          className={`ai-forecast-tab ${activeTab === 'history' ? 'ai-forecast-tab--active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          이전 예측 이력
+        </button>
       </div>
+
+      {activeTab === 'history' && historyLoading && (
+        <main className="ai-forecast-history">
+          <p className="ai-forecast-history-empty">이전 예측 이력을 불러오는 중입니다...</p>
+        </main>
+      )}
+
+      {activeTab === 'history' && !historyLoading && historyError && (
+        <main className="ai-forecast-history">
+          <p className="ai-forecast-history-empty">{historyError}</p>
+        </main>
+      )}
 
       {activeTab === 'query' && (
         <main className="ai-forecast-main">
@@ -195,7 +291,7 @@ const AiForecastPage = () => {
                           onChange={(value) =>
                             setAnalysisCondition((prev) => ({ ...prev, operatingDept: value }))
                           }
-                          options={OPERATING_DEPT_OPTIONS}
+                          options={operatingDeptOptions}
                           ariaLabel="운용부서 선택"
                         />
                       </div>
@@ -262,52 +358,52 @@ const AiForecastPage = () => {
               </div>
               <div className="ai-forecast-result-inner">
                 <div className="ai-forecast-result-banner">
-                <div className="ai-forecast-result-banner-text">
-                  <p>입력하신 조건에 따라</p>
-                  <p>다음과 같이 분석이 완료되었습니다.</p>
-                </div>
-              </div>
-
-              <div className="ai-forecast-result-row1">
-                <div className="ai-forecast-query-bubble">
-                  <p>{result.summary.query}</p>
-                </div>
-                <div className="ai-forecast-params">
-                  <div className="ai-forecast-param">
-                    <span className="ai-forecast-param-label">Target :</span>
-                    <span className="ai-forecast-param-value">{result.summary.target}</span>
-                  </div>
-                  <div className="ai-forecast-param">
-                    <span className="ai-forecast-param-label">Risk :</span>
-                    <span className="ai-forecast-param-value">{result.summary.risk}</span>
-                  </div>
-                  <div className="ai-forecast-param">
-                    <span className="ai-forecast-param-label">Period :</span>
-                    <span className="ai-forecast-param-value">{result.summary.period}</span>
+                  <div className="ai-forecast-result-banner-text">
+                    <p>입력하신 조건에 따라</p>
+                    <p>다음과 같이 분석이 완료되었습니다.</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="ai-forecast-charts">
-                <div className="ai-forecast-chart-block">
-                  <DemandTimeSeriesChart chart={result.demandTimeSeries} height={437} />
+                <div className="ai-forecast-result-row1">
+                  <div className="ai-forecast-query-bubble">
+                    <p>{result.summary.query}</p>
+                  </div>
+                  <div className="ai-forecast-params">
+                    <div className="ai-forecast-param">
+                      <span className="ai-forecast-param-label">Target :</span>
+                      <span className="ai-forecast-param-value">{result.summary.target}</span>
+                    </div>
+                    <div className="ai-forecast-param">
+                      <span className="ai-forecast-param-label">Risk :</span>
+                      <span className="ai-forecast-param-value">{result.summary.risk}</span>
+                    </div>
+                    <div className="ai-forecast-param">
+                      <span className="ai-forecast-param-label">Period :</span>
+                      <span className="ai-forecast-param-value">{result.summary.period}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="ai-forecast-chart-block">
-                  <PortfolioMatrixChart chart={result.portfolioMatrix} height={437} />
-                </div>
-              </div>
 
-              <div className="ai-forecast-table-section">
-                <DataTable<ProcurementRecommendationRow>
-                  pageKey="ai-forecast"
-                  title={result.recommendationTitle}
-                  data={result.recommendations}
-                  columns={recommendationColumns}
-                  getRowKey={(row) => row.no}
-                  pageSize={10}
-                  renderActions={() => null}
-                />
-              </div>
+                <div className="ai-forecast-charts">
+                  <div className="ai-forecast-chart-block">
+                    <DemandTimeSeriesChart chart={result.demandTimeSeries} height={437} />
+                  </div>
+                  <div className="ai-forecast-chart-block">
+                    <PortfolioMatrixChart chart={result.portfolioMatrix} height={437} />
+                  </div>
+                </div>
+
+                <div className="ai-forecast-table-section">
+                  <DataTable<ProcurementRecommendationRow>
+                    pageKey="ai-forecast"
+                    title={result.recommendationTitle}
+                    data={result.recommendations}
+                    columns={recommendationColumns}
+                    getRowKey={(row) => row.no}
+                    pageSize={10}
+                    renderActions={() => null}
+                  />
+                </div>
               </div>
             </>
           ) : (
@@ -317,6 +413,43 @@ const AiForecastPage = () => {
                 질문하러 가기
               </Button>
             </div>
+          )}
+        </main>
+      )}
+
+      {activeTab === 'history' && !historyLoading && !historyError && (
+        <main className="ai-forecast-history">
+          {history.length === 0 ? (
+            <p className="ai-forecast-history-empty">아직 저장된 예측 이력이 없습니다.</p>
+          ) : (
+            <ul className="ai-forecast-history-list">
+              {history.map((item) => (
+                <li key={item.id} className="ai-forecast-history-item">
+                  <button
+                    type="button"
+                    className="ai-forecast-history-button"
+                    onClick={async () => {
+                      try {
+                        const detail = await fetchAiForecastHistoryDetail(item.id, item.title)
+                        setResult(detail)
+                        setActiveTab('result')
+                      } catch (e) {
+                        window.alert(
+                          e instanceof Error
+                            ? e.message
+                            : '이전 예측 내용을 불러오지 못했습니다.',
+                        )
+                      }
+                    }}
+                  >
+                    <div className="ai-forecast-history-title">{item.title}</div>
+                    {item.createdAt && (
+                      <div className="ai-forecast-history-meta">{item.createdAt}</div>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </main>
       )}

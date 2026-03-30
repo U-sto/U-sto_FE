@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
 import Button from '../../../components/common/Button/Button'
 import RadioButton from '../../../components/common/RadioButton/RadioButton'
@@ -8,7 +8,19 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
 import { useManagementFilter } from '../../../hooks/useManagementFilter'
+import {
+  fetchItemDisposalItems,
+  fetchItemDisposals,
+  confirmItemDisposal,
+  rejectItemDisposal,
+  type DisposalItemRow,
+  type DisposalRegistrationRow as ApiDisposalRegistrationRow,
+} from '../../../api/itemDisposals'
 import './DisposalManagementPage.css'
+import {
+  useApprovalStatusFilterOptions,
+  resolveApprovalFilterTransferStyle,
+} from '../../../hooks/useCommonCodeOptions'
 
 type Filters = {
   disposalDateFrom: string
@@ -22,28 +34,11 @@ const INITIAL_FILTERS: Filters = {
   approvalStatus: '전체',
 }
 
-type DisposalRegistrationRow = {
-  id: number
-  disposalDate: string
-  disposalConfirmDate: string
-  registrantId: string
-  registrantName: string
-  approvalStatus: string
-}
-
-type DisposalItemRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  acquireAmount: string
-  operatingDept: string
-  itemStatus: string
-  reason: string
-}
+type SelectedRegistration = { dispMId: string }
 
 const DisposalManagementPage = () => {
+  const { options: approvalOptions, descToCode: approvalDescToCode } =
+    useApprovalStatusFilterOptions()
   const {
     filters,
     setFilters,
@@ -60,50 +55,159 @@ const DisposalManagementPage = () => {
     ],
   })
 
-  const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [registrationData, setRegistrationData] = useState<ApiDisposalRegistrationRow[]>([])
+  const [registrationTotalCount, setRegistrationTotalCount] = useState(0)
+  const [registrationError, setRegistrationError] = useState<string | null>(null)
+  const [selectedRegistration, setSelectedRegistration] = useState<SelectedRegistration | null>(null)
 
-  const allRegistrationData = useMemo<DisposalRegistrationRow[]>(() => {
-    return Array.from({ length: 5 }).map((_, idx) => ({
-      id: idx + 1,
-      disposalDate: '2026-01-21',
-      disposalConfirmDate: '2026-01-22',
-      registrantId: `user${idx + 1}`,
-      registrantName: `등록자${idx + 1}`,
-      approvalStatus: '대기',
-    }))
-  }, [])
+  const [itemPage, setItemPage] = useState(1)
+  const [itemData, setItemData] = useState<DisposalItemRow[]>([])
+  const [itemTotalCount, setItemTotalCount] = useState(0)
+  const [itemError, setItemError] = useState<string | null>(null)
+  const [checkedDispMIds, setCheckedDispMIds] = useState<Set<string>>(new Set())
 
-  const allItemData = useMemo<DisposalItemRow[]>(() => {
-    return Array.from({ length: 10 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: '노트북',
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서 ${idx + 1}`,
-      itemStatus: '운용중',
-      reason: '처분 사유',
-    }))
-  }, [])
+  const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
 
-  const filteredRegistrationData = useMemo(() => {
-    if (!searchedFilters) return allRegistrationData
-    return allRegistrationData.filter((item) => {
-      if (searchedFilters.disposalDateFrom && item.disposalDate < searchedFilters.disposalDateFrom)
-        return false
-      if (searchedFilters.disposalDateTo && item.disposalDate > searchedFilters.disposalDateTo)
-        return false
-      if (searchedFilters.approvalStatus && searchedFilters.approvalStatus !== '전체') {
-        if (item.approvalStatus !== searchedFilters.approvalStatus) return false
+  const apiDisposalFilters = useMemo(
+    () => ({
+      disposalDateFrom: effectiveFilters.disposalDateFrom,
+      disposalDateTo: effectiveFilters.disposalDateTo,
+      approvalStatus: resolveApprovalFilterTransferStyle(
+        effectiveFilters.approvalStatus,
+        approvalDescToCode,
+      ),
+    }),
+    [effectiveFilters, approvalDescToCode],
+  )
+
+  useEffect(() => {
+    let ignore = false
+    setRegistrationError(null)
+    ;(async () => {
+      try {
+        const res = await fetchItemDisposals({
+          page: currentPage,
+          pageSize: 10,
+          filters: apiDisposalFilters,
+        })
+        if (ignore) return
+        setRegistrationData(res.data)
+        setRegistrationTotalCount(res.totalCount)
+        setSelectedRegistration(null)
+        setItemPage(1)
+        setItemData([])
+        setItemTotalCount(0)
+        setCheckedDispMIds(new Set())
+      } catch (e) {
+        if (ignore) return
+        setRegistrationData([])
+        setRegistrationTotalCount(0)
+        setRegistrationError(
+          e instanceof Error ? e.message : '처분 등록 목록을 불러오지 못했습니다.',
+        )
       }
-      return true
+    })()
+    return () => {
+      ignore = true
+    }
+  }, [currentPage, apiDisposalFilters])
+
+  useEffect(() => {
+    let ignore = false
+    const dispMId = selectedRegistration?.dispMId
+    if (!dispMId) {
+      setItemError(null)
+      setItemData([])
+      setItemTotalCount(0)
+      return
+    }
+
+    setItemError(null)
+    ;(async () => {
+      try {
+        const res = await fetchItemDisposalItems({
+          dispMId,
+          page: itemPage,
+          pageSize: 10,
+        })
+        if (ignore) return
+        setItemData(res.data)
+        setItemTotalCount(res.totalCount)
+      } catch (e) {
+        if (ignore) return
+        setItemData([])
+        setItemTotalCount(0)
+        setItemError(e instanceof Error ? e.message : '처분 물품 목록을 불러오지 못했습니다.')
+      }
+    })()
+
+    return () => {
+      ignore = true
+    }
+  }, [itemPage, selectedRegistration?.dispMId])
+
+  const allRegistrationsChecked =
+    registrationData.length > 0 && registrationData.every((row) => checkedDispMIds.has(row.dispMId))
+
+  const toggleAllRegistrations = (checked: boolean) => {
+    if (!checked) {
+      setCheckedDispMIds(new Set())
+      return
+    }
+    setCheckedDispMIds(new Set(registrationData.map((r) => r.dispMId).filter(Boolean)))
+  }
+
+  const toggleOneRegistration = (dispMId: string, checked: boolean) => {
+    setCheckedDispMIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(dispMId)
+      else next.delete(dispMId)
+      return next
     })
-  }, [allRegistrationData, searchedFilters])
+  }
 
-  const filteredItemData = useMemo(() => allItemData, [allItemData])
-
-  const registrationColumns: DataTableColumn<DisposalRegistrationRow>[] = [
+  // API 응답 row 타입이 동일하지만, 이 페이지에서 사용하는 타입과 맞추기 위해 명시적으로 선언
+  const registrationColumns: DataTableColumn<ApiDisposalRegistrationRow>[] = [
+    {
+      key: 'check',
+      header: (
+        <input
+          type="checkbox"
+          checked={allRegistrationsChecked}
+          disabled={registrationData.length === 0}
+          onChange={(e) => toggleAllRegistrations(e.target.checked)}
+          aria-label="전체 선택"
+        />
+      ),
+      width: 56,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={checkedDispMIds.has(row.dispMId)}
+          disabled={!row.dispMId}
+          onChange={(e) => toggleOneRegistration(row.dispMId, e.target.checked)}
+          aria-label={`선택 ${row.id}`}
+        />
+      ),
+    },
+    {
+      key: 'select',
+      header: '',
+      width: 56,
+      render: (row) => (
+        <input
+          type="radio"
+          name="disposal-registration-select"
+          disabled={!row.dispMId}
+          checked={selectedRegistration?.dispMId === row.dispMId}
+          onChange={() => {
+            setSelectedRegistration({ dispMId: row.dispMId })
+            setItemPage(1)
+          }}
+        />
+      ),
+    },
     { key: 'id', header: '순번', width: 100, render: (row) => row.id },
     { key: 'disposalDate', header: '처분일자', width: 150, render: (row) => row.disposalDate },
     { key: 'disposalConfirmDate', header: '처분확정일자', width: 150, render: (row) => row.disposalConfirmDate },
@@ -113,7 +217,6 @@ const DisposalManagementPage = () => {
   ]
 
   const itemColumns: DataTableColumn<DisposalItemRow>[] = [
-    { key: 'select', header: <input type="checkbox" />, width: 56, render: () => <input type="checkbox" /> },
     { key: 'g2bNumber', header: 'G2B목록번호', width: 150, render: (row) => row.g2bNumber },
     { key: 'g2bName', header: 'G2B목록명', width: 150, render: (row) => row.g2bName },
     { key: 'itemUniqueNumber', header: '물품고유번호', width: 150, render: (row) => row.itemUniqueNumber },
@@ -125,6 +228,51 @@ const DisposalManagementPage = () => {
   ]
 
   const setDisposalDateError = (err: string) => setDateError('disposalDate', err)
+
+  const handleSearch = () => {
+    const ok = onSearch()
+    if (ok) setCurrentPage(1)
+  }
+
+  const handleReset = () => {
+    onReset()
+    setCurrentPage(1)
+    setSelectedRegistration(null)
+    setItemPage(1)
+    setItemData([])
+    setItemTotalCount(0)
+    setCheckedDispMIds(new Set())
+  }
+
+  const handleReject = async () => {
+    if (checkedDispMIds.size === 0) {
+      window.alert('상단 처분 등록 목록에서 반려할 항목을 체크해주세요.')
+      return
+    }
+    try {
+      await Promise.all(Array.from(checkedDispMIds).map((id) => rejectItemDisposal(id)))
+      window.alert('반려 처리되었습니다.')
+      setCheckedDispMIds(new Set())
+      setCurrentPage(1)
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '반려 처리에 실패했습니다.')
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (checkedDispMIds.size === 0) {
+      window.alert('상단 처분 등록 목록에서 확정할 항목을 체크해주세요.')
+      return
+    }
+    try {
+      await Promise.all(Array.from(checkedDispMIds).map((id) => confirmItemDisposal(id)))
+      window.alert('확정 처리되었습니다.')
+      setCheckedDispMIds(new Set())
+      setCurrentPage(1)
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '확정 처리에 실패했습니다.')
+    }
+  }
 
   return (
     <ManagementPageLayout
@@ -181,40 +329,59 @@ const DisposalManagementPage = () => {
           </div>
         </div>
         <div className="disposal-filter-actions">
-          <Button className="disposal-btn disposal-btn-outline" onClick={onReset}>
+          <Button className="disposal-btn disposal-btn-outline" onClick={handleReset}>
             초기화
           </Button>
-          <Button className="disposal-btn disposal-btn-primary" onClick={onSearch}>
+          <Button className="disposal-btn disposal-btn-primary" onClick={handleSearch}>
             조회
           </Button>
         </div>
       </FilterPanel>
 
-      <DataTable<DisposalRegistrationRow>
+      {registrationError && <div className="disposal-error-text">{registrationError}</div>}
+
+      <DataTable<ApiDisposalRegistrationRow>
         pageKey="disposal"
         title="처분 등록 목록"
-        data={filteredRegistrationData}
-        totalCount={allRegistrationData.length}
+        data={registrationData}
+        totalCount={registrationTotalCount}
         pageSize={10}
         variant="upper"
         columns={registrationColumns}
         getRowKey={(row) => row.id}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        renderActions={() => (
+          <div className="disposal-table-actions">
+            <Button
+              className="disposal-btn disposal-btn-outline disposal-btn-table"
+              onClick={handleReject}
+              disabled={checkedDispMIds.size === 0}
+            >
+              반려
+            </Button>
+            <Button
+              className="disposal-btn disposal-btn-primary disposal-btn-table"
+              onClick={handleConfirm}
+              disabled={checkedDispMIds.size === 0}
+            >
+              확정
+            </Button>
+          </div>
+        )}
       />
+      {itemError && <div className="disposal-error-text">{itemError}</div>}
       <DataTable<DisposalItemRow>
         pageKey="disposal"
         title="처분 물품 목록"
-        data={filteredItemData}
-        totalCount={allItemData.length}
+        data={itemData}
+        totalCount={itemTotalCount}
         pageSize={10}
         variant="lower"
         columns={itemColumns}
         getRowKey={(row) => row.id}
-        renderActions={() => (
-          <div className="disposal-table-actions">
-            <Button className="disposal-btn disposal-btn-outline disposal-btn-table">반려</Button>
-            <Button className="disposal-btn disposal-btn-primary disposal-btn-table">확정</Button>
-          </div>
-        )}
+        currentPage={itemPage}
+        onPageChange={setItemPage}
       />
     </ManagementPageLayout>
   )

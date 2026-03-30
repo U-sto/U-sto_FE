@@ -18,7 +18,7 @@ const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProp
   const prefix = 'management'
 
   return (
-    <div className={`${prefix}-page`}>
+    <div className={`${prefix}-page ai-forecast-page-layout`}>
       <GNBWithMenu />
 
       <div className={`${prefix}-layout`}>
@@ -54,7 +54,7 @@ const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProp
             </div>
           </section>
 
-          {children}
+          <div className={`${prefix}-main-body`}>{children}</div>
         </main>
       </div>
     </div>

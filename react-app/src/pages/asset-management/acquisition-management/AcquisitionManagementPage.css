@@ -1,9 +1,9 @@
 /* 콘텐츠 래퍼 (제목 행 + 패널) */
 .acquisition-content {
-  width: calc(100% - 160px);
-  max-width: 1420px;
-  margin-left: 80px;
-  margin-right: 80px;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   margin-top: 48px;
   flex-shrink: 0;
 }
@@ -36,6 +36,13 @@
 
 .acquisition-form-body {
   width: 100%;
+}
+
+.acquisition-form-loading {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--usto-text-secondary, #5c5c5c);
 }
 
 /* Figma 사진 기준: Row1 2열, Row2 4열, Row3 3열, Row4 2열, Row5 전체 */
@@ -71,11 +78,11 @@
 }
 
 .acquisition-label {
-  width: 100px;
+  width: 112px;
   flex-shrink: 0;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
@@ -85,11 +92,11 @@
 .acquisition-form-panel .text-field {
   flex: 1;
   min-width: 0;
-  height: 32px;
-  padding: 4px 10px;
+  height: 38px;
+  padding: 6px 12px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.3;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -125,7 +132,7 @@
   flex-shrink: 0;
   padding: 0 8px;
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--usto-alt-black);
 }
@@ -140,12 +147,12 @@
   flex: 1;
   min-width: 0;
   max-width: 100%;
-  height: 32px;
-  min-height: 32px;
-  padding: 4px 10px;
+  height: 38px;
+  min-height: 38px;
+  padding: 6px 12px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.3;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -176,8 +183,8 @@
 }
 
 .acquisition-search-btn {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: flex;
   align-items: center;

@@ -8,12 +8,25 @@ import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
-import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import { useManagementFilter } from '../../../hooks/useManagementFilter'
 import {
   fetchAcqConfirmationList,
   type AcqConfirmationRow,
 } from '../../../api/acqConfirmation'
+import {
+  bulkApproveItemAcquisitions,
+  bulkRejectItemAcquisitions,
+} from '../../../api/itemAcquisitions'
+import {
+  CODE_GROUP,
+  buildDescriptionToCodeMap,
+  buildFilterOptionsWithAll,
+} from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import './AcqConfirmationPage.css'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
 
@@ -75,7 +88,21 @@ const DATE_RANGES = [
 /** AcqTableRow는 AcqConfirmationRow와 동일 - API 타입과 정렬 */
 type AcqTableRow = AcqConfirmationRow
 
+const APPROVAL_FALLBACK_OPTIONS = ['전체', '대기', '반려', '확정']
+
 const AcqConfirmationPage = () => {
+  const { group: apprGroup } = useCommonCodeGroup(CODE_GROUP.APPR_STATUS)
+  const approvalDescToCode = useMemo(
+    () => buildDescriptionToCodeMap(apprGroup ?? undefined),
+    [apprGroup],
+  )
+  const approvalOptions = useMemo(() => {
+    if (Object.keys(approvalDescToCode).length > 0) {
+      return buildFilterOptionsWithAll(approvalDescToCode)
+    }
+    return APPROVAL_FALLBACK_OPTIONS
+  }, [approvalDescToCode])
+
   const {
     filters,
     setFilters,
@@ -97,7 +124,6 @@ const AcqConfirmationPage = () => {
 
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
 
-  const approvalOptions = useMemo(() => ['전체', '대기', '반려', '확정'], [])
   const operatingDeptOptions = useMemo(
     () => OPERATING_DEPARTMENT_FILTER_OPTIONS,
     [],
@@ -105,6 +131,8 @@ const AcqConfirmationPage = () => {
 
   const [tableData, setTableData] = useState<AcqTableRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
+  const [selectedAcqIds, setSelectedAcqIds] = useState<Set<string>>(() => new Set())
+  const [approvalActionLoading, setApprovalActionLoading] = useState(false)
   const pageSize = 10
 
   const loadData = useCallback(async () => {
@@ -112,14 +140,87 @@ const AcqConfirmationPage = () => {
       page: query.page,
       pageSize,
       filters: query.filters,
+      approvalDescToCode:
+        Object.keys(approvalDescToCode).length > 0 ? approvalDescToCode : undefined,
     })
     setTableData(res.data)
     setTotalCount(res.totalCount)
-  }, [query])
+  }, [query, approvalDescToCode])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    setSelectedAcqIds(new Set())
+  }, [query.filters])
+
+  const pageAcqIds = useMemo(
+    () => tableData.map((r) => r.acqId).filter((id) => id.length > 0),
+    [tableData],
+  )
+  const allPageSelected =
+    pageAcqIds.length > 0 && pageAcqIds.every((id) => selectedAcqIds.has(id))
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (allPageSelected) {
+        pageAcqIds.forEach((id) => next.delete(id))
+      } else {
+        pageAcqIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const toggleRowSelected = (acqId: string) => {
+    if (!acqId) return
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(acqId)) next.delete(acqId)
+      else next.add(acqId)
+      return next
+    })
+  }
+
+  const handleBulkApprove = async () => {
+    const ids = [...selectedAcqIds]
+    if (ids.length === 0) {
+      window.alert('확정할 건을 체크해 주세요.')
+      return
+    }
+    setApprovalActionLoading(true)
+    try {
+      await bulkApproveItemAcquisitions(ids)
+      window.alert(`승인 확정 처리되었습니다. (${ids.length}건)`)
+      setSelectedAcqIds(new Set())
+      await loadData()
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '승인 확정에 실패했습니다.')
+    } finally {
+      setApprovalActionLoading(false)
+    }
+  }
+
+  const handleBulkReject = async () => {
+    const ids = [...selectedAcqIds]
+    if (ids.length === 0) {
+      window.alert('반려할 건을 체크해 주세요.')
+      return
+    }
+    setApprovalActionLoading(true)
+    try {
+      await bulkRejectItemAcquisitions(ids)
+      window.alert(`반려 처리되었습니다. (${ids.length}건)`)
+      setSelectedAcqIds(new Set())
+      await loadData()
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '반려 처리에 실패했습니다.')
+    } finally {
+      setApprovalActionLoading(false)
+    }
+  }
 
   /** 조회: 날짜 검증 후 필터 조건으로 query 갱신 → API 재호출 */
   const handleSearchClick = () => {
@@ -129,12 +230,12 @@ const AcqConfirmationPage = () => {
   }
 
   const handleG2BSelect = (item: G2BItem) => {
-    const [from = '', to = ''] = item.number.split('-')
+    const { prefix, suffix } = getG2BListNumberParts(item)
     setFilters((p) => ({
       ...p,
       g2bName: item.name,
-      g2bNumberFrom: from,
-      g2bNumberTo: to,
+      g2bNumberFrom: prefix,
+      g2bNumberTo: suffix,
     }))
     setIsG2BModalOpen(false)
   }
@@ -151,9 +252,25 @@ const AcqConfirmationPage = () => {
   const columns: DataTableColumn<AcqTableRow>[] = [
     {
       key: 'select',
-      header: '',
+      header: (
+        <input
+          type="checkbox"
+          checked={allPageSelected}
+          onChange={toggleSelectAllOnPage}
+          disabled={pageAcqIds.length === 0}
+          aria-label="현재 페이지 전체 선택"
+        />
+      ),
       width: 56,
-      render: () => <input type="checkbox" />,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={row.acqId ? selectedAcqIds.has(row.acqId) : false}
+          onChange={() => toggleRowSelected(row.acqId)}
+          disabled={!row.acqId}
+          aria-label={`취득 건 선택 ${row.g2bNumber}`}
+        />
+      ),
     },
     {
       key: 'g2bNumber',
@@ -381,9 +498,26 @@ const AcqConfirmationPage = () => {
         currentPage={query.page}
         onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))}
         columns={columns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
         renderActions={() => (
-          <Button className="acq-btn acq-btn-primary acq-btn-small">확정</Button>
+          <>
+            <Button
+              type="button"
+              className="acq-btn acq-btn-outline acq-btn-small"
+              disabled={approvalActionLoading || selectedAcqIds.size === 0}
+              onClick={() => void handleBulkReject()}
+            >
+              {approvalActionLoading ? '처리 중…' : '반려'}
+            </Button>
+            <Button
+              type="button"
+              className="acq-btn acq-btn-primary acq-btn-small"
+              disabled={approvalActionLoading || selectedAcqIds.size === 0}
+              onClick={() => void handleBulkApprove()}
+            >
+              {approvalActionLoading ? '처리 중…' : '확정'}
+            </Button>
+          </>
         )}
       />
     </ManagementPageLayout>

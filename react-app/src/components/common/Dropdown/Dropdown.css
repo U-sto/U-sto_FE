@@ -87,6 +87,11 @@
   overflow-y: auto;
 }
 
+.dropdown-menu.dropdown-menu--top {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .dropdown-option {
   width: 100%;
   padding: 14px var(--spacing-md);
@@ -176,6 +181,11 @@
   z-index: 1000;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.dropdown-small-menu.dropdown-menu--top {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .dropdown-small-option {

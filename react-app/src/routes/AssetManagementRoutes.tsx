@@ -72,6 +72,7 @@ const AssetManagementRoutes = () => (
   <Suspense fallback={<div className="loading-fallback">로딩 중...</div>}>
     <Routes>
       <Route path="acquisition-management" element={<AcquisitionListPage />} />
+      <Route path="acquisition-management/edit/:acqId" element={<AcquisitionManagementPage />} />
       <Route path="acquisition-management/register" element={<AcquisitionManagementPage />} />
       <Route
         path="operation-management/operation-ledger"
@@ -90,6 +91,10 @@ const AssetManagementRoutes = () => (
         element={<OperationTransferRegistrationPage />}
       />
       <Route
+        path="operation-management/operation-transfer/edit/:operMId"
+        element={<OperationTransferRegistrationPage />}
+      />
+      <Route
         path="operation-management/printout-management"
         element={<PrintoutManagementPage />}
       />
@@ -98,15 +103,27 @@ const AssetManagementRoutes = () => (
         element={<AssetReturnManagementPage />}
       />
       <Route
+        path="operation-management/return-management/edit/:rtrnMid"
+        element={<ReturnRegistrationPage />}
+      />
+      <Route
         path="operation-management/return-management/register"
         element={<ReturnRegistrationPage />}
       />
       <Route path="disuse-management" element={<AssetDisuseManagementPage />} />
       <Route
+        path="disuse-management/edit/:dsuMId"
+        element={<DisuseRegistrationPage />}
+      />
+      <Route
         path="disuse-management/register"
         element={<DisuseRegistrationPage />}
       />
       <Route path="disposal-management" element={<AssetDisposalManagementPage />} />
+      <Route
+        path="disposal-management/edit/:dispMId"
+        element={<DisposalRegistrationPage />}
+      />
       <Route
         path="disposal-management/register"
         element={<DisposalRegistrationPage />}

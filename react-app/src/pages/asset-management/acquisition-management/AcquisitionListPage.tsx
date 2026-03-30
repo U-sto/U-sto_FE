@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
@@ -8,11 +8,30 @@ import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
-import G2BSearchModal, { type G2BItem } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import {
+  fetchAcqConfirmationList,
+  type AcqConfirmationRow,
+} from '../../../api/acqConfirmation'
+import {
+  requestItemAcquisitionApproval,
+  cancelItemAcquisitionRequest,
+  deleteItemAcquisition,
+} from '../../../api/itemAcquisitions'
+import {
+  CODE_GROUP,
+  buildDescriptionToCodeMap,
+  buildFilterOptionsWithAll,
+} from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import './AcquisitionListPage.css'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import DeleteConfirmModal from '../../../components/common/DeleteConfirmModal/DeleteConfirmModal'
 
 type AcquisitionListFilters = {
   g2bName: string
@@ -26,20 +45,20 @@ type AcquisitionListFilters = {
   operatingDept: string
 }
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const APPROVAL_STATUS_OPTIONS = ['전체', '대기', '반려', '확정']
-
-export type AcquisitionListRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  sortDate: string
-  acquireAmount: string
-  operatingDept: string
-  approvalStatus: string
+const INITIAL_FILTERS: AcquisitionListFilters = {
+  g2bName: '',
+  g2bNumberPrefix: '',
+  g2bNumberSuffix: '',
+  sortDateFrom: '',
+  sortDateTo: '',
+  acquireDateFrom: '',
+  acquireDateTo: '',
+  approvalStatus: '전체',
+  operatingDept: '전체',
 }
+
+const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
+const APPROVAL_STATUS_FALLBACK_OPTIONS = ['전체', '대기', '반려', '확정']
 
 const SearchIcon = () => (
   <svg
@@ -69,82 +88,229 @@ const SearchIcon = () => (
 
 const AcquisitionListPage = () => {
   const navigate = useNavigate()
-  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
-  const [filters, setFilters] = useState<AcquisitionListFilters>({
-    g2bName: '',
-    g2bNumberPrefix: '',
-    g2bNumberSuffix: '',
-    sortDateFrom: '',
-    sortDateTo: '',
-    acquireDateFrom: '',
-    acquireDateTo: '',
-    approvalStatus: '전체',
-    operatingDept: '전체',
-  })
-
-  const [allData] = useState<AcquisitionListRow[]>(() =>
-    Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      sortDate: '2026-01-20',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      approvalStatus: idx % 3 === 0 ? '대기' : idx % 3 === 1 ? '반려' : '확정',
-    })),
+  const { group: apprGroup } = useCommonCodeGroup(CODE_GROUP.APPR_STATUS)
+  const approvalDescToCode = useMemo(
+    () => buildDescriptionToCodeMap(apprGroup ?? undefined),
+    [apprGroup],
   )
+  const approvalStatusOptions = useMemo(() => {
+    if (Object.keys(approvalDescToCode).length > 0) {
+      return buildFilterOptionsWithAll(approvalDescToCode)
+    }
+    return APPROVAL_STATUS_FALLBACK_OPTIONS
+  }, [approvalDescToCode])
 
-  const filteredData = useMemo(() => {
-    return allData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) return false
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [numPrefix = '', numSuffix = ''] = row.g2bNumber.split('-')
-        if (filters.g2bNumberPrefix && !numPrefix.startsWith(filters.g2bNumberPrefix)) return false
-        if (filters.g2bNumberSuffix && !numSuffix.startsWith(filters.g2bNumberSuffix)) return false
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
+  const [filters, setFilters] = useState<AcquisitionListFilters>({ ...INITIAL_FILTERS })
+  /** 초기값을 두어 진입 시 전체 조건으로 목록 자동 조회 */
+  const [searchedFilters, setSearchedFilters] = useState<AcquisitionListFilters>(() => ({
+    ...INITIAL_FILTERS,
+  }))
+  const [currentPage, setCurrentPage] = useState(1)
+  const [tableData, setTableData] = useState<AcqConfirmationRow[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [selectedAcqIds, setSelectedAcqIds] = useState<Set<string>>(() => new Set())
+  const [approvalRequesting, setApprovalRequesting] = useState(false)
+  const [requestCanceling, setRequestCanceling] = useState(false)
+  const [deletingItemAcquisitions, setDeletingItemAcquisitions] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetchAcqConfirmationList({
+        page: currentPage,
+        pageSize: 10,
+        filters: {
+          g2bName: searchedFilters.g2bName,
+          g2bNumberFrom: searchedFilters.g2bNumberPrefix,
+          g2bNumberTo: searchedFilters.g2bNumberSuffix,
+          sortDateFrom: searchedFilters.sortDateFrom,
+          sortDateTo: searchedFilters.sortDateTo,
+          acquireDateFrom: searchedFilters.acquireDateFrom,
+          acquireDateTo: searchedFilters.acquireDateTo,
+          approvalStatus: searchedFilters.approvalStatus,
+          operatingDept: searchedFilters.operatingDept,
+        },
+        approvalDescToCode:
+          Object.keys(approvalDescToCode).length > 0 ? approvalDescToCode : undefined,
+      })
+      setTableData(res.data)
+      setTotalCount(res.totalCount)
+    } catch {
+      setTableData([])
+      setTotalCount(0)
+    }
+  }, [currentPage, searchedFilters, approvalDescToCode])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  /** 조회 조건만 바뀔 때 선택 초기화 — 페이지 이동 시에는 여러 페이지 건 동시 승인요청 가능 */
+  useEffect(() => {
+    setSelectedAcqIds(new Set())
+  }, [searchedFilters])
+
+  const pageAcqIds = useMemo(
+    () => tableData.map((r) => r.acqId).filter((id) => id.length > 0),
+    [tableData],
+  )
+  const allPageSelected =
+    pageAcqIds.length > 0 && pageAcqIds.every((id) => selectedAcqIds.has(id))
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (allPageSelected) {
+        pageAcqIds.forEach((id) => next.delete(id))
+      } else {
+        pageAcqIds.forEach((id) => next.add(id))
       }
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) return false
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) return false
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) return false
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) return false
-      if (filters.approvalStatus !== '전체' && row.approvalStatus !== filters.approvalStatus) return false
-      if (filters.operatingDept !== '전체' && row.operatingDept !== filters.operatingDept) return false
-      return true
+      return next
     })
-  }, [allData, filters])
+  }
 
-  const columns: DataTableColumn<AcquisitionListRow>[] = [
-    { key: 'select', header: '', render: () => <input type="checkbox" /> },
+  const toggleRowSelected = (acqId: string) => {
+    if (!acqId) return
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(acqId)) next.delete(acqId)
+      else next.add(acqId)
+      return next
+    })
+  }
+
+  const handleApprovalRequest = async () => {
+    const ids = [...selectedAcqIds]
+    if (ids.length === 0) {
+      window.alert('승인 요청할 건을 체크해 주세요.')
+      return
+    }
+    setApprovalRequesting(true)
+    try {
+      for (const acqId of ids) {
+        await requestItemAcquisitionApproval(acqId)
+      }
+      window.alert(`승인 요청이 완료되었습니다. (${ids.length}건)`)
+      setSelectedAcqIds(new Set())
+      await loadData()
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '승인 요청에 실패했습니다.')
+    } finally {
+      setApprovalRequesting(false)
+    }
+  }
+
+  const handleRequestCancel = async () => {
+    const ids = [...selectedAcqIds]
+    if (ids.length === 0) {
+      window.alert('요청 취소할 건을 체크해 주세요.')
+      return
+    }
+    if (!window.confirm(`선택한 ${ids.length}건의 승인 요청을 취소하시겠습니까?`)) {
+      return
+    }
+    setRequestCanceling(true)
+    try {
+      for (const acqId of ids) {
+        await cancelItemAcquisitionRequest(acqId)
+      }
+      window.alert(`요청 취소가 완료되었습니다. (${ids.length}건)`)
+      setSelectedAcqIds(new Set())
+      await loadData()
+    } catch (e) {
+      window.alert(
+        e instanceof Error ? e.message : '요청 취소에 실패했습니다.',
+      )
+    } finally {
+      setRequestCanceling(false)
+    }
+  }
+
+  const actionInProgress =
+    approvalRequesting || requestCanceling || deletingItemAcquisitions
+
+  const handleOpenDeleteModal = () => {
+    if (selectedAcqIds.size === 0) {
+      window.alert('삭제할 건을 체크해 주세요.')
+      return
+    }
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    const ids = [...selectedAcqIds]
+    setDeleteConfirmOpen(false)
+    if (ids.length === 0) return
+    setDeletingItemAcquisitions(true)
+    try {
+      for (const acqId of ids) {
+        await deleteItemAcquisition(acqId)
+      }
+      window.alert(`삭제가 완료되었습니다. (${ids.length}건)`)
+      setSelectedAcqIds(new Set())
+      await loadData()
+    } catch (e) {
+      window.alert(
+        e instanceof Error ? e.message : '삭제에 실패했습니다.',
+      )
+    } finally {
+      setDeletingItemAcquisitions(false)
+    }
+  }
+
+  const columns: DataTableColumn<AcqConfirmationRow>[] = [
+    {
+      key: 'select',
+      header: (
+        <input
+          type="checkbox"
+          checked={allPageSelected}
+          onChange={toggleSelectAllOnPage}
+          disabled={pageAcqIds.length === 0}
+          aria-label="현재 페이지 전체 선택"
+        />
+      ),
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={row.acqId ? selectedAcqIds.has(row.acqId) : false}
+          onChange={() => toggleRowSelected(row.acqId)}
+          disabled={!row.acqId}
+          aria-label={`취득 건 선택 ${row.g2bNumber}`}
+        />
+      ),
+    },
     { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'g2bNumber', header: 'G2B목록번호', render: (row) => row.g2bNumber },
     { key: 'g2bName', header: 'G2B목록명', render: (row) => row.g2bName },
-    { key: 'itemUniqueNumber', header: '물품고유번호', render: (row) => row.itemUniqueNumber },
     { key: 'acquireDate', header: '취득일자', render: (row) => row.acquireDate },
     { key: 'sortDate', header: '정리일자', render: (row) => row.sortDate },
-    { key: 'acquireAmount', header: '취득금액', render: (row) => row.acquireAmount },
+    {
+      key: 'acquireAmount',
+      header: '취득금액',
+      render: (row) =>
+        typeof row.acquireAmount === 'number'
+          ? row.acquireAmount.toLocaleString('ko-KR') + '원'
+          : String(row.acquireAmount),
+    },
     { key: 'operatingDept', header: '운용부서', render: (row) => row.operatingDept },
     { key: 'approvalStatus', header: '승인상태', render: (row) => row.approvalStatus },
   ]
 
   const handleReset = () => {
-    setFilters({
-      g2bName: '',
-      g2bNumberPrefix: '',
-      g2bNumberSuffix: '',
-      sortDateFrom: '',
-      sortDateTo: '',
-      acquireDateFrom: '',
-      acquireDateTo: '',
-      approvalStatus: '전체',
-      operatingDept: '전체',
-    })
+    setFilters({ ...INITIAL_FILTERS })
+    setSearchedFilters({ ...INITIAL_FILTERS })
+    setCurrentPage(1)
   }
 
-  const handleSearch = () => {}
+  const handleSearch = () => {
+    setSearchedFilters({ ...filters })
+    setCurrentPage(1)
+  }
 
   const handleG2BSelect = (item: G2BItem) => {
-    const [prefix = '', suffix = ''] = item.number.split('-')
+    const { prefix, suffix } = getG2BListNumberParts(item)
     setFilters((prev) => ({
       ...prev,
       g2bName: item.name,
@@ -156,6 +322,16 @@ const AcquisitionListPage = () => {
 
   const handleRegister = () => {
     navigate('/asset-management/acquisition-management/register')
+  }
+
+  const handleEdit = () => {
+    if (selectedAcqIds.size !== 1) {
+      window.alert('수정할 건을 1건만 선택해 주세요.')
+      return
+    }
+    const only = [...selectedAcqIds][0]
+    if (!only) return
+    navigate(`/asset-management/acquisition-management/edit/${encodeURIComponent(only)}`)
   }
 
   return (
@@ -221,7 +397,7 @@ const AcquisitionListPage = () => {
                 placeholder="전체"
                 value={filters.approvalStatus}
                 onChange={(value: string) => setFilters((prev) => ({ ...prev, approvalStatus: value }))}
-                options={APPROVAL_STATUS_OPTIONS}
+                options={approvalStatusOptions}
               />
             </div>
 
@@ -275,27 +451,62 @@ const AcquisitionListPage = () => {
         onSelect={handleG2BSelect}
       />
 
-      <DataTable<AcquisitionListRow>
+      <DeleteConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={() => void handleConfirmDelete()}
+        extraMessage={
+          <>
+            선택한 <strong>{selectedAcqIds.size}건</strong>을 삭제합니다.
+            <br />
+            <span className="delete-confirm-modal__hint">(작성중 상태만 삭제 가능합니다.)</span>
+          </>
+        }
+      />
+
+      <DataTable<AcqConfirmationRow>
         pageKey="operation-ledger"
         title="물품 취득 대장 목록"
-        data={filteredData}
-        totalCount={allData.length}
+        data={tableData}
+        totalCount={totalCount}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
         columns={columns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
         renderActions={() => (
           <div className="return-registration-actions">
-            <button type="button" className="return-btn-modify">
+            <button
+              type="button"
+              className="return-btn-modify"
+              disabled={actionInProgress}
+              onClick={() => void handleEdit()}
+            >
               수정
             </button>
-            <button type="button" className="return-btn-delete">
-              삭제
+            <button
+              type="button"
+              className="return-btn-delete"
+              disabled={actionInProgress || selectedAcqIds.size === 0}
+              onClick={handleOpenDeleteModal}
+            >
+              {deletingItemAcquisitions ? '삭제 중…' : '삭제'}
             </button>
-            <button type="button" className="return-btn-approval-request">
-              승인요청
+            <button
+              type="button"
+              className="return-btn-approval-request"
+              disabled={actionInProgress}
+              onClick={() => void handleApprovalRequest()}
+            >
+              {approvalRequesting ? '요청 중…' : '승인요청'}
             </button>
-            <button type="button" className="return-btn-request-cancel">
-              요청취소
+            <button
+              type="button"
+              className="return-btn-request-cancel"
+              disabled={actionInProgress}
+              onClick={() => void handleRequestCancel()}
+            >
+              {requestCanceling ? '취소 중…' : '요청취소'}
             </button>
             <button
               type="button"

@@ -98,3 +98,35 @@ export const OPERATING_DEPARTMENT_SELECT_OPTIONS: string[] = [
   ...DEPARTMENTS,
 ]
 
+/**
+ * 운용 전환 등록 API `deptCd` — 화면 부서명(라벨) → 백엔드 부서코드.
+ * 실제 코드는 백엔드/공통코드와 맞춰 채움. 비어 있으면 `resolveDeptCdForOperation`은 빈 문자열을 반환할 수 있음.
+ */
+export const DEPARTMENT_NAME_TO_DEPT_CD: Record<string, string> = {
+  // 예: '교무처 (ERICA)': 'A001',
+}
+
+/** 운용 전환 등록 시 드롭다운 라벨을 deptCd로 변환 (매핑 없으면 코드 형태 문자열만 통과) */
+export function resolveDeptCdForOperation(deptLabel: string): string {
+  const t = deptLabel?.trim() ?? ''
+  if (!t || t === '선택') return ''
+  const mapped = DEPARTMENT_NAME_TO_DEPT_CD[t]
+  if (mapped) return mapped
+  if (/^[A-Za-z0-9_-]{2,32}$/.test(t)) return t
+  return ''
+}
+
+/** 목록 searchRequest: 한글 부서명을 deptCd에 넣지 않도록 (매핑 있으면 코드만, 항상 deptNm) */
+export function applyDeptLabelToSearchRequest(
+  target: { deptCd?: string; deptNm?: string },
+  label: string,
+  options?: { allLabel?: string },
+): void {
+  const all = options?.allLabel ?? '전체'
+  const t = label?.trim() ?? ''
+  if (!t || t === all) return
+  const cd = resolveDeptCdForOperation(t)
+  if (cd) target.deptCd = cd
+  target.deptNm = t
+}
+

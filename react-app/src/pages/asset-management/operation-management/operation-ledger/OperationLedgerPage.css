@@ -1,9 +1,9 @@
 .operation-ledger-filter {
-  width: calc(100% - 160px);
-  max-width: 1420px;
+  width: 100%;
+  max-width: none;
   margin-top: 28px;
-  margin-left: 80px;
-  margin-right: 80px;
+  margin-left: 0;
+  margin-right: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -12,7 +12,7 @@
 .operation-ledger-filter-wrapper {
   border-radius: 10px;
   background: var(--usto-primary-200);
-  padding: 20px 24px;
+  padding: 22px 28px;
   display: flex;
   flex-direction: row;
   align-items: flex-end;
@@ -44,10 +44,10 @@
 }
 
 .operation-ledger-label {
-  width: 100px;
+  width: 112px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
@@ -57,11 +57,11 @@
 }
 
 .operation-ledger-filter .text-field {
-  height: 30px;
-  padding: 5px 12px;
+  height: 38px;
+  padding: 6px 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -82,12 +82,12 @@
   flex: 1;
   min-width: 0;
   max-width: 100%;
-  height: 30px !important;
-  min-height: 30px !important;
-  padding: 4px 10px;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 6px 12px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -109,8 +109,8 @@
 }
 
 .operation-ledger-search-btn {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -152,7 +152,7 @@
   flex-shrink: 0;
   padding: 0 8px;
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--usto-alt-black);
 }
@@ -169,7 +169,7 @@
   padding: 0 4px;
   font-family: var(--font-family);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   color: var(--usto-gray-200);
 }
@@ -185,7 +185,7 @@
   align-items: center;
   gap: 4px;
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--usto-alt-black);
   white-space: nowrap;
 }
@@ -205,12 +205,12 @@
   border-radius: 4px;
   font-family: var(--font-family);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   letter-spacing: -0.03em;
-  padding: 2px 12px;
+  padding: 6px 16px;
   height: auto;
-  min-height: 25px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,24 +229,24 @@
 }
 
 .operation-ledger-btn-table {
-  padding: 2px 12px;
+  padding: 6px 16px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.2;
   letter-spacing: -0.03em;
   min-width: auto;
   width: auto;
   min-height: auto;
-  height: 24px;
+  height: auto;
 }
 
 .operation-ledger-table {
-  width: calc(100% - 160px);
-  max-width: 1420px;
+  width: 100%;
+  max-width: none;
   margin-top: 28px;
-  margin-left: 80px;
-  margin-right: 80px;
+  margin-left: 0;
+  margin-right: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -276,15 +276,16 @@
 .operation-ledger-table-label {
   background: var(--usto-primary-200);
   border-radius: 6px;
-  padding: 4px 16px;
+  padding: 8px 20px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.448;
+  font-size: 16px;
+  line-height: 1.45;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
   white-space: nowrap;
-  height: 25px;
+  min-height: 32px;
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -323,15 +324,8 @@
 }
 
 .operation-ledger-table-el thead th {
-  height: 40px;
   background: var(--usto-primary-300);
   color: var(--usto-alt-white);
-  font-family: var(--font-family);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  padding: 8px 16px;
   border-right: 1px solid var(--usto-primary-200);
   text-align: left;
 }
@@ -353,12 +347,24 @@
   white-space: nowrap;
 }
 
+/* G2B목록명은 더 넓게, 내용연수는 더 좁게 (긴 목록명 줄바꿈/두줄 방지) */
+.operation-ledger-table-el .operation-ledger-th-g2bName {
+  width: 260px;
+  min-width: 260px;
+}
+
+.operation-ledger-table-el .operation-ledger-th-usefulLife {
+  width: 80px;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
 .operation-ledger-detail-content {
-  width: calc(100% - 160px);
-  max-width: 1420px;
+  width: 100%;
+  max-width: none;
   margin-top: 28px;
-  margin-left: 80px;
-  margin-right: 80px;
+  margin-left: 0;
+  margin-right: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -404,10 +410,10 @@
 }
 
 .operation-ledger-detail-label {
-  width: 100px;
+  width: 112px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
@@ -417,11 +423,11 @@
 }
 
 .operation-ledger-detail-panel .text-field {
-  height: 30px;
-  min-height: 30px;
+  height: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.3;
   flex: 0 0 220px;
   max-width: 220px;
@@ -448,12 +454,12 @@
 .operation-ledger-detail-textarea {
   flex: 1;
   width: 100%;
-  min-height: 80px;
-  padding: 8px 12px;
+  min-height: 88px;
+  padding: 10px 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 4px;
   font-family: var(--font-family);
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   color: var(--usto-alt-black);
   resize: vertical;
@@ -470,7 +476,7 @@
   margin-top: 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 6px;
-  padding: 4px 0;
+  padding: 6px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -478,7 +484,8 @@
   position: relative;
   background: var(--usto-alt-white);
   flex-shrink: 0;
-  height: 40px;
+  min-height: 44px;
+  height: auto;
 }
 
 .operation-ledger-page-btn,
@@ -488,7 +495,7 @@
   cursor: pointer;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.448;
   letter-spacing: -0.03em;
   color: var(--usto-primary-200);

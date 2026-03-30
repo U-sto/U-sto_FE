@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
@@ -8,9 +8,26 @@ import AssetManagementPageLayout from '../../../components/layout/management/Ass
 import DataTable, {
   type DataTableColumn,
 } from '../../../features/management/components/DataTable/DataTable'
+import G2BSearchModal, {
+  type G2BItem,
+  getG2BListNumberParts,
+} from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
+import {
+  fetchItemAssets,
+} from '../../../api/itemAssets'
+import { createItemDisposalRequest } from '../../../api/itemDisposalRequest'
+import {
+  updateItemDisposal,
+  fetchItemDisposalByDispMId,
+  fetchItemDisposalAllItems,
+} from '../../../api/itemDisposals'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import {
+  useOperatingStatusFilterOptions,
+  resolveOperatingStatusFilterValue,
+} from '../../../hooks/useCommonCodeOptions'
 
 type RegistrationFilters = {
   g2bName: string
@@ -26,21 +43,53 @@ type RegistrationFilters = {
 }
 
 const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
-const OPERATING_STATUS_OPTIONS = ['전체', '운용중', '반납', '불용', '처분']
-const ASSET_STATUS_OPTIONS = ['선택', '운용중', '반납', '불용', '처분']
-const REASON_OPTIONS = ['선택', '교체', '폐기', '기타']
-
+// 처분정리구분(표시: 한글, 전송: 코드)
+const DISPOSAL_SORT_OPTIONS = ['폐기', '매각', '멸실', '도난']
+const DISPOSAL_TYPE_MAP: Record<string, string> = {
+  폐기: 'DISCARD',
+  매각: 'SALE',
+  멸실: 'LOSS',
+  도난: 'THEFT',
+}
+const DISPOSAL_TYPE_CODE_TO_LABEL: Record<string, string> = {
+  DISCARD: '폐기',
+  SALE: '매각',
+  LOSS: '멸실',
+  THEFT: '도난',
+}
 type LedgerRow = {
   id: number
   g2bNumber: string
   g2bName: string
   itemUniqueNumber: string
+  /** 처분 신청 API 전송용 물품고유번호(itmNo) */
+  itmNo: string
   acquireDate: string
   sortDate: string
   acquireAmount: string
   operatingDept: string
   operatingStatus: string
   usefulLife: string
+}
+
+function mapDisposalItemToLedgerRow(
+  item: Awaited<ReturnType<typeof fetchItemDisposalAllItems>>[number],
+  index: number,
+): LedgerRow {
+  const acqUprValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
+  return {
+    id: index + 1,
+    g2bNumber: String(item.g2bItemNo ?? ''),
+    g2bName: String(item.g2bItemNm ?? ''),
+    itemUniqueNumber: String(item.itmNo ?? item.itemUnqNo ?? ''),
+    itmNo: String(item.itmNo ?? item.itemUnqNo ?? ''),
+    acquireDate: String(item.acqAt ?? ''),
+    sortDate: '',
+    acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
+    operatingDept: String(item.deptNm ?? ''),
+    operatingStatus: String(item.operSts ?? ''),
+    usefulLife: '',
+  }
 }
 
 const SearchIcon = () => (
@@ -71,6 +120,11 @@ const SearchIcon = () => (
 
 const DisposalRegistrationPage = () => {
   const navigate = useNavigate()
+  const { dispMId: dispMIdParam } = useParams<{ dispMId?: string }>()
+  const dispMId = dispMIdParam?.trim() ?? ''
+  const isEditMode = dispMId.length > 0
+  const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
+    useOperatingStatusFilterOptions()
   const [filters, setFilters] = useState<RegistrationFilters>({
     g2bName: '',
     g2bNumberPrefix: '',
@@ -87,58 +141,123 @@ const DisposalRegistrationPage = () => {
   const [ledgerCheckedIds, setLedgerCheckedIds] = useState<Set<number>>(new Set())
   const [selectedRows, setSelectedRows] = useState<LedgerRow[]>([])
   const [selectedTableCheckedIds, setSelectedTableCheckedIds] = useState<Set<number>>(new Set())
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
+
+  const [ledgerPage, setLedgerPage] = useState(1)
+  const [ledgerData, setLedgerData] = useState<LedgerRow[]>([])
+  const [ledgerTotalCount, setLedgerTotalCount] = useState(0)
+  const [ledgerError, setLedgerError] = useState<string | null>(null)
+
+  const [searchedFilters, setSearchedFilters] = useState<RegistrationFilters>({
+    g2bName: '',
+    g2bNumberPrefix: '',
+    g2bNumberSuffix: '',
+    itemUniqueNumber: '',
+    operatingDept: '전체',
+    operatingStatus: '전체',
+    acquireDateFrom: '',
+    acquireDateTo: '',
+    sortDateFrom: '',
+    sortDateTo: '',
+  })
 
   const [disposalInfo, setDisposalInfo] = useState({
     disposalDate: '',
     registrantId: '',
-    assetStatus: '선택',
-    reason: '선택',
+    disposalSortType: '폐기',
   })
 
-  const ledgerData = useMemo<LedgerRow[]>(() => {
-    return Array.from({ length: 15 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: `노트북 ${idx + 1}`,
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      sortDate: '2026-01-20',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서${(idx % 3) + 1}`,
-      operatingStatus: idx % 2 === 0 ? '운용중' : '처분',
-      usefulLife: `${3 + (idx % 3)}년`,
-    }))
-  }, [])
+  const [saving, setSaving] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const filteredLedgerData = useMemo(() => {
-    return ledgerData.filter((row) => {
-      if (filters.g2bName && !row.g2bName.includes(filters.g2bName)) return false
-      if (filters.g2bNumberPrefix || filters.g2bNumberSuffix) {
-        const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-        if (filters.g2bNumberPrefix && !prefix.startsWith(filters.g2bNumberPrefix)) return false
-        if (filters.g2bNumberSuffix && !suffix.startsWith(filters.g2bNumberSuffix)) return false
+  const apiLedgerFilters = useMemo(
+    () => ({
+      ...searchedFilters,
+      operatingStatus: resolveOperatingStatusFilterValue(
+        searchedFilters.operatingStatus,
+        operStatusDescToCode,
+      ),
+    }),
+    [searchedFilters, operStatusDescToCode],
+  )
+
+  useEffect(() => {
+    let ignore = false
+    setLedgerError(null)
+    ;(async () => {
+      try {
+        const res = await fetchItemAssets({
+          page: ledgerPage,
+          pageSize: 10,
+          filters: apiLedgerFilters,
+        })
+        if (ignore) return
+        setLedgerData(res.data)
+        setLedgerTotalCount(res.totalCount)
+      } catch (e) {
+        if (ignore) return
+        setLedgerData([])
+        setLedgerTotalCount(0)
+        setLedgerError(e instanceof Error ? e.message : '물품 운용 대장 목록을 불러오지 못했습니다.')
       }
-      if (filters.itemUniqueNumber && !row.itemUniqueNumber.includes(filters.itemUniqueNumber)) return false
-      if (filters.operatingDept !== '전체' && row.operatingDept !== filters.operatingDept) return false
-      if (filters.operatingStatus !== '전체' && row.operatingStatus !== filters.operatingStatus) return false
-      if (filters.acquireDateFrom && row.acquireDate < filters.acquireDateFrom) return false
-      if (filters.acquireDateTo && row.acquireDate > filters.acquireDateTo) return false
-      if (filters.sortDateFrom && row.sortDate < filters.sortDateFrom) return false
-      if (filters.sortDateTo && row.sortDate > filters.sortDateTo) return false
-      return true
-    })
-  }, [ledgerData, filters])
+    })()
+    return () => {
+      ignore = true
+    }
+  }, [ledgerPage, apiLedgerFilters])
+
+  useEffect(() => {
+    if (!isEditMode || !dispMId) return
+    let cancelled = false
+    setLoadingDetail(true)
+    ;(async () => {
+      try {
+        const master = await fetchItemDisposalByDispMId(dispMId)
+        const items = await fetchItemDisposalAllItems(dispMId)
+        if (cancelled) return
+        if (!master && items.length === 0) {
+          window.alert('처분 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/disposal-management')
+          return
+        }
+        setSelectedRows(items.map((item, i) => mapDisposalItemToLedgerRow(item, i)))
+        setSelectedTableCheckedIds(new Set())
+        setLedgerCheckedIds(new Set())
+        const dispTypeCode = String(master?.dispType ?? '')
+        setDisposalInfo({
+          disposalDate: master?.aplyAt ?? '',
+          registrantId: master?.aplyUsrId ?? '',
+          disposalSortType: DISPOSAL_TYPE_CODE_TO_LABEL[dispTypeCode] ?? '폐기',
+        })
+      } catch (e) {
+        if (cancelled) return
+        window.alert(e instanceof Error ? e.message : '처분 정보를 불러오지 못했습니다.')
+        navigate('/asset-management/disposal-management')
+      } finally {
+        if (!cancelled) setLoadingDetail(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isEditMode, dispMId, navigate])
 
   const ledgerColumns: DataTableColumn<LedgerRow>[] = [
     {
       key: 'select',
       header: '',
       render: (row) => (
+        // 처분 신청은 불용(DSU) 상태만 가능
         <input
           type="checkbox"
+          disabled={row.operatingStatus !== '불용'}
           checked={ledgerCheckedIds.has(row.id)}
           onChange={(e) => {
             if (e.target.checked) {
+              if (row.operatingStatus !== '불용') {
+                window.alert('불용 상태인 물품만 처분 신청할 수 있습니다.')
+                return
+              }
               setLedgerCheckedIds((prev) => new Set(prev).add(row.id))
               setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
             } else {
@@ -210,6 +329,24 @@ const DisposalRegistrationPage = () => {
       sortDateFrom: '',
       sortDateTo: '',
     })
+    setSearchedFilters({
+      g2bName: '',
+      g2bNumberPrefix: '',
+      g2bNumberSuffix: '',
+      itemUniqueNumber: '',
+      operatingDept: '전체',
+      operatingStatus: '전체',
+      acquireDateFrom: '',
+      acquireDateTo: '',
+      sortDateFrom: '',
+      sortDateTo: '',
+    })
+    setLedgerPage(1)
+  }
+
+  const handleSearch = () => {
+    setSearchedFilters({ ...filters })
+    setLedgerPage(1)
   }
 
   const handleDeleteSelected = useCallback(() => {
@@ -228,18 +365,107 @@ const DisposalRegistrationPage = () => {
     setLedgerCheckedIds(new Set())
   }, [])
 
-  const handleSave = () => {
-    alert('처분 등록이 완료되었습니다.')
-    navigate('/asset-management/disposal-management')
+  const handleG2BSelect = (item: G2BItem) => {
+    const { prefix, suffix } = getG2BListNumberParts(item)
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name ?? '',
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+  }
+
+  const handleSave = async () => {
+    if (selectedRows.length === 0) {
+      window.alert('선택 물품 목록에 물품을 먼저 추가해주세요.')
+      return
+    }
+    if (selectedRows.some((r) => r.operatingStatus !== '불용')) {
+      window.alert('불용 상태인 물품만 처분 신청할 수 있습니다.')
+      return
+    }
+    if (!disposalInfo.disposalDate) {
+      window.alert('처분일자를 입력해주세요.')
+      return
+    }
+    // 일부 백엔드 검증: 신청일자는 미래 날짜 불가(YYYY-MM-DD 문자열 비교 가능)
+    const today = new Date()
+    const todayIso = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    )
+      .toISOString()
+      .slice(0, 10)
+    if (disposalInfo.disposalDate > todayIso) {
+      window.alert('처분일자는 오늘 이후 날짜로 입력할 수 없습니다.')
+      return
+    }
+    if (!disposalInfo.registrantId?.trim()) {
+      window.alert('등록자ID를 입력해주세요.')
+      return
+    }
+    const dispType =
+      DISPOSAL_TYPE_MAP[disposalInfo.disposalSortType] ?? disposalInfo.disposalSortType
+
+    const itmNos = Array.from(
+      new Set(
+        selectedRows
+          .map((r) => r.itmNo || r.itemUniqueNumber)
+          .filter((v): v is string => Boolean(v && String(v).trim())),
+      ),
+    )
+
+    if (itmNos.length === 0) {
+      window.alert('선택된 물품의 물품고유번호(itmNo)를 찾지 못했습니다.')
+      return
+    }
+
+    const payload = {
+      aplyAt: disposalInfo.disposalDate,
+      dispType,
+      itmNos,
+    }
+
+    setSaving(true)
+    if (isEditMode) {
+      updateItemDisposal(dispMId, payload)
+        .then(() => {
+          window.alert('처분 수정이 완료되었습니다.')
+          navigate('/asset-management/disposal-management')
+        })
+        .catch((e) => {
+          const message = e instanceof Error ? e.message : '처분 수정에 실패했습니다.'
+          window.alert(message)
+        })
+        .finally(() => setSaving(false))
+      return
+    }
+
+    createItemDisposalRequest(payload)
+      .then(() => {
+        window.alert('처분 신청이 등록되었습니다.')
+        navigate('/asset-management/disposal-management')
+      })
+      .catch((e) => {
+        const message = e instanceof Error ? e.message : '처분 신청 등록에 실패했습니다.'
+        window.alert(message)
+      })
+      .finally(() => setSaving(false))
   }
 
   return (
     <AssetManagementPageLayout
       pageKey="disposal"
       depthSecondLabel="물품 관리"
-      depthThirdLabel="물품 처분 등록"
+      depthThirdLabel={isEditMode ? '물품 처분 수정' : '물품 처분 등록'}
     >
-      <section className="operation-ledger-filter">
+      {isEditMode && loadingDetail ? (
+        <div className="return-registration-detail-loading" role="status">
+          처분 정보를 불러오는 중...
+        </div>
+      ) : null}
+      <section className="operation-ledger-filter" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-filter-wrapper">
           <div className="operation-ledger-filter-grid">
             <div className="operation-ledger-field operation-ledger-field-span2">
@@ -257,6 +483,7 @@ const DisposalRegistrationPage = () => {
                   type="button"
                   className="operation-ledger-search-btn"
                   aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
                 >
                   <SearchIcon />
                 </button>
@@ -283,7 +510,7 @@ const DisposalRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingStatus: value }))
                 }
-                options={OPERATING_STATUS_OPTIONS}
+                options={operatingStatusOptions}
               />
             </div>
 
@@ -292,16 +519,14 @@ const DisposalRegistrationPage = () => {
               <div className="operation-ledger-g2b-number-split">
                 <TextField
                   value={filters.g2bNumberPrefix}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, g2bNumberPrefix: e.target.value }))
-                  }
+                  readOnly
+                  className="operation-ledger-readonly"
                 />
                 <span className="operation-ledger-g2b-number-sep">-</span>
                 <TextField
                   value={filters.g2bNumberSuffix}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, g2bNumberSuffix: e.target.value }))
-                  }
+                  readOnly
+                  className="operation-ledger-readonly"
                 />
               </div>
             </div>
@@ -367,7 +592,7 @@ const DisposalRegistrationPage = () => {
             </Button>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary"
-              onClick={() => {}}
+              onClick={handleSearch}
             >
               조회
             </Button>
@@ -375,47 +600,51 @@ const DisposalRegistrationPage = () => {
         </div>
       </section>
 
-      <div className="return-registration-ledger-table-wrap">
+      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
         <DataTable<LedgerRow>
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
-          data={filteredLedgerData}
-          totalCount={filteredLedgerData.length}
+          data={ledgerData}
+          totalCount={ledgerTotalCount}
           pageSize={10}
           columns={ledgerColumns}
           getRowKey={(row) => row.id}
+          currentPage={ledgerPage}
+          onPageChange={setLedgerPage}
         />
       </div>
 
-      <DataTable<LedgerRow>
-        pageKey="operation-ledger"
-        title="선택 물품 목록"
-        data={selectedRows}
-        totalCount={selectedRows.length}
-        pageSize={10}
-        columns={selectedColumns}
-        getRowKey={(row) => row.id}
-        renderActions={() => (
-          <div className="operation-ledger-table-actions">
-            <Button
-              className="operation-ledger-btn operation-ledger-btn-outline operation-ledger-btn-table"
-              onClick={handleDeleteSelected}
-            >
-              선택삭제
-            </Button>
-            <Button
-              className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
-              onClick={handleDeleteAll}
-            >
-              전체삭제
-            </Button>
-          </div>
-        )}
-      />
+      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
+        <DataTable<LedgerRow>
+          pageKey="operation-ledger"
+          title="선택 물품 목록"
+          data={selectedRows}
+          totalCount={selectedRows.length}
+          pageSize={10}
+          columns={selectedColumns}
+          getRowKey={(row) => row.id}
+          renderActions={() => (
+            <div className="operation-ledger-table-actions">
+              <Button
+                className="operation-ledger-btn operation-ledger-btn-outline operation-ledger-btn-table"
+                onClick={handleDeleteSelected}
+              >
+                선택삭제
+              </Button>
+              <Button
+                className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
+                onClick={handleDeleteAll}
+              >
+                전체삭제
+              </Button>
+            </div>
+          )}
+        />
+      </div>
 
-      <div className="operation-ledger-detail-content">
+      <div className="operation-ledger-detail-content" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-detail-header-row">
-          <TitlePill>처분 등록 정보</TitlePill>
+          <TitlePill>{isEditMode ? '처분 수정 정보' : '처분 등록 정보'}</TitlePill>
         </div>
         <section className="operation-ledger-detail-panel return-registration-info-panel">
           <div className="return-registration-info-inner">
@@ -443,39 +672,37 @@ const DisposalRegistrationPage = () => {
                 />
               </div>
               <div className="operation-ledger-detail-field">
-                <label className="operation-ledger-detail-label">물품상태</label>
+                <label className="operation-ledger-detail-label operation-ledger-detail-label--disposal-sort">
+                  처분정리구분
+                </label>
                 <Dropdown
                   size="small"
                   placeholder="선택"
-                  value={disposalInfo.assetStatus}
+                  value={disposalInfo.disposalSortType}
+                  menuPlacement="top"
                   onChange={(value: string) =>
-                    setDisposalInfo((prev) => ({ ...prev, assetStatus: value }))
+                    setDisposalInfo((prev) => ({ ...prev, disposalSortType: value }))
                   }
-                  options={ASSET_STATUS_OPTIONS}
-                />
-              </div>
-              <div className="operation-ledger-detail-field">
-                <label className="operation-ledger-detail-label">사유</label>
-                <Dropdown
-                  size="small"
-                  placeholder="선택"
-                  value={disposalInfo.reason}
-                  onChange={(value: string) =>
-                    setDisposalInfo((prev) => ({ ...prev, reason: value }))
-                  }
-                  options={REASON_OPTIONS}
+                  options={DISPOSAL_SORT_OPTIONS}
                 />
               </div>
             </div>
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary operation-ledger-btn-table"
               onClick={handleSave}
+              disabled={saving || (isEditMode && loadingDetail)}
             >
-              저장
+              {saving ? '저장 중...' : '저장'}
             </Button>
           </div>
         </section>
       </div>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
     </AssetManagementPageLayout>
   )
 }

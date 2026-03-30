@@ -219,11 +219,6 @@
   color: var(--usto-alt-black);
 }
 
-/* 분석조건 내 드롭다운: 캠퍼스 입력란과 동일 높이(32px) */
-.ai-forecast-analysis-condition .dropdown-small-wrapper {
-  min-width: 100px;
-}
-
 .ai-forecast-analysis-condition .dropdown-small-button {
   height: 32px;
   min-height: 32px;
@@ -308,8 +303,8 @@
 
 /* PDF 버튼: 결과 틀 밖, 오른쪽 정렬 */
 .ai-forecast-result-header {
-  max-width: 1420px;
-  margin: 0 auto 12px;
+  max-width: none;
+  margin: 0 0 12px;
   width: 100%;
   display: flex;
   justify-content: flex-end;
@@ -338,8 +333,9 @@
 
 /* 결과 페이지 틀 (테두리 있는 영역) */
 .ai-forecast-result-inner {
-  max-width: 1420px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -468,6 +464,72 @@
   font-size: 16px;
 }
 
+/* 이전 예측 이력 탭 */
+.ai-forecast-history {
+  flex: 1;
+  padding: 40px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-forecast-history-empty {
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  padding: 24px 32px;
+  border-radius: 12px;
+  background: var(--usto-primary-100);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-history-list {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-forecast-history-item {
+  list-style: none;
+}
+
+.ai-forecast-history-button {
+  width: 100%;
+  text-align: left;
+  padding: 16px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--usto-primary-200);
+  background: var(--usto-alt-white);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-forecast-history-button:hover {
+  border-color: var(--usto-primary-300);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-history-title {
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-history-meta {
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--usto-gray-200);
+}
+
 /* 분석 결과 테이블 (DataTable pageKey=ai-forecast) */
 .ai-forecast-table-top {
   display: flex;
@@ -511,12 +573,8 @@
 }
 
 .ai-forecast-table-el thead th {
-  height: 32px;
   background: var(--usto-primary-300);
   color: var(--usto-alt-white);
-  font-size: 14px;
-  font-weight: 500;
-  padding: 4px 16px;
   border-right: 1px solid var(--usto-primary-200);
   text-align: left;
 }

@@ -187,13 +187,13 @@
 
 /* Filter */
 .acq-filter {
-  width: calc(100% - 160px);
-  max-width: 1420px;
-  margin-left: 80px;
-  margin-right: 80px;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   background: var(--usto-primary-200);
   border-radius: 6px;
-  padding: 14px 32px;
+  padding: 18px 36px;
   margin-top: 48px;
   flex-shrink: 0;
 }
@@ -201,21 +201,27 @@
 .acq-filter-wrapper {
   display: flex;
   align-items: flex-start;
-  gap: 275px;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
 }
 
 .acq-filter-grid {
   display: grid;
-  grid-template-columns: repeat(2, 447px);
-  column-gap: 32px;
-  row-gap: 16px;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  column-gap: 40px;
+  row-gap: 20px;
+  flex: 1 1 480px;
+  min-width: 0;
 }
 
 .acq-field {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  width: 447px;
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
 }
 
 .acq-field .acq-label {
@@ -223,10 +229,10 @@
 }
 
 .acq-label {
-  width: 100px;
+  width: 112px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
@@ -265,7 +271,7 @@
 
 .acq-number-sep {
   font-family: var(--font-family);
-  font-size: 16px;
+  font-size: 17px;
   color: var(--usto-gray-200);
   flex-shrink: 0;
 }
@@ -283,11 +289,11 @@
 
 /* Filter field inputs - smaller size */
 .acq-filter .text-field {
-  height: 30px;
-  padding: 5px 12px;
+  height: 38px;
+  padding: 6px 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 0;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -313,8 +319,8 @@
 }
 
 .acq-search-btn {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -333,11 +339,11 @@
 }
 
 .acq-filter .dropdown-button {
-  height: 30px;
-  padding: 5px 12px;
+  height: 38px;
+  padding: 6px 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 0;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 300;
   color: var(--usto-alt-black);
@@ -345,19 +351,19 @@
 
 /* 운용부서 등 드롭다운: G2B목록명과 동일 높이(30px), 모서리 라운드 제거 */
 .acq-filter .dropdown-small-button {
-  height: 30px;
-  min-height: 30px;
+  height: 38px;
+  min-height: 38px;
   border-radius: 0;
   border: 1px solid var(--usto-gray-200);
 }
 
 /* 드롭다운 열렸을 때 검색창·플레이스홀더(선택) 글자 크기를 버튼과 동일하게 16px */
 .acq-filter .dropdown-small-search-input {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .acq-filter .dropdown-search-input {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 300;
   color: var(--usto-alt-black);
@@ -389,7 +395,7 @@
 .acq-date-sep {
   font-family: var(--font-family);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   color: var(--usto-gray-200);
   flex-shrink: 0;
@@ -411,22 +417,22 @@
   border-radius: 4px;
   font-family: var(--font-family);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   letter-spacing: -0.03em;
-  padding: 2px 12px;
+  padding: 6px 16px;
   height: auto;
-  min-height: 25px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .acq-page .acq-btn-small {
-  padding: 4px 16px;
+  padding: 6px 18px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4479999542236328;
   letter-spacing: -0.03em;
   min-width: auto;
@@ -449,11 +455,11 @@
 
 /* Table */
 .acq-table {
-  width: calc(100% - 160px);
-  max-width: 1420px;
+  width: 100%;
+  max-width: none;
   margin-top: 28px;
-  margin-left: 80px;
-  margin-right: 80px;
+  margin-left: 0;
+  margin-right: 0;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -475,20 +481,25 @@
 .acq-table-top .acq-table-actions {
   margin-left: auto;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .acq-table-label {
   background: var(--usto-primary-200);
   border-radius: 6px;
-  padding: 4px 10px;
+  padding: 8px 18px;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.4479999542236328;
+  font-size: 16px;
+  line-height: 1.45;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
   white-space: nowrap;
-  height: 25px;
+  min-height: 32px;
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -521,15 +532,8 @@
 }
 
 .acq-table-el thead th {
-  height: 32px;
   background: var(--usto-primary-300);
   color: var(--usto-alt-white);
-  font-family: var(--font-family);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  padding: 4px 16px;
   border-right: 1px solid var(--usto-primary-200);
   text-align: left;
 }
@@ -564,7 +568,7 @@
   margin-left: 0;
   font-family: var(--font-family);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--usto-primary-300);
 }
 
@@ -573,7 +577,7 @@
   margin-top: 14px;
   border: 1px solid var(--usto-gray-200);
   border-radius: 6px;
-  padding: 4px 0;
+  padding: 6px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -581,7 +585,8 @@
   position: relative;
   background: var(--usto-alt-white);
   flex-shrink: 0;
-  height: 40px;
+  min-height: 44px;
+  height: auto;
 }
 
 .acq-page-btn,
@@ -591,7 +596,7 @@
   cursor: pointer;
   font-family: var(--font-family);
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4479999542236328;
   letter-spacing: -0.03em;
   color: var(--usto-primary-200);

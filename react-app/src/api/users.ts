@@ -83,6 +83,7 @@ export interface UserInfo {
   email: string
   sms: string
   orgNm: string
+  orgCd?: string
   roleNm: string
 }
 

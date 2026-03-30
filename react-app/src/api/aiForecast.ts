@@ -8,7 +8,7 @@ export interface AiForecastRequestConditions {
   org_cd: string
   dept_cd: string
   category: string
-  risk_level: string
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH'
 }
 
 export interface AiForecastRequest {
@@ -174,33 +174,52 @@ export interface AiForecastUiCondition {
   riskPropensity: string
 }
 
+export interface BuildForecastConditionOptions {
+  campusOrgCd?: string
+  deptLabelToCd?: Record<string, string>
+}
+
+type ForecastRiskLevel = AiForecastRequestConditions['risk_level']
+
 const ORG_CD_BY_CAMPUS: Record<string, string> = {
   '한양대학교 ERICA캠퍼스': '7008277',
   '한양대학교 서울캠퍼스': '7002282',
 }
 
-const RISK_LEVEL_BY_PROPENSITY: Record<string, string> = {
-  필수: 'HIGH',
-  권장: 'MEDIUM',
-  선택: 'LOW',
+function normalizeDeptName(label: string): string {
+  // 중복 부서명 구분용으로 붙인 " (DEPT_CD)" suffix는 API 요청에서 제거
+  return label.replace(/\s\([A-Za-z0-9_-]+\)$/, '').trim()
 }
 
 export function buildForecastConditions(
   ui: AiForecastUiCondition,
+  options?: BuildForecastConditionOptions,
 ): AiForecastRequestConditions {
   const year = parseInt(ui.year, 10) || new Date().getFullYear()
-  const semester = ui.semester === '2학기' ? 2 : 1
-  const org_cd = ORG_CD_BY_CAMPUS[ui.campus] ?? '7008277'
-  const dept_cd = ui.operatingDept === '선택' ? '' : ui.operatingDept
-  const category = ui.itemCategoryName?.trim() ?? ''
-  const risk_level = RISK_LEVEL_BY_PROPENSITY[ui.riskPropensity] ?? 'MEDIUM'
+  const semesterByLabel: Record<string, number> = {
+    '1학기': 1,
+    여름학기: 2,
+    '2학기': 3,
+    겨울학기: 4,
+  }
+  const semester = semesterByLabel[ui.semester] ?? 1
+  const departmentLabel = ui.operatingDept === '선택' ? '' : normalizeDeptName(ui.operatingDept)
+  const deptCd = departmentLabel ? options?.deptLabelToCd?.[departmentLabel] ?? '' : ''
+  const orgCd = options?.campusOrgCd?.trim() || ORG_CD_BY_CAMPUS[ui.campus] || '7008277'
+  const category = ui.itemCategoryName?.trim() || ''
+  const riskLevelByPropensity: Record<string, ForecastRiskLevel> = {
+    필수: 'HIGH',
+    권장: 'MEDIUM',
+    선택: 'LOW',
+  }
+  const riskLevel = (riskLevelByPropensity[ui.riskPropensity] ?? 'HIGH').toUpperCase() as ForecastRiskLevel
   return {
     year,
     semester,
-    org_cd,
-    dept_cd,
+    org_cd: orgCd,
+    dept_cd: deptCd,
     category,
-    risk_level,
+    risk_level: riskLevel,
   }
 }
 
@@ -226,4 +245,73 @@ export async function fetchAiForecast(
     throw new Error(body?.message ?? '분석 결과를 불러오지 못했습니다.')
   }
   return mapApiDataToResponse(prompt.trim(), body.data)
+}
+
+/** 이전 AI 예측 기록 요약 한 건 */
+export interface AiForecastHistoryItem {
+  /** 서버에서 발급한 기록 ID (forecastId) */
+  id: string
+  /** 목록에 표시할 제목 (일반적으로 사용자가 입력한 질문) */
+  title: string
+  /** 생성 일시 (선택) */
+  createdAt?: string
+}
+
+type AiForecastHistoryListApiItem =
+  | string
+  | {
+      id?: string
+      forecastId?: string
+      title?: string
+      prompt?: string
+      createdAt?: string
+    }
+
+type AiForecastHistoryListApiData = AiForecastHistoryListApiItem[]
+
+/** GET /api/ai/forecast - 이전 기록 목록 조회 */
+export async function fetchAiForecastHistory(): Promise<AiForecastHistoryItem[]> {
+  const res = await http.get<ApiResponse<AiForecastHistoryListApiData>>('/api/ai/forecast')
+  const body = res.data
+  if (!body?.data) {
+    throw new Error(body?.message ?? '이전 예측 이력을 불러오지 못했습니다.')
+  }
+
+  return body.data.map((raw, index) => {
+    if (typeof raw === 'string') {
+      return {
+        id: raw,
+        title: `예측 ${index + 1}`,
+      }
+    }
+    const id = raw.id ?? raw.forecastId
+    const title = raw.title ?? raw.prompt ?? `예측 ${index + 1}`
+    return {
+      id: id ?? String(index),
+      title,
+      createdAt: raw.createdAt,
+    }
+  })
+}
+
+/**
+ * GET /api/ai/forecast/contents - 특정 예측 기록 상세 조회
+ * @param forecastId 기록 ID
+ * @param displayTitle 요약 탭에 표시할 질문/제목 (없으면 target_text를 사용)
+ */
+export async function fetchAiForecastHistoryDetail(
+  forecastId: string,
+  displayTitle?: string,
+): Promise<AiForecastResponse> {
+  const res = await http.get<ApiResponse<AiForecastApiData>>(
+    '/api/ai/forecast/contents',
+    { params: { forecastId } },
+  )
+  const body = res.data
+  if (!body?.data) {
+    throw new Error(body?.message ?? '이전 예측 내용을 불러오지 못했습니다.')
+  }
+  const apiData = body.data
+  const promptForDisplay = displayTitle || apiData.summary?.target_text || '이전 예측'
+  return mapApiDataToResponse(promptForDisplay, apiData)
 }

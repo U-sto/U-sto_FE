@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
@@ -6,81 +6,302 @@ import AssetManagementPageLayout from '../../../../components/layout/management/
 import DataTable, {
   type DataTableColumn,
 } from '../../../../features/management/components/DataTable/DataTable'
+import {
+  fetchOperationTransferRegistrations,
+  fetchOperationTransferItems,
+  requestItemOperationApproval,
+  cancelItemOperationRequest,
+  deleteItemOperation,
+  type OperationTransferListFilters,
+  type OperationTransferRegistrationRow,
+  type OperationTransferItemRow,
+} from '../../../../api/itemOperations'
+import type { OperationTransferEditLocationState } from './OperationTransferRegistrationPage'
 import '../operation-ledger/OperationLedgerPage.css'
 import '../return-management/ReturnManagementPage.css'
+import {
+  useApprovalStatusFilterOptions,
+  resolveApprovalFilterTransferStyle,
+} from '../../../../hooks/useCommonCodeOptions'
 
-type TransferFilters = {
-  transferDateFrom: string
-  transferDateTo: string
-  approvalStatus: string
+const INITIAL_FILTERS: OperationTransferListFilters = {
+  transferDateFrom: '',
+  transferDateTo: '',
+  approvalStatus: '전체',
 }
 
-const APPROVAL_STATUS_OPTIONS = ['전체', '대기', '반려', '확정']
-
-type TransferRegistrationRow = {
-  id: number
-  transferDate: string
-  transferConfirmDate: string
-  registrantId: string
-  registrantName: string
-  approvalStatus: string
-}
-
-type TransferItemRow = {
-  id: number
-  g2bNumber: string
-  g2bName: string
-  itemUniqueNumber: string
-  acquireDate: string
-  acquireAmount: string
-  operatingDept: string
-  itemStatus: string
-  reason: string
+/** 스웨거: 작성중(WAIT)만 삭제 — 화면 라벨은 보통 '대기' */
+function isOperationWaitDraftStatus(approvalStatus: string): boolean {
+  const s = approvalStatus.trim()
+  return s === '대기' || s === 'WAIT' || s === '작성중'
 }
 
 const OperationTransferPage = () => {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<TransferFilters>({
-    transferDateFrom: '',
-    transferDateTo: '',
-    approvalStatus: '전체',
-  })
+  const { options: approvalStatusOptions, descToCode: approvalDescToCode } =
+    useApprovalStatusFilterOptions()
+  const [filters, setFilters] = useState<OperationTransferListFilters>({ ...INITIAL_FILTERS })
+  const [searchedFilters, setSearchedFilters] = useState<OperationTransferListFilters>(() => ({
+    ...INITIAL_FILTERS,
+  }))
+  const [currentPage, setCurrentPage] = useState(1)
+  const [registrationData, setRegistrationData] = useState<OperationTransferRegistrationRow[]>([])
+  const [registrationTotal, setRegistrationTotal] = useState(0)
 
-  const allRegistrationData = useMemo<TransferRegistrationRow[]>(() => {
-    return Array.from({ length: 5 }).map((_, idx) => ({
-      id: idx + 1,
-      transferDate: '2026-01-21',
-      transferConfirmDate: '2026-01-22',
-      registrantId: `user${idx + 1}`,
-      registrantName: `등록자${idx + 1}`,
-      approvalStatus: idx % 3 === 0 ? '대기' : idx % 3 === 1 ? '반려' : '확정',
-    }))
-  }, [])
+  /** 체크한 운용 등록 ID — 승인요청 등 일괄 처리 */
+  const [checkedOperMIds, setCheckedOperMIds] = useState<Set<string>>(() => new Set())
+  /** 하단 물품 목록 조회용 (체크 시 마지막으로 체크한 행 우선) */
+  const [selectedOperMId, setSelectedOperMId] = useState<string | null>(null)
+  const [itemPage, setItemPage] = useState(1)
+  const [approvalRequestLoading, setApprovalRequestLoading] = useState(false)
+  const [cancelRequestLoading, setCancelRequestLoading] = useState(false)
+  const [deleteOperationLoading, setDeleteOperationLoading] = useState(false)
+  const [itemData, setItemData] = useState<OperationTransferItemRow[]>([])
+  const [itemTotal, setItemTotal] = useState(0)
 
-  const allItemData = useMemo<TransferItemRow[]>(() => {
-    return Array.from({ length: 10 }).map((_, idx) => ({
-      id: idx + 1,
-      g2bNumber: '43211613-26081535',
-      g2bName: '노트북',
-      itemUniqueNumber: `ITEM-${String(idx + 1).padStart(4, '0')}`,
-      acquireDate: '2026-01-15',
-      acquireAmount: ((idx + 1) * 1000000).toLocaleString() + '원',
-      operatingDept: `운용부서 ${(idx % 3) + 1}`,
-      itemStatus: '운용중',
-      reason: '전환 사유',
-    }))
-  }, [])
+  const apiSearchedFilters = useMemo(
+    () => ({
+      ...searchedFilters,
+      approvalStatus: resolveApprovalFilterTransferStyle(
+        searchedFilters.approvalStatus,
+        approvalDescToCode,
+      ),
+    }),
+    [searchedFilters, approvalDescToCode],
+  )
 
-  const filteredRegistrationData = useMemo(() => {
-    return allRegistrationData.filter((row) => {
-      if (filters.transferDateFrom && row.transferDate < filters.transferDateFrom) return false
-      if (filters.transferDateTo && row.transferDate > filters.transferDateTo) return false
-      if (filters.approvalStatus !== '전체' && row.approvalStatus !== filters.approvalStatus) return false
-      return true
+  const loadRegistrationList = useCallback(async () => {
+    try {
+      const res = await fetchOperationTransferRegistrations({
+        page: currentPage,
+        pageSize: 10,
+        filters: apiSearchedFilters,
+      })
+      setRegistrationData(res.data)
+      setRegistrationTotal(res.totalCount)
+    } catch {
+      setRegistrationData([])
+      setRegistrationTotal(0)
+    }
+  }, [currentPage, apiSearchedFilters])
+
+  useEffect(() => {
+    void loadRegistrationList()
+  }, [loadRegistrationList])
+
+  /** 등록 목록 페이지·조회가 바뀌면 선택 해제 */
+  useEffect(() => {
+    setSelectedOperMId(null)
+    setCheckedOperMIds(new Set())
+    setItemPage(1)
+  }, [currentPage, searchedFilters])
+
+  const loadItemList = useCallback(async () => {
+    if (!selectedOperMId) {
+      setItemData([])
+      setItemTotal(0)
+      return
+    }
+    try {
+      const res = await fetchOperationTransferItems({
+        operMId: selectedOperMId,
+        page: itemPage,
+        pageSize: 10,
+      })
+      setItemData(res.data)
+      setItemTotal(res.totalCount)
+    } catch {
+      setItemData([])
+      setItemTotal(0)
+    }
+  }, [selectedOperMId, itemPage])
+
+  useEffect(() => {
+    void loadItemList()
+  }, [loadItemList])
+
+  const handleToggleRegistrationCheck = (row: OperationTransferRegistrationRow) => {
+    if (!row.operMId) {
+      window.alert('운용 등록 ID(operMId)가 없습니다.')
+      return
+    }
+    setCheckedOperMIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(row.operMId)) {
+        next.delete(row.operMId)
+        setSelectedOperMId((cur) => {
+          if (cur !== row.operMId) return cur
+          const first = next.values().next().value as string | undefined
+          return first ?? null
+        })
+      } else {
+        next.add(row.operMId)
+        setSelectedOperMId(row.operMId)
+        setItemPage(1)
+      }
+      return next
     })
-  }, [allRegistrationData, filters])
+  }
 
-  const registrationColumns: DataTableColumn<TransferRegistrationRow>[] = [
+  const handleApprovalRequest = async () => {
+    if (checkedOperMIds.size === 0) {
+      window.alert('승인 요청할 항목을 체크해 주세요.')
+      return
+    }
+    const ids = [...checkedOperMIds]
+    setApprovalRequestLoading(true)
+    try {
+      const failed: { id: string; message: string }[] = []
+      for (const id of ids) {
+        try {
+          await requestItemOperationApproval(id)
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e)
+          failed.push({ id, message })
+        }
+      }
+      if (failed.length === 0) {
+        window.alert('승인 요청이 완료되었습니다.')
+        setCheckedOperMIds(new Set())
+        setSelectedOperMId(null)
+        await loadRegistrationList()
+        return
+      }
+      if (failed.length === ids.length) {
+        window.alert(
+          `승인 요청에 실패했습니다.\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+        )
+        return
+      }
+      window.alert(
+        `일부만 성공했습니다. (실패 ${failed.length}건)\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+      )
+      setCheckedOperMIds(new Set(failed.map((f) => f.id)))
+      await loadRegistrationList()
+    } finally {
+      setApprovalRequestLoading(false)
+    }
+  }
+
+  const handleCancelRequest = async () => {
+    if (checkedOperMIds.size === 0) {
+      window.alert('승인 요청을 취소할 항목을 체크해 주세요.')
+      return
+    }
+    if (!window.confirm('체크한 항목의 승인 요청을 취소하시겠습니까?')) {
+      return
+    }
+    const ids = [...checkedOperMIds]
+    setCancelRequestLoading(true)
+    try {
+      const failed: { id: string; message: string }[] = []
+      for (const id of ids) {
+        try {
+          await cancelItemOperationRequest(id)
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e)
+          failed.push({ id, message })
+        }
+      }
+      if (failed.length === 0) {
+        window.alert('승인 요청이 취소되었습니다.')
+        setCheckedOperMIds(new Set())
+        setSelectedOperMId(null)
+        await loadRegistrationList()
+        return
+      }
+      if (failed.length === ids.length) {
+        window.alert(
+          `승인 요청 취소에 실패했습니다.\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+        )
+        return
+      }
+      window.alert(
+        `일부만 취소되었습니다. (실패 ${failed.length}건)\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+      )
+      setCheckedOperMIds(new Set(failed.map((f) => f.id)))
+      await loadRegistrationList()
+    } finally {
+      setCancelRequestLoading(false)
+    }
+  }
+
+  const handleDeleteOperation = async () => {
+    if (checkedOperMIds.size === 0) {
+      window.alert('삭제할 항목을 체크해 주세요.')
+      return
+    }
+    const checkedRows = registrationData.filter((r) => r.operMId && checkedOperMIds.has(r.operMId))
+    const deletableIds = checkedRows
+      .filter((r) => isOperationWaitDraftStatus(r.approvalStatus))
+      .map((r) => r.operMId)
+    const skippedCount = checkedRows.length - deletableIds.length
+
+    if (deletableIds.length === 0) {
+      window.alert('작성중(WAIT) 상태의 운용 신청만 삭제할 수 있습니다.')
+      return
+    }
+    if (skippedCount > 0) {
+      if (
+        !window.confirm(
+          `선택한 항목 중 작성중 상태가 아닌 ${skippedCount}건은 제외하고, ${deletableIds.length}건만 삭제합니다. 계속하시겠습니까?`,
+        )
+      ) {
+        return
+      }
+    } else if (!window.confirm('체크한 운용 신청을 삭제하시겠습니까?')) {
+      return
+    }
+
+    setDeleteOperationLoading(true)
+    try {
+      const failed: { id: string; message: string }[] = []
+      for (const id of deletableIds) {
+        try {
+          await deleteItemOperation(id)
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e)
+          failed.push({ id, message })
+        }
+      }
+      if (failed.length === 0) {
+        window.alert('삭제되었습니다.')
+        setCheckedOperMIds(new Set())
+        setSelectedOperMId(null)
+        await loadRegistrationList()
+        return
+      }
+      if (failed.length === deletableIds.length) {
+        window.alert(
+          `삭제에 실패했습니다.\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+        )
+        return
+      }
+      window.alert(
+        `일부만 삭제되었습니다. (실패 ${failed.length}건)\n${failed.map((f) => `- ${f.id}: ${f.message}`).join('\n')}`,
+      )
+      setCheckedOperMIds(new Set(failed.map((f) => f.id)))
+      await loadRegistrationList()
+    } finally {
+      setDeleteOperationLoading(false)
+    }
+  }
+
+  const registrationColumns: DataTableColumn<OperationTransferRegistrationRow>[] = [
+    {
+      key: 'select',
+      header: '',
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={row.operMId !== '' && checkedOperMIds.has(row.operMId)}
+          onChange={() => handleToggleRegistrationCheck(row)}
+          disabled={!row.operMId}
+          onClick={(e) => e.stopPropagation()}
+          aria-label="운용 등록 선택"
+        />
+      ),
+    },
     { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'transferDate', header: '전환일자', render: (row) => row.transferDate },
     { key: 'transferConfirmDate', header: '전환확정일자', render: (row) => row.transferConfirmDate },
@@ -89,8 +310,8 @@ const OperationTransferPage = () => {
     { key: 'approvalStatus', header: '승인상태', render: (row) => row.approvalStatus },
   ]
 
-  const itemColumns: DataTableColumn<TransferItemRow>[] = [
-    { key: 'select', header: '', render: () => <input type="checkbox" /> },
+  const itemColumns: DataTableColumn<OperationTransferItemRow>[] = [
+    { key: 'select', header: '', render: () => <input type="checkbox" disabled /> },
     { key: 'g2bNumber', header: 'G2B목록번호', render: (row) => row.g2bNumber },
     { key: 'g2bName', header: 'G2B목록명', render: (row) => row.g2bName },
     { key: 'itemUniqueNumber', header: '물품고유번호', render: (row) => row.itemUniqueNumber },
@@ -102,16 +323,38 @@ const OperationTransferPage = () => {
   ]
 
   const handleReset = () => {
-    setFilters({
-      transferDateFrom: '',
-      transferDateTo: '',
-      approvalStatus: '전체',
-    })
+    setFilters({ ...INITIAL_FILTERS })
+    setSearchedFilters({ ...INITIAL_FILTERS })
+    setCurrentPage(1)
   }
 
   const handleSearch = () => {
-    // 클라이언트 필터만 사용
+    setSearchedFilters({ ...filters })
+    setCurrentPage(1)
   }
+
+  const handleModify = () => {
+    if (checkedOperMIds.size !== 1) {
+      window.alert('수정할 항목을 한 건만 체크해 주세요.')
+      return
+    }
+    const id = [...checkedOperMIds][0]
+    const row = registrationData.find((r) => r.operMId === id)
+    const state: OperationTransferEditLocationState | undefined = row
+      ? {
+          transferDate: row.transferDate,
+          registrantId: row.registrantId,
+          registrantName: row.registrantName,
+        }
+      : undefined
+    navigate(
+      `/asset-management/operation-management/operation-transfer/edit/${encodeURIComponent(id)}`,
+      { state },
+    )
+  }
+
+  const bulkActionBusy =
+    approvalRequestLoading || cancelRequestLoading || deleteOperationLoading
 
   return (
     <AssetManagementPageLayout
@@ -146,7 +389,7 @@ const OperationTransferPage = () => {
             <div className="operation-ledger-field">
               <div className="operation-ledger-label">승인상태</div>
               <div className="operation-ledger-radio-group">
-                {APPROVAL_STATUS_OPTIONS.map((option) => (
+                {approvalStatusOptions.map((option) => (
                   <label key={option} className="operation-ledger-radio-label">
                     <input
                       type="radio"
@@ -181,27 +424,64 @@ const OperationTransferPage = () => {
         </div>
       </section>
 
-      <DataTable<TransferRegistrationRow>
+      <DataTable<OperationTransferRegistrationRow>
         pageKey="operation-ledger"
         title="운용 전환 등록 목록"
-        data={filteredRegistrationData}
-        totalCount={filteredRegistrationData.length}
+        data={registrationData}
+        totalCount={registrationTotal}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
         columns={registrationColumns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => (row.operMId ? `reg-${row.operMId}` : `reg-${row.id}`)}
         renderActions={() => (
           <div className="return-registration-actions">
-            <button type="button" className="return-btn-modify">
+            <button
+              type="button"
+              className="return-btn-modify"
+              disabled={bulkActionBusy || checkedOperMIds.size !== 1}
+              onClick={handleModify}
+            >
               수정
             </button>
-            <button type="button" className="return-btn-delete">
-              삭제
+            <button
+              type="button"
+              className="return-btn-delete"
+              disabled={
+                deleteOperationLoading ||
+                approvalRequestLoading ||
+                cancelRequestLoading ||
+                checkedOperMIds.size === 0
+              }
+              onClick={() => void handleDeleteOperation()}
+            >
+              {deleteOperationLoading ? '삭제 중…' : '삭제'}
             </button>
-            <button type="button" className="return-btn-approval-request">
-              승인요청
+            <button
+              type="button"
+              className="return-btn-approval-request"
+              disabled={
+                approvalRequestLoading ||
+                cancelRequestLoading ||
+                deleteOperationLoading ||
+                checkedOperMIds.size === 0
+              }
+              onClick={() => void handleApprovalRequest()}
+            >
+              {approvalRequestLoading ? '승인 요청 중…' : '승인요청'}
             </button>
-            <button type="button" className="return-btn-request-cancel">
-              요청취소
+            <button
+              type="button"
+              className="return-btn-request-cancel"
+              disabled={
+                cancelRequestLoading ||
+                approvalRequestLoading ||
+                deleteOperationLoading ||
+                checkedOperMIds.size === 0
+              }
+              onClick={() => void handleCancelRequest()}
+            >
+              {cancelRequestLoading ? '취소 처리 중…' : '요청취소'}
             </button>
             <button
               type="button"
@@ -214,14 +494,16 @@ const OperationTransferPage = () => {
         )}
       />
 
-      <DataTable<TransferItemRow>
+      <DataTable<OperationTransferItemRow>
         pageKey="operation-ledger"
         title="운용 전환 물품 목록"
-        data={allItemData}
-        totalCount={allItemData.length}
+        data={itemData}
+        totalCount={itemTotal}
         pageSize={10}
+        currentPage={itemPage}
+        onPageChange={setItemPage}
         columns={itemColumns}
-        getRowKey={(row) => row.id}
+        getRowKey={(row) => `${selectedOperMId ?? 'none'}-${row.id}-${row.itemUniqueNumber}`}
       />
     </AssetManagementPageLayout>
   )

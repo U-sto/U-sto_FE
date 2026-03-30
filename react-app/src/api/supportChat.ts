@@ -12,6 +12,27 @@ export interface AiChatResponseData {
   created_at?: string
 }
 
+export interface AiItemAssetsSearchParams {
+  itmNo?: string
+  g2bMcd?: string
+  g2bDcd?: string
+  g2bDn?: string
+}
+
+export interface AiItemAssetRow {
+  itmNo?: string
+  g2bMcd?: string
+  g2bDcd?: string
+  g2bDn?: string
+  acqAt?: string
+  arrAt?: string
+  deptNm?: string
+  operSts?: string
+  acqUpr?: string
+  qty?: string
+  [key: string]: unknown
+}
+
 /**
  * 이전 채팅방(쓰레드) 목록 조회
  * GET /api/ai/chat/threads
@@ -85,5 +106,31 @@ export async function sendAiChat(
   const body = res.data
   if (!body?.data?.reply) return ''
   return body.data.reply
+}
+
+/**
+ * 물품 조회 By AI
+ * GET /api/ai/item/assets
+ */
+export async function fetchAiItemAssets(
+  params: AiItemAssetsSearchParams,
+): Promise<AiItemAssetRow[]> {
+  const req: Record<string, string> = {}
+  if (params.itmNo?.trim()) req.itmNo = params.itmNo.trim()
+  if (params.g2bMcd?.trim()) req.g2bMcd = params.g2bMcd.trim()
+  if (params.g2bDcd?.trim()) req.g2bDcd = params.g2bDcd.trim()
+  if (params.g2bDn?.trim()) req.g2bDn = params.g2bDn.trim()
+  if (Object.keys(req).length === 0) return []
+
+  const res = await http.get<ApiResponse<{ arr?: AiItemAssetRow[] } | AiItemAssetRow[] | string>>(
+    '/api/ai/item/assets',
+    { params: req },
+  )
+  const data = res.data?.data
+  if (Array.isArray(data)) return data
+  if (data && typeof data === 'object' && Array.isArray((data as { arr?: AiItemAssetRow[] }).arr)) {
+    return (data as { arr: AiItemAssetRow[] }).arr
+  }
+  return []
 }
 

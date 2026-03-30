@@ -4,6 +4,7 @@
   gap: 4px;
   cursor: pointer;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .radio-input {
@@ -51,4 +52,6 @@
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
+  white-space: nowrap;
+  word-break: keep-all;
 }

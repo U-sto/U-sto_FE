@@ -142,7 +142,7 @@ const AssetManagementPageLayout = ({
             </div>
           </section>
 
-          {children}
+          <div className={`${prefix}-main-body`}>{children}</div>
         </main>
       </div>
 

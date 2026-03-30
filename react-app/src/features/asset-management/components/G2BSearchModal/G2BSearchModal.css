@@ -76,7 +76,7 @@
 }
 
 .g2b-search-label-inline {
-  margin-left: 8px;
+  margin-left: 24px;
 }
 
 .g2b-search-input {
@@ -102,9 +102,9 @@
   flex: none;
 }
 
-/* 물품식별코드: 130x30 */
+/* 물품식별코드: 분류코드(140x30)와 동일 */
 .g2b-input-identification-code {
-  width: 130px;
+  width: 140px;
   height: 30px;
   flex: none;
 }
@@ -251,9 +251,10 @@
 
 .g2b-page-btn,
 .g2b-page-num {
-  min-width: 28px;
+  width: 32px;
+  min-width: 32px;
   height: 28px;
-  padding: 0 8px;
+  padding: 0;
   border: 1px solid var(--usto-gray-200);
   background: var(--usto-alt-white);
   color: var(--usto-gray-200);
@@ -263,6 +264,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .g2b-page-btn:disabled {
