@@ -1,0 +1,10 @@
+/* 뎁스 필 1개만 있을 때 기준 길이(물품 취득 관리처럼)로만 표시 */
+.ai-forecast-depthbar-track {
+  width: auto;
+  max-width: none;
+}
+
+.ai-forecast-depthbar-track .management-depth-pill {
+  flex: 0 0 auto;
+}
+

@@ -1,0 +1,99 @@
+/* react-datepicker 오버라이드 - text-field 스타일과 통일 */
+.date-picker-field {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* 달력 팝업 전체 */
+.date-picker-calendar {
+  font-family: var(--font-family) !important;
+  border: 2px solid var(--usto-primary-200) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-drop) !important;
+  overflow: hidden;
+}
+
+/* 헤더 (년/월 영역) */
+.date-picker-calendar .react-datepicker__header {
+  background-color: var(--usto-primary-100) !important;
+  border-bottom: 1px solid var(--usto-primary-200) !important;
+  padding: 10px 0 8px !important;
+}
+
+/* 년/월 텍스트 */
+.date-picker-calendar .react-datepicker__current-month {
+  font-family: var(--font-family) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--usto-primary-300) !important;
+}
+
+/* 요일 헤더 */
+.date-picker-calendar .react-datepicker__day-name {
+  font-family: var(--font-family) !important;
+  font-size: 13px !important;
+  color: var(--usto-gray-200) !important;
+  font-weight: 500 !important;
+}
+
+/* 날짜 셀 */
+.date-picker-calendar .react-datepicker__day {
+  font-family: var(--font-family) !important;
+  font-size: 13px !important;
+  color: var(--usto-alt-black) !important;
+  border-radius: 4px !important;
+  transition: background-color 0.15s !important;
+}
+
+.date-picker-calendar .react-datepicker__day:hover {
+  background-color: var(--usto-primary-200) !important;
+  color: var(--usto-primary-300) !important;
+}
+
+/* 선택된 날짜 */
+.date-picker-calendar .react-datepicker__day--selected,
+.date-picker-calendar .react-datepicker__day--keyboard-selected {
+  background-color: var(--usto-primary-300) !important;
+  color: white !important;
+}
+
+/* 오늘 날짜 */
+.date-picker-calendar .react-datepicker__day--today {
+  font-weight: 700 !important;
+  color: var(--usto-primary-300) !important;
+}
+
+.date-picker-calendar .react-datepicker__day--today.react-datepicker__day--selected {
+  color: white !important;
+}
+
+/* 이전/다음 달 버튼 */
+.date-picker-calendar .react-datepicker__navigation-icon::before {
+  border-color: var(--usto-primary-300) !important;
+}
+
+.date-picker-calendar .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: var(--usto-primary-200) !important;
+}
+
+/* 년/월 드롭다운 */
+.date-picker-calendar .react-datepicker__month-select,
+.date-picker-calendar .react-datepicker__year-select {
+  font-family: var(--font-family) !important;
+  font-size: 13px !important;
+  color: var(--usto-primary-300) !important;
+  border: 1px solid var(--usto-primary-200) !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  background-color: white !important;
+}
+
+/* 비활성 날짜 */
+.date-picker-calendar .react-datepicker__day--outside-month {
+  color: var(--usto-gray-100) !important;
+}
+
+/* 포퍼 z-index */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}

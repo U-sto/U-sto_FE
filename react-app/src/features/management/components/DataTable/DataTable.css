@@ -1,0 +1,151 @@
+/* 공통: 관리 테이블 헤더·본문 (페이지별 색/보더는 각 *-table-el 규칙과 병행) */
+.management-table-el thead th {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  padding: 14px 18px;
+  min-height: 48px;
+  height: auto;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.management-table-el th,
+.management-table-el td {
+  padding: 14px 18px;
+}
+
+.management-table-el tbody td {
+  border-top: 1px solid var(--usto-primary-200);
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* 공통: 관리 테이블 행 호버 */
+.management-table-el tbody tr:hover {
+  background-color: var(--usto-primary-100);
+  cursor: pointer;
+}
+
+/* 빈 데이터 메시지 */
+.management-table-el tbody td.management-table-empty {
+  text-align: center;
+  color: var(--usto-gray-200);
+  font-size: 16px;
+  padding: 28px 18px;
+}
+
+/* 페이지네이션: 버튼은 데이터 테이블 너비 기준 정중앙, summary는 좌/우 배치 */
+.management-pagination {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.management-pagination-buttons {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.management-pagination-buttons button {
+  pointer-events: auto;
+}
+
+.management-pagination-summary {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: 16px;
+  text-align: left;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+}
+
+@media (max-width: 480px) {
+  .management-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .management-pagination-buttons {
+    position: static;
+    pointer-events: auto;
+  }
+
+  .management-pagination-summary {
+    text-align: left;
+    order: -1;
+  }
+}
+
+/* 행 클릭 가능 (상위 목록에서 하위 목록 연동 등) */
+.management-table-el tbody tr.management-table-row-clickable {
+  cursor: pointer;
+}
+
+/* 체크박스가 있는 행도 클릭 가능 커서 */
+.management-table-el tbody tr:has(input[type='checkbox']) {
+  cursor: pointer;
+}
+
+.management-table-el tbody tr.management-table-row-selected td {
+  background-color: var(--usto-primary-100);
+}
+
+.management-table-el tbody tr.management-table-row-selected:hover td {
+  background-color: var(--usto-primary-200);
+}
+
+/* 커스텀 체크박스 */
+.management-table-el input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid var(--usto-primary-200);
+  border-radius: 4px;
+  background-color: var(--usto-alt-white);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, border-color 0.15s;
+  vertical-align: middle;
+  position: relative;
+}
+
+.management-table-el input[type='checkbox']:hover {
+  border-color: var(--usto-primary-300);
+}
+
+.management-table-el input[type='checkbox']:checked {
+  background-color: var(--usto-primary-300);
+  border-color: var(--usto-primary-300);
+}
+
+.management-table-el input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid var(--usto-alt-white);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}

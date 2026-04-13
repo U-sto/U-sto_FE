@@ -1,0 +1,199 @@
+.change-phone-page {
+  min-height: 100vh;
+  background: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.change-phone-content {
+  flex: 1;
+  padding: 32px 24px 48px;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.change-phone-topbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  position: relative;
+}
+
+.change-phone-back {
+  position: absolute;
+  left: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--usto-primary-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-phone-back:hover {
+  color: var(--usto-primary-200);
+}
+
+.change-phone-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  text-align: center;
+}
+
+.change-phone-divider {
+  width: 100%;
+  height: 0;
+  border: none;
+  border-top: 2px solid var(--usto-primary-200);
+}
+
+.change-phone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.change-phone-auth-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+}
+
+.change-phone-auth-row {
+  display: flex;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.change-phone-auth-code-wrap {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 10px;
+}
+
+.change-phone-input {
+  flex: 1;
+  width: 100%;
+  padding: 14px 20px;
+  border: 2px solid var(--usto-gray-100);
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  background: var(--usto-alt-white);
+  box-sizing: border-box;
+  height: 70px;
+}
+
+.change-phone-input:focus {
+  outline: none;
+  border-color: var(--usto-primary-200);
+}
+
+.change-phone-input::placeholder {
+  color: var(--usto-gray-100);
+}
+
+.change-phone-send-btn {
+  flex-shrink: 0;
+  width: 136px;
+  height: 70px;
+  padding: 14px;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  background: var(--usto-primary-300);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-phone-send-btn:hover {
+  background: var(--usto-primary-200);
+}
+
+.change-phone-error {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--usto-primary-300);
+  margin: 0;
+  padding: 0;
+}
+
+.change-phone-submit-btn {
+  width: 100%;
+  max-width: 500px;
+  height: 80px;
+  padding: 14px;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-white);
+  background: var(--usto-primary-200);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-phone-submit-btn:hover {
+  background: var(--usto-primary-300);
+}
+
+@media (max-width: 768px) {
+  .change-phone-title {
+    font-size: 28px;
+  }
+
+  .change-phone-input {
+    font-size: 18px;
+    height: 56px;
+  }
+
+  .change-phone-send-btn {
+    width: 100px;
+    height: 56px;
+    font-size: 18px;
+  }
+
+  .change-phone-submit-btn {
+    font-size: 24px;
+    height: 64px;
+  }
+
+  .change-phone-auth-row {
+    flex-direction: column;
+  }
+}

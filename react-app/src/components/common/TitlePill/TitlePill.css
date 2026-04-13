@@ -1,0 +1,17 @@
+.title-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 25px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--usto-primary-200);
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.4479999542236328;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: nowrap;
+  width: fit-content;
+}

@@ -1,0 +1,1054 @@
+.ai-forecast-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 24px 40px;
+}
+
+.ai-forecast-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  max-width: 1200px;
+  width: 100%;
+  margin-top: -32px;
+}
+
+.ai-forecast-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 732px;
+}
+
+.ai-forecast-info-icon {
+  flex-shrink: 0;
+}
+
+.ai-forecast-info-icon img {
+  display: block;
+  width: 74px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.ai-forecast-info-heading {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  text-align: center;
+}
+
+.ai-forecast-info-desc {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.45;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+  text-align: center;
+}
+
+/* 두 번째 문장 한 라인 유지 */
+.ai-forecast-info-desc-line2 {
+  white-space: nowrap;
+}
+
+.ai-forecast-search-field {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-200);
+  border-radius: 6px;
+}
+
+.ai-forecast-search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  height: 56px;
+}
+
+.ai-forecast-search-input {
+  flex: 1;
+  height: 100%;
+  border: 2px solid var(--usto-primary-300);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  padding: 5px 18px;
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.ai-forecast-search-input::placeholder {
+  color: var(--usto-gray-200);
+}
+
+.ai-forecast-search-btn {
+  width: 79px;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0 21px;
+  background: var(--usto-primary-300);
+  border: 2px solid var(--usto-primary-300);
+  border-radius: 0 4px 4px 0;
+  color: var(--usto-alt-white);
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-forecast-search-btn:hover {
+  background: var(--usto-primary-200);
+  border-color: var(--usto-primary-200);
+}
+
+/* 분석조건 접이식 패널 */
+.ai-forecast-analysis-condition {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.ai-forecast-analysis-condition-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  text-align: left;
+}
+
+.ai-forecast-analysis-condition-title {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-analysis-condition-caret {
+  font-size: 10px;
+  color: var(--usto-primary-300);
+  line-height: 1;
+}
+
+.ai-forecast-analysis-condition-body {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--usto-primary-200);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-forecast-analysis-condition-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+
+.ai-forecast-analysis-condition-row-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.ai-forecast-analysis-condition-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-forecast-analysis-condition-label {
+  flex-shrink: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: nowrap;
+}
+
+/* 물품분류명 + G2B 분류 검색(돋보기) — 필터 섹션과 동일: 입력과 버튼 분리 */
+.ai-forecast-analysis-condition-field--g2b-class .ai-forecast-g2b-class-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 360px;
+}
+
+.ai-forecast-g2b-class-input-wrap .ai-forecast-g2b-class-input.ai-forecast-analysis-condition-input {
+  width: auto;
+  flex: 1;
+  min-width: 140px;
+  max-width: none;
+  border-radius: 4px;
+}
+
+/* operation-ledger 등 필터 돋보기와 동일 톤 */
+.ai-forecast-g2b-class-search-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: #5c7c83;
+  color: #eaeaea;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.ai-forecast-g2b-class-search-btn:hover {
+  background: #4a6369;
+  opacity: 0.95;
+}
+
+.ai-forecast-analysis-condition-input {
+  width: 220px;
+  min-width: 120px;
+  height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--usto-alt-black);
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-analysis-condition-input::placeholder {
+  color: var(--usto-gray-200);
+}
+
+/* 캠퍼스 읽기 전용: 배경·커서 고정 */
+.ai-forecast-analysis-condition-input--readonly {
+  background: var(--usto-primary-100);
+  cursor: default;
+  color: var(--usto-alt-black);
+}
+
+/* 리스크성향: 드롭다운 + 물음표(설명 툴팁) */
+.ai-forecast-risk-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ai-forecast-analysis-condition .dropdown-small-button {
+  height: 32px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.ai-forecast-analysis-condition .dropdown-small-search-input {
+  font-size: 14px;
+}
+
+.ai-forecast-analysis-condition-reset {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--usto-gray-200);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ai-forecast-analysis-condition-reset:hover {
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-error {
+  color: #d52e2e;
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+
+/* 탭 */
+.ai-forecast-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px 16px;
+  margin-bottom: 0;
+}
+
+.ai-forecast-tab {
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+}
+
+.ai-forecast-tab:hover {
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-tab--active {
+  color: var(--usto-primary-300);
+  font-weight: 600;
+}
+
+.ai-forecast-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--usto-primary-300);
+}
+
+/* 분석 결과 영역 */
+.ai-forecast-result {
+  flex: 1;
+  padding: 4px 32px 40px;
+  margin-top: -15px;
+  overflow-y: auto;
+}
+
+/* PDF 버튼: 결과 틀 밖, 오른쪽 정렬 */
+.ai-forecast-result-header {
+  max-width: none;
+  margin: 0 0 12px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 알고리즘 안내 버튼 */
+.ai-forecast-algo-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--usto-alt-white);
+  background: var(--usto-primary-300);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.ai-forecast-algo-btn:hover {
+  opacity: 0.85;
+}
+
+.ai-forecast-algo-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--usto-alt-white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* 알고리즘 가이드 팝업 오버레이 */
+.ai-forecast-algo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 알고리즘 가이드 모달 */
+.ai-forecast-algo-modal {
+  background: var(--usto-alt-white);
+  border-radius: 12px;
+  width: 560px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+.ai-forecast-algo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--usto-primary-200);
+  flex-shrink: 0;
+}
+
+.ai-forecast-algo-modal-title {
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+}
+
+.ai-forecast-algo-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--usto-gray-200);
+  padding: 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-forecast-algo-modal-close:hover {
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-algo-modal-body {
+  padding: 20px 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-forecast-algo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+  background: var(--usto-primary-100);
+  border-radius: 8px;
+  border-left: 4px solid var(--usto-primary-300);
+}
+
+.ai-forecast-algo-item-label {
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--usto-primary-300);
+  margin: 0;
+}
+
+.ai-forecast-algo-item-desc {
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--usto-alt-black);
+  line-height: 1.7;
+  margin: 0;
+  word-break: keep-all;
+}
+
+.ai-forecast-pdf-btn {
+  width: auto;
+  height: 32px;
+  min-height: 0;
+  padding: 0 14px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--usto-primary-300);
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-300);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.ai-forecast-pdf-btn:hover {
+  background: var(--usto-primary-100);
+}
+
+/* 결과 페이지 틀 (테두리 있는 영역) */
+.ai-forecast-result-inner {
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  border: 2px solid var(--usto-primary-200);
+  border-radius: 16px;
+  padding: 32px;
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-result-banner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-forecast-result-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ai-forecast-result-banner-text p {
+  margin: 0;
+}
+
+.ai-forecast-banner-sparkle {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.ai-forecast-result-row1 {
+  display: flex;
+  gap: 36px;
+  align-items: stretch;
+}
+
+/* 질문 영역: 흰 배경 + 연한 테두리 + 왼쪽 청록 악센트 바 (2번째 사진 스타일) */
+.ai-forecast-query-bubble {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 24px 8px 36px;
+  background: var(--usto-alt-white);
+  border: 1px solid #c2d4d4;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.ai-forecast-query-bubble::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: #698f9e;
+  border-radius: 8px 0 0 8px;
+}
+
+.ai-forecast-query-bubble p {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  margin: 0;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.ai-forecast-params {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ai-forecast-param {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: var(--usto-primary-100);
+  border-radius: 4px;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+}
+
+.ai-forecast-param-label {
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--usto-primary-300);
+  flex-shrink: 0;
+}
+
+.ai-forecast-param-value {
+  font-family: var(--font-family);
+  font-weight: 400;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-guide-and-chart {
+  display: grid;
+  grid-template-columns: 45fr 55fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.ai-forecast-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ai-forecast-chart-block {
+  min-width: 0;
+  flex: 1;
+}
+
+/* AI 전략적 조달 가이드 래퍼 (라벨 + 패널) */
+.ai-forecast-guide-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.ai-forecast-guide-panel-label {
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  background: var(--usto-primary-200);
+  padding: 4px 16px;
+  border-radius: 6px;
+  display: inline-block;
+  margin: 0 0 8px 0;
+  align-self: flex-start;
+}
+
+/* AI 전략적 조달 가이드 패널 */
+.ai-forecast-guide-panel {
+  border: 2px solid var(--usto-primary-300);
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--usto-alt-white);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  min-width: 0;
+  flex: 1;
+}
+
+.ai-forecast-guide-highlight {
+  display: flex;
+  gap: 8px;
+  color: var(--usto-primary-300);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: -0.02em;
+}
+
+.ai-forecast-guide-highlight::before {
+  content: '◆';
+  flex-shrink: 0;
+  color: var(--usto-primary-300);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.ai-forecast-guide-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 3px solid var(--usto-primary-300);
+  padding-left: 14px;
+}
+
+.ai-forecast-guide-section-title {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  color: var(--usto-alt-black);
+  margin: 0;
+}
+
+.ai-forecast-guide-section-text {
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--usto-alt-black);
+  line-height: 1.7;
+  letter-spacing: -0.02em;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ai-forecast-guide-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--usto-gray-200);
+  font-size: 14px;
+}
+
+.ai-forecast-guide-empty p {
+  margin: 0;
+}
+
+.ai-forecast-table-section {
+  margin-top: 8px;
+}
+
+.ai-forecast-result-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px;
+  color: var(--usto-gray-200);
+  font-size: 16px;
+}
+
+/* 이전 예측 이력 탭 — 상단 정렬로 제목 검색 위치 고정(항목 개수 변해도 검색창 안 움직임) */
+.ai-forecast-history {
+  flex: 1;
+  padding: 28px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+}
+
+.ai-forecast-history--no-data {
+  justify-content: center;
+}
+
+.ai-forecast-history-empty {
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+  text-align: center;
+  padding: 24px 32px;
+  border-radius: 12px;
+  background: var(--usto-primary-100);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-history-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+}
+
+.ai-forecast-history-search {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 20px;
+}
+
+.ai-forecast-history-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.ai-forecast-history-search .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ai-forecast-history-delete-btn {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--usto-primary-300);
+  background: var(--usto-alt-white);
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--usto-primary-300);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.ai-forecast-history-delete-btn:hover:not(:disabled) {
+  background: var(--usto-primary-100);
+}
+
+.ai-forecast-history-delete-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ai-forecast-history-search-label {
+  display: block;
+  width: 100%;
+  cursor: text;
+  position: relative;
+}
+
+.ai-forecast-history-search-heading {
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-history-search-input {
+  font-size: 18px !important;
+}
+
+.ai-forecast-history-empty--inline {
+  margin: 12px 0 0;
+  width: 100%;
+  text-align: center;
+  padding: 20px 16px;
+}
+
+/* 페이지네이션 사용 시 목록 영역 높이 확보 → 이전/다음 줄 세로 위치 고정 */
+.ai-forecast-history-list-wrap {
+  width: 100%;
+  max-width: 900px;
+  flex-shrink: 0;
+}
+
+.ai-forecast-history-list-wrap--with-pager {
+  min-height: 600px;
+  overflow-y: auto;
+}
+
+.ai-forecast-history-list {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ai-forecast-history-item {
+  list-style: none;
+}
+
+.ai-forecast-history-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.ai-forecast-history-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--usto-primary-300);
+}
+
+.ai-forecast-history-button {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  text-align: left;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--usto-primary-200);
+  background: var(--usto-alt-white);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-forecast-history-button:hover {
+  border-color: var(--usto-primary-300);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-history-title {
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-history-meta {
+  font-family: var(--font-family);
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--usto-gray-200);
+}
+
+.ai-forecast-history-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 900px;
+}
+
+.ai-forecast-history-pager-info {
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--usto-primary-300);
+  min-width: 4em;
+  text-align: center;
+}
+
+.ai-forecast-history-pager-btn {
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--usto-primary-200);
+  background: var(--usto-alt-white);
+  color: var(--usto-primary-300);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ai-forecast-history-pager-btn:hover:not(:disabled) {
+  border-color: var(--usto-primary-300);
+  background: var(--usto-primary-100);
+}
+
+.ai-forecast-history-pager-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 분석 결과 테이블 (DataTable pageKey=ai-forecast) */
+.ai-forecast-table-top {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.ai-forecast-table-label {
+  background: var(--usto-primary-200);
+  border-radius: 6px;
+  padding: 4px 16px;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ai-forecast-table-wrap {
+  margin-top: 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--usto-alt-white);
+}
+
+.ai-forecast-table-wrap-inner {
+  overflow-x: auto;
+}
+
+.ai-forecast-table-el {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-family);
+  table-layout: fixed;
+}
+
+.ai-forecast-table-el thead th {
+  background: var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  border-right: 1px solid var(--usto-primary-200);
+  text-align: left;
+}
+
+.ai-forecast-table-el thead th:last-child {
+  border-right: none;
+}
+
+.ai-forecast-pagination {
+  margin-top: 7px;
+}

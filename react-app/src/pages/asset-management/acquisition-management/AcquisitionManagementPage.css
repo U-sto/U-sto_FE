@@ -1,0 +1,271 @@
+/* 콘텐츠 래퍼 (제목 행 + 패널) */
+.acquisition-content {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 48px;
+  flex-shrink: 0;
+}
+
+/* 위쪽 한 줄: 왼쪽 제목 pill, 오른쪽 목록·저장 버튼 */
+.acquisition-form-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* 물품 취득 확정 관리 페이지의 "물품 취득 대장 목록" 제목과 동일 스타일 */
+/* 이제 TitlePill 컴포넌트를 사용합니다 */
+
+/* 물품 기본 정보 패널 (폼 필드만) */
+.acquisition-form-panel {
+  width: 100%;
+  background: var(--usto-primary-200);
+  border-radius: 8px;
+  padding: 20px 24px 28px;
+  flex-shrink: 0;
+}
+
+.acquisition-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acquisition-form-body {
+  width: 100%;
+}
+
+.acquisition-form-loading {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--usto-text-secondary, #5c5c5c);
+}
+
+/* Figma 사진 기준: Row1 2열, Row2 4열, Row3 3열, Row4 2열, Row5 전체 */
+.acquisition-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 24px;
+  row-gap: 20px;
+  min-width: 0;
+}
+
+.acquisition-form-grid > * {
+  min-width: 0;
+}
+
+.acquisition-field-span2 {
+  grid-column: span 2;
+}
+
+.acquisition-field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.acquisition-field-full {
+  grid-column: 1 / -1;
+}
+
+.acquisition-field-remarks {
+  align-items: flex-start;
+}
+
+.acquisition-label {
+  width: 112px;
+  flex-shrink: 0;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  white-space: nowrap;
+}
+
+.acquisition-form-panel .text-field {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 6px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 400;
+  color: var(--usto-alt-black);
+  background: var(--usto-alt-white);
+}
+
+.acquisition-form-panel .text-field::placeholder {
+  color: var(--usto-gray-200);
+}
+
+.acquisition-form-panel .text-field.acquisition-readonly {
+  background: var(--usto-primary-100);
+  cursor: default;
+}
+
+/* G2B목록번호: 두 박스 + 하이픈 */
+.acquisition-g2b-number-split {
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.acquisition-g2b-number-split .acquisition-g2b-number-box {
+  flex: 1;
+  min-width: 0;
+  max-width: 140px;
+}
+
+.acquisition-g2b-number-sep {
+  flex-shrink: 0;
+  padding: 0 8px;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--usto-alt-black);
+}
+
+.acquisition-form-panel .dropdown-wrapper,
+.acquisition-form-panel .dropdown-small-wrapper {
+  min-width: 0;
+}
+
+.acquisition-form-panel .dropdown-button,
+.acquisition-form-panel .dropdown-small-button {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 400;
+  color: var(--usto-alt-black);
+  background: var(--usto-alt-white);
+}
+
+.acquisition-form-panel .dropdown-small-menu {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.acquisition-form-panel .dropdown-small-button input {
+  min-width: 0;
+}
+
+/* G2B목록명: 입력창 + 분리된 검색 버튼 */
+.acquisition-input-and-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acquisition-input-and-search .acquisition-g2b-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.acquisition-search-btn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: #5C7C83;
+  color: #EAEAEA;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.acquisition-search-btn:hover {
+  background: #4a6369;
+  opacity: 0.95;
+}
+
+/* 비고 textarea */
+.acquisition-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 100px;
+  padding: 8px 12px;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 4px;
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--usto-alt-black);
+  resize: vertical;
+}
+
+.acquisition-textarea::placeholder {
+  color: var(--usto-gray-200);
+}
+
+/* 버튼 - Figma Btn/Table-Stroke, Btn/Table-Prime: 14px, padding 4px 16px, radius 6 */
+.acquisition-btn {
+  width: auto;
+  border-radius: 6px;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  padding: 4px 16px;
+  height: auto;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acquisition-btn-outline {
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-300);
+  color: var(--usto-primary-300);
+}
+
+.acquisition-btn-primary {
+  background: var(--usto-primary-300);
+  border: 1px solid var(--usto-primary-300);
+  color: var(--usto-alt-white);
+}
+
+@media (max-width: 1024px) {
+  .acquisition-content {
+    width: calc(100% - 32px);
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .acquisition-form-panel {
+    overflow-x: hidden;
+  }
+
+  .acquisition-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .acquisition-field-span2 {
+    grid-column: span 1;
+  }
+}

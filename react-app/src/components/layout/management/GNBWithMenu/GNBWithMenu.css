@@ -1,0 +1,246 @@
+.gnb-with-menu {
+  width: 100%;
+  position: relative;
+}
+
+.gnb-top-bar {
+  width: 100%;
+  height: 2px;
+  background-color: var(--usto-primary-300);
+}
+
+.gnb-user-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 400px;
+  height: 40px;
+  background-color: var(--usto-primary-200);
+}
+
+.gnb-user-text {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.gnb-user-text:hover {
+  color: var(--usto-primary-300);
+}
+
+.gnb-user-divider {
+  width: 0;
+  height: 16.5px;
+  border-left: 1.5px solid var(--usto-gray-200);
+}
+
+.gnb-menu-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 400px;
+  min-height: 80px;
+  background-color: var(--usto-alt-white);
+}
+
+.gnb-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* 메가 메뉴 전체 패널 */
+.gnb-mega-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background-color: var(--usto-primary-100);
+  z-index: 1000;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+
+/* 탭 버튼과 동일한 오른쪽 패딩/gap으로 컬럼 배치 */
+.gnb-mega-menu-inner {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 0;
+  padding: 24px 345px 28px 40px;
+  box-sizing: border-box;
+}
+
+.gnb-mega-column {
+  min-width: 120px;
+}
+
+/* 관리자 ~ 물품관리 간격 */
+.gnb-mega-column:nth-child(1) {
+  margin-right: 55px;
+}
+
+/* 물품관리 ~ AI예측 간격 */
+.gnb-mega-column:nth-child(2) {
+  margin-right: 70px;
+}
+
+.gnb-mega-column-header {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-gray-200);
+  margin: 0 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--usto-primary-200);
+}
+
+.gnb-mega-column-header--active {
+  color: var(--usto-primary-300);
+  border-bottom-color: var(--usto-primary-300);
+}
+
+.gnb-mega-column-items {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 탭 활성 상태 */
+.gnb-menu-tab--active {
+  color: var(--usto-primary-300);
+}
+
+.gnb-dropdown-item {
+  font-family: var(--font-family);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  padding: 7px 8px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  border: none;
+  background: transparent;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+.gnb-dropdown-item:hover,
+.gnb-dropdown-item-focused {
+  background-color: var(--usto-primary-200);
+  color: var(--usto-primary-300);
+}
+
+.gnb-dropdown-main {
+  font-weight: 600;
+  color: var(--usto-alt-black);
+  cursor: default;
+  pointer-events: none;
+}
+
+.gnb-dropdown-main:hover {
+  background-color: transparent;
+  color: var(--usto-alt-black);
+}
+
+.gnb-dropdown-submenu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 하위 항목 들여쓰기 */
+.gnb-dropdown-submenu .gnb-dropdown-item {
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--usto-gray-200);
+}
+
+.gnb-logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gnb-logo-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--usto-primary-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gnb-logo-text {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.gnb-menu-tabs {
+  display: flex;
+  align-items: center;
+  gap: 120px;
+  justify-content: flex-end;
+}
+
+.gnb-menu-tab {
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-200);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.gnb-menu-tab:hover {
+  color: var(--usto-primary-300);
+}
+
+.gnb-bottom-border {
+  width: 100%;
+  height: 1px;
+  background-color: var(--usto-gray-100);
+}
+
+@media (max-width: 1920px) {
+  .gnb-user-section,
+  .gnb-menu-content {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gnb-menu-tabs {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .gnb-dropdown-menu {
+    position: static;
+    margin-top: 4px;
+  }
+}

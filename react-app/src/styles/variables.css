@@ -1,0 +1,36 @@
+:root {
+  /* cspell:words Usto */
+  /* Usto Color Palette */
+  --usto-alt-white: #FAFBFB;
+  --usto-primary-300: #58828E;
+  --usto-primary-200: #C1D8DC;
+  --usto-primary-100: #E8EEF0;
+  --usto-gray-100: #BEC3C3;
+  --usto-gray-200: #888C8D;
+  --usto-alt-black: #191919;
+  
+  /* Typography */
+  --font-family: 'Noto Sans KR', sans-serif;
+  
+  /* Buttons */
+  --btn-reset-border: none;
+  --btn-reset-bg: none;
+  --btn-reset-padding: 0;
+  --btn-reset-outline: none;
+  --btn-hover-bg: rgba(0, 0, 0, 0.05);
+  
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 64px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  
+  /* Shadows */
+  --shadow-drop: 0px 8px 10px 0px rgba(234, 237, 237, 1);
+  --usto-shadow-sidebar: 8px 0 10px 0 rgba(234, 237, 237, 1);
+  --usto-primary-300-70: rgba(88, 130, 142, 0.7);
+}

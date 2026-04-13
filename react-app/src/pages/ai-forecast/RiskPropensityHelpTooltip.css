@@ -1,0 +1,135 @@
+.risk-propensity-help {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.risk-propensity-help__trigger {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--usto-gray-200);
+  border-radius: 50%;
+  background: var(--usto-alt-white);
+  color: var(--usto-primary-300);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.risk-propensity-help__trigger:hover,
+.risk-propensity-help__trigger:focus-visible {
+  background: var(--usto-primary-100);
+  border-color: var(--usto-primary-300);
+  outline: none;
+}
+
+/* ? 기준 왼쪽 위: 패널 하단·좌측이 버튼과 맞닿도록 */
+.risk-propensity-help__panel {
+  position: absolute;
+  z-index: 200;
+  left: 0;
+  right: auto;
+  bottom: calc(100% + 6px);
+  top: auto;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(420px, 70vh);
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--usto-primary-200);
+  border-radius: 8px;
+  background: var(--usto-alt-white);
+  box-shadow: 0 -4px 20px rgba(0, 60, 70, 0.08);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.22s ease,
+    visibility 0.22s ease;
+}
+
+.risk-propensity-help__panel--open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.risk-propensity-help__scroll {
+  max-height: min(380px, calc(70vh - 52px));
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  background: var(--usto-alt-white);
+}
+
+.risk-propensity-help__title {
+  margin: 0;
+  padding: 12px 16px 10px;
+  background: var(--usto-primary-100);
+  border-bottom: 1px solid var(--usto-primary-200);
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.risk-propensity-help__section + .risk-propensity-help__section {
+  margin-top: 18px;
+  padding-top: 0;
+}
+
+.risk-propensity-help__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--usto-primary-200);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--usto-primary-300);
+}
+
+.risk-propensity-help__heading::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--usto-primary-300);
+}
+
+.risk-propensity-help__p {
+  margin: 0 0 8px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.02em;
+  color: var(--usto-alt-black);
+}
+
+.risk-propensity-help__p:last-child {
+  margin-bottom: 0;
+}
+
+.risk-propensity-help__p strong {
+  font-weight: 600;
+  color: var(--usto-primary-300);
+}
