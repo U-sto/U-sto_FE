@@ -5,6 +5,7 @@
  */
 import http from './http'
 import type { ApiResponse } from './types'
+import { pickFirstStringFromRecord } from './pickFromRecord'
 
 export type ItemDisposalSearchRequest = {
   /** 시작 처분 신청일자 */
@@ -108,30 +109,21 @@ function mapItemDisposalToRow(
   index: number,
   offset: number,
 ): DisposalRegistrationRow {
-  const dispMId = String(
-    (item.dispMId as string | undefined) ??
-      (typeof item.id === 'string' ? item.id : '') ??
-      '',
-  )
-  const disposalDate =
-    (item.applYAt as string | undefined) ??
-    (item.disdAt as string | undefined) ??
-    (item.disdDate as string | undefined) ??
-    ''
-  const disposalConfirmDate =
-    (item.apprAt as string | undefined) ??
-    (item.confirmAt as string | undefined) ??
-    (item.cnfmAt as string | undefined) ??
-    (item.disdCfmAt as string | undefined) ??
-    ''
-  const registrantId =
-    (item.usrId as string | undefined) ?? (item.registrantId as string | undefined) ?? ''
-  const registrantName =
-    (item.usrNm as string | undefined) ?? (item.registrantName as string | undefined) ?? ''
-  const approvalStatus =
-    (item.apprSts as string | undefined) ??
-    (item.approvalStatus as string | undefined) ??
-    ''
+  const rec = item as Record<string, unknown>
+  /** 목록 행: id는 문자열일 때만 보조 키로 사용 (기존 동작 유지) */
+  const dispMId =
+    pickFirstStringFromRecord(rec, ['dispMId']) ||
+    (typeof item.id === 'string' ? item.id : '')
+  const disposalDate = pickFirstStringFromRecord(rec, ['applYAt', 'disdAt', 'disdDate'])
+  const disposalConfirmDate = pickFirstStringFromRecord(rec, [
+    'apprAt',
+    'confirmAt',
+    'cnfmAt',
+    'disdCfmAt',
+  ])
+  const registrantId = pickFirstStringFromRecord(rec, ['usrId', 'registrantId'])
+  const registrantName = pickFirstStringFromRecord(rec, ['usrNm', 'registrantName'])
+  const approvalStatus = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
 
   return {
     id: offset + index + 1,
@@ -145,27 +137,14 @@ function mapItemDisposalToRow(
 }
 
 function mapItemDisposalToMaster(item: ItemDisposalContent): DisposalMaster {
+  const rec = item as Record<string, unknown>
   return {
-    dispMId: String(item.dispMId ?? item.id ?? ''),
-    aplyAt:
-      (item.applYAt as string | undefined) ??
-      (item.disdAt as string | undefined) ??
-      (item.disdDate as string | undefined) ??
-      '',
-    apprAt:
-      (item.apprAt as string | undefined) ??
-      (item.confirmAt as string | undefined) ??
-      (item.cnfmAt as string | undefined) ??
-      (item.disdCfmAt as string | undefined) ??
-      '',
-    aplyUsrId:
-      (item.usrId as string | undefined) ?? (item.registrantId as string | undefined) ?? '',
-    aplyUsrNm:
-      (item.usrNm as string | undefined) ?? (item.registrantName as string | undefined) ?? '',
-    apprSts:
-      (item.apprSts as string | undefined) ??
-      (item.approvalStatus as string | undefined) ??
-      '',
+    dispMId: pickFirstStringFromRecord(rec, ['dispMId', 'id']),
+    aplyAt: pickFirstStringFromRecord(rec, ['applYAt', 'disdAt', 'disdDate']),
+    apprAt: pickFirstStringFromRecord(rec, ['apprAt', 'confirmAt', 'cnfmAt', 'disdCfmAt']),
+    aplyUsrId: pickFirstStringFromRecord(rec, ['usrId', 'registrantId']),
+    aplyUsrNm: pickFirstStringFromRecord(rec, ['usrNm', 'registrantName']),
+    apprSts: pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus']),
     dispType: typeof item.dispType === 'string' ? item.dispType : undefined,
   }
 }

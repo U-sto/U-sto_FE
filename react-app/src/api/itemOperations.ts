@@ -8,6 +8,7 @@ import http from './http'
 import type { ApiResponse } from './types'
 import { applyDeptLabelToSearchRequest } from '../constants/departments'
 import { buildCombinedG2bListNoForFilter } from './g2bFilterNormalize'
+import { pickFirstStringFromRecord as pickFromRecord } from './pickFromRecord'
 
 export type ItemOperationSearchRequest = {
   /** 시작 신청일자 (스웨거 예: startAplyAt) */
@@ -244,14 +245,6 @@ function operationTransferFiltersToSearchRequest(
     if (code) req.apprSts = code
   }
   return req
-}
-
-function pickFromRecord(obj: Record<string, unknown>, keys: string[]): string {
-  for (const k of keys) {
-    const v = obj[k]
-    if (v != null && String(v).trim() !== '') return String(v)
-  }
-  return ''
 }
 
 /** 등록자: 최상위 필드가 비었을 때 user/regUser 등 중첩 객체에서 시도 */

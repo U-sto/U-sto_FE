@@ -343,8 +343,8 @@
 /* 분석 결과 영역 */
 .ai-forecast-result {
   flex: 1;
-  padding: 0 32px 40px;
-  margin-top: -28px;
+  padding: 4px 32px 40px;
+  margin-top: -15px;
   overflow-y: auto;
 }
 
@@ -1050,5 +1050,5 @@
 }
 
 .ai-forecast-pagination {
-  margin-top: 12px;
+  margin-top: 7px;
 }

@@ -10,7 +10,10 @@ import {
   ReferenceDot,
   Legend,
 } from 'recharts'
-import type { DemandTimeSeriesChart as DemandTimeSeriesChartType } from '../../../api/aiForecast'
+import type {
+  DemandTimeSeriesChart as DemandTimeSeriesChartType,
+  DemandTimeSeriesPoint,
+} from '../../../api/aiForecast'
 import './DemandTimeSeriesChart.css'
 
 type DemandTimeSeriesChartProps = {
@@ -29,15 +32,19 @@ const DemandTimeSeriesChart = ({
   hideLabel = false,
 }: DemandTimeSeriesChartProps) => {
   const { data, reorderPointPeriod } = chart
+  const normalizedData: (DemandTimeSeriesPoint & { totalOrderQty: number })[] = data.map((d) => ({
+    ...d,
+    totalOrderQty: d.totalOrderQty ?? 0,
+  }))
   const reorderPoint = reorderPointPeriod != null
-    ? data.find((d) => d.period === reorderPointPeriod)
+    ? normalizedData.find((d) => d.period === reorderPointPeriod)
     : undefined
 
   return (
     <div className="demand-time-series-chart" style={{ width: '100%', height }}>
       {!hideLabel && <div className="demand-time-series-chart__label">수요 예측 시계열</div>}
       <ResponsiveContainer width="100%" height={height - 37}>
-        <ComposedChart data={data} margin={{ top: 36, right: 16, left: 0, bottom: 24 }}>
+        <ComposedChart data={normalizedData} margin={{ top: 36, right: 16, left: 0, bottom: 24 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--usto-primary-200)" />
           <XAxis
             dataKey="period"
@@ -60,41 +67,119 @@ const DemandTimeSeriesChart = ({
             }}
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null
-              const value = payload[0]?.value ?? 0
+              // Recharts payload[].payload는 시리즈별로 잘린 객체일 수 있어, X축 period로 원본 행을 찾는다.
+              const labelPeriod =
+                label !== undefined && label !== null && label !== ''
+                  ? typeof label === 'number'
+                    ? label
+                    : Number(label)
+                  : NaN
+              const rawFromData =
+                Number.isFinite(labelPeriod) && labelPeriod > 0
+                  ? normalizedData.find((d) => d.period === labelPeriod)
+                  : undefined
+              const raw =
+                rawFromData ?? (payload[0]?.payload as DemandTimeSeriesPoint | undefined)
+              const periodNum = raw?.period ?? (label != null ? Number(label) : NaN)
+              const monthHeading =
+                Number.isFinite(periodNum) && periodNum > 0 ? `${periodNum}월` : String(label ?? '')
+              const value = raw?.quantity ?? (payload[0]?.value as number) ?? 0
+              const extraRows: { label: string; value: string | number }[] = []
+              if (raw?.baseQty != null) {
+                extraRows.push({ label: '기초수량', value: raw.baseQty })
+              }
+              if (raw?.safetyStock != null) {
+                extraRows.push({ label: '안전재고', value: raw.safetyStock })
+              }
+              if (raw?.rop_date) {
+                extraRows.push({ label: '발주 마감 기한', value: raw.rop_date })
+              }
               return (
-                <div style={{
-                  background: 'var(--usto-alt-white)',
-                  border: '1px solid var(--usto-primary-200)',
-                  borderRadius: 6,
-                  padding: '8px 12px',
-                  fontFamily: 'var(--font-family)',
-                  fontSize: 13,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                }}>
-                  <p style={{ margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: 10,
-                      height: 10,
-                      borderRadius: 2,
-                      background: lineColor,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ color: lineColor }}>발주시점 : </span>
-                    <span style={{ fontWeight: 600, color: lineColor }}>{label}</span>
+                <div
+                  style={{
+                    background: 'var(--usto-alt-white)',
+                    border: '1px solid var(--usto-primary-200)',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    fontFamily: 'var(--font-family)',
+                    fontSize: 13,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    minWidth: 200,
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: '0 0 8px',
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: 'var(--usto-alt-black)',
+                      letterSpacing: '-0.03em',
+                    }}
+                  >
+                    {monthHeading}
                   </p>
-                  <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: 10,
-                      height: 10,
-                      borderRadius: 2,
-                      background: barColor,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ color: 'var(--usto-alt-black)' }}>발주수량 : </span>
+                  <p style={{ margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 10,
+                        height: 10,
+                        borderRadius: 2,
+                        background: lineColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ color: 'var(--usto-alt-black)', fontWeight: 500 }}>총 발주수량 : </span>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: lineColor,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      {raw?.totalOrderQty ?? 0}
+                    </span>
+                  </p>
+                  <p style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 10,
+                        height: 10,
+                        borderRadius: 2,
+                        background: barColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ color: 'var(--usto-alt-black)', fontWeight: 500 }}>예상 고장 수량 : </span>
                     <span style={{ fontWeight: 600, color: barColor }}>{value}</span>
                   </p>
+                  {extraRows.length > 0 && (
+                    <ul
+                      style={{
+                        margin: 0,
+                        padding: '8px 0 0',
+                        borderTop: '1px solid var(--usto-primary-100)',
+                        listStyle: 'none',
+                      }}
+                    >
+                      {extraRows.map((row) => (
+                        <li
+                          key={row.label}
+                          style={{
+                            margin: '0 0 4px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            color: 'var(--usto-alt-black)',
+                          }}
+                        >
+                          <span style={{ color: 'var(--usto-gray-200)' }}>{row.label}</span>
+                          <span style={{ fontWeight: 600, color: barColor }}>{row.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )
             }}
@@ -102,15 +187,15 @@ const DemandTimeSeriesChart = ({
           <Legend />
           <Bar
             dataKey="quantity"
-            name="수량"
+            name="예상 고장 수량"
             fill={barColor}
             fillOpacity={0.8}
             radius={[0, 0, 0, 0]}
           />
           <Line
             type="monotone"
-            dataKey="quantity"
-            name="발주시점(ROP)"
+            dataKey="totalOrderQty"
+            name="총 발주수량"
             stroke={lineColor}
             strokeWidth={2}
             strokeDasharray="4 4"
@@ -119,7 +204,7 @@ const DemandTimeSeriesChart = ({
           {reorderPoint && (
             <ReferenceDot
               x={reorderPoint.period}
-              y={reorderPoint.quantity}
+              y={reorderPoint.totalOrderQty}
               r={8}
               fill={lineColor}
               stroke="#fff"

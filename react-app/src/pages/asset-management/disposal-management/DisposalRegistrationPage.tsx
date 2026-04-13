@@ -255,10 +255,6 @@ const DisposalRegistrationPage = () => {
           checked={ledgerCheckedIds.has(row.id)}
           onChange={(e) => {
             if (e.target.checked) {
-              if (row.operatingStatus !== '불용') {
-                window.alert('불용 상태인 물품만 처분 신청할 수 있습니다.')
-                return
-              }
               setLedgerCheckedIds((prev) => new Set(prev).add(row.id))
               setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
             } else {

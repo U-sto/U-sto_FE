@@ -26,6 +26,11 @@ export interface AiForecastApiTimeSeriesItem {
   month: number
   quantity: number
   is_rop: boolean
+  /** ROP 월 등에서만 추가로 내려올 수 있음 */
+  base_qty?: number
+  rop_date?: string
+  safety_stock?: number
+  total_order_qty?: number
 }
 
 /** section_2: AI 전략적 조달 가이드 */
@@ -91,6 +96,14 @@ export interface DemandTimeSeriesPoint {
   period: number
   /** 월별 수량 예측 (PCP) */
   quantity: number
+  /** 기초 수량 (ROP 월 등) */
+  baseQty?: number
+  /** 발주 기준일 */
+  rop_date?: string
+  /** 안전재고 */
+  safetyStock?: number
+  /** 총 발주 수량 */
+  totalOrderQty?: number
 }
 
 export interface DemandTimeSeriesChart {
@@ -196,10 +209,29 @@ function mapApiDataToResponse(
   const algoGuide = data.section_4_algorithm_guide
 
   // section_1 → 수요 예측 시계열
-  const demandTimeSeriesData = timeSeries.map((d) => ({
-    period: d.month,
-    quantity: d.quantity,
-  }))
+  const demandTimeSeriesData: DemandTimeSeriesPoint[] = timeSeries.map((d) => {
+    const point: DemandTimeSeriesPoint = {
+      period: d.month,
+      quantity: d.quantity,
+    }
+    if (d.base_qty != null && !Number.isNaN(Number(d.base_qty))) {
+      point.baseQty = Number(d.base_qty)
+    }
+    const ropFromApi =
+      d.rop_date != null && String(d.rop_date).trim() !== ''
+        ? d.rop_date
+        : (d as { ropDate?: string }).ropDate
+    if (ropFromApi != null && String(ropFromApi).trim() !== '') {
+      point.rop_date = String(ropFromApi)
+    }
+    if (d.safety_stock != null && !Number.isNaN(Number(d.safety_stock))) {
+      point.safetyStock = Number(d.safety_stock)
+    }
+    if (d.total_order_qty != null && !Number.isNaN(Number(d.total_order_qty))) {
+      point.totalOrderQty = Number(d.total_order_qty)
+    }
+    return point
+  })
   const ropItem = timeSeries.find((d) => d.is_rop)
   const reorderPointPeriod = ropItem?.month
 
