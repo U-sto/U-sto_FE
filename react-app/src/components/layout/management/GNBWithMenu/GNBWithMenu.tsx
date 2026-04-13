@@ -157,7 +157,7 @@ const GNBWithMenu = () => {
   }
 
   return (
-    <nav className="gnb-with-menu">
+    <nav className="gnb-with-menu" onMouseLeave={() => { setActiveDropdown(null); setFocusedIndex(-1) }}>
       <div className="gnb-user-section">
         <button
           type="button"
@@ -178,33 +178,47 @@ const GNBWithMenu = () => {
             <div key={section.id} className="gnb-dropdown">
               <button
                 type="button"
-                className="gnb-menu-tab"
+                className={`gnb-menu-tab${activeDropdown === section.id ? ' gnb-menu-tab--active' : ''}`}
                 onClick={() => handleDropdownToggle(section.id)}
                 aria-haspopup="menu"
                 aria-expanded={activeDropdown === section.id}
-                aria-controls={`${menuId}-${section.id}`}
+                aria-controls={`${menuId}-mega`}
                 aria-label={`${section.label} 메뉴`}
               >
                 {section.label}
               </button>
-              {activeDropdown === section.id && (
-                <div
-                  id={`${menuId}-${section.id}`}
-                  ref={(el) => el && menuRefs.current.set(section.id, el)}
-                  className="gnb-dropdown-menu"
-                  role="menu"
-                  aria-label={section.label}
-                  tabIndex={-1}
-                  onKeyDown={(e) => handleMenuKeyDown(e, section)}
-                >
-                  {renderSectionItems(section)}
-                </div>
-              )}
             </div>
           ))}
         </div>
       </div>
       <div className="gnb-bottom-border"></div>
+
+      {activeDropdown && (
+        <div
+          id={`${menuId}-mega`}
+          ref={(el) => el && menuRefs.current.set(activeDropdown, el)}
+          className="gnb-mega-menu"
+          role="menu"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            const section = menuData.find((s) => s.id === activeDropdown)
+            if (section) handleMenuKeyDown(e, section)
+          }}
+        >
+          <div className="gnb-mega-menu-inner">
+            {menuData.map((section) => (
+              <div key={section.id} className="gnb-mega-column">
+                <p className={`gnb-mega-column-header${activeDropdown === section.id ? ' gnb-mega-column-header--active' : ''}`}>
+                  {section.label}
+                </p>
+                <div className="gnb-mega-column-items">
+                  {renderSectionItems(section)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

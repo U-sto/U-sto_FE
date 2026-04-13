@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
 import RadioButton from '../../../components/common/RadioButton/RadioButton'
 import ManagementPageLayout from '../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
@@ -285,8 +286,7 @@ const DisposalManagementPage = () => {
             <div className="disposal-label">처분일자</div>
             <div className="disposal-date-field-wrapper">
               <div className="disposal-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.disposalDateFrom}
                   onChange={(e) => {
                     setFilters((p) => ({ ...p, disposalDateFrom: e.target.value }))
@@ -296,8 +296,7 @@ const DisposalManagementPage = () => {
                   }}
                 />
                 <span className="disposal-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.disposalDateTo}
                   onChange={(e) => {
                     setFilters((p) => ({ ...p, disposalDateTo: e.target.value }))

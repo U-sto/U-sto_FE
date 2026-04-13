@@ -96,11 +96,56 @@
   cursor: pointer;
 }
 
+/* 체크박스가 있는 행도 클릭 가능 커서 */
+.management-table-el tbody tr:has(input[type='checkbox']) {
+  cursor: pointer;
+}
+
 .management-table-el tbody tr.management-table-row-selected td {
-  background-color: rgba(59, 130, 246, 0.12);
-  box-shadow: inset 3px 0 0 0 var(--usto-accent, #2563eb);
+  background-color: var(--usto-primary-100);
 }
 
 .management-table-el tbody tr.management-table-row-selected:hover td {
-  background-color: rgba(59, 130, 246, 0.18);
+  background-color: var(--usto-primary-200);
+}
+
+/* 커스텀 체크박스 */
+.management-table-el input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid var(--usto-primary-200);
+  border-radius: 4px;
+  background-color: var(--usto-alt-white);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, border-color 0.15s;
+  vertical-align: middle;
+  position: relative;
+}
+
+.management-table-el input[type='checkbox']:hover {
+  border-color: var(--usto-primary-300);
+}
+
+.management-table-el input[type='checkbox']:checked {
+  background-color: var(--usto-primary-300);
+  border-color: var(--usto-primary-300);
+}
+
+.management-table-el input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid var(--usto-alt-white);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
 }

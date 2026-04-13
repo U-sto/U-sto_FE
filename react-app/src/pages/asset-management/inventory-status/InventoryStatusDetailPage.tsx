@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
 import TitlePill from '../../../components/common/TitlePill/TitlePill'
 import AssetManagementPageLayout from '../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
@@ -148,8 +149,7 @@ const InventoryStatusDetailPage = () => {
             </div>
             <div className="operation-ledger-detail-field">
               <label className="operation-ledger-detail-label">취득일자</label>
-              <TextField
-                type="date"
+              <DatePickerField
                 value={item.acquireDate ?? ''}
                 readOnly
                 className="operation-ledger-readonly"
@@ -157,8 +157,7 @@ const InventoryStatusDetailPage = () => {
             </div>
             <div className="operation-ledger-detail-field">
               <label className="operation-ledger-detail-label">정리일자</label>
-              <TextField
-                type="date"
+              <DatePickerField
                 value={item.sortDate ?? ''}
                 readOnly
                 className="operation-ledger-readonly"

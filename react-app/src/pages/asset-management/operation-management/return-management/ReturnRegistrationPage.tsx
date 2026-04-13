@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
+import DatePickerField from '../../../../components/common/DatePickerField/DatePickerField'
 import Dropdown from '../../../../components/common/Dropdown/Dropdown'
 import Button from '../../../../components/common/Button/Button'
 import TitlePill from '../../../../components/common/TitlePill/TitlePill'
@@ -553,16 +554,14 @@ const ReturnRegistrationPage = () => {
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">취득일자</div>
               <div className="operation-ledger-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.acquireDateFrom}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, acquireDateFrom: e.target.value }))
                   }
                 />
                 <span className="operation-ledger-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.acquireDateTo}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, acquireDateTo: e.target.value }))
@@ -574,16 +573,14 @@ const ReturnRegistrationPage = () => {
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">정리일자</div>
               <div className="operation-ledger-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.sortDateFrom}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, sortDateFrom: e.target.value }))
                   }
                 />
                 <span className="operation-ledger-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.sortDateTo}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, sortDateTo: e.target.value }))
@@ -661,8 +658,7 @@ const ReturnRegistrationPage = () => {
             <div className="operation-ledger-detail-grid">
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">반납일자</label>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={returnInfo.returnDate}
                   onChange={(e) =>
                     setReturnInfo((prev) => ({ ...prev, returnDate: e.target.value }))

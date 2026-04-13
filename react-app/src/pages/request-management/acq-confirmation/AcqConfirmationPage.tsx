@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
 import RadioButton from '../../../components/common/RadioButton/RadioButton'
@@ -400,8 +401,7 @@ const AcqConfirmationPage = () => {
                   <div className="acq-label">정리일자</div>
                   <div className="acq-date-field-wrapper">
                     <div className="acq-date-range">
-                      <TextField
-                        type="date"
+                      <DatePickerField
                         value={filters.sortDateFrom}
                         onChange={(e) => {
                           setFilters((p) => ({ ...p, sortDateFrom: e.target.value }))
@@ -411,8 +411,7 @@ const AcqConfirmationPage = () => {
                         }}
                       />
                       <span className="acq-date-sep">~</span>
-                      <TextField
-                        type="date"
+                      <DatePickerField
                         value={filters.sortDateTo}
                         onChange={(e) => {
                           setFilters((p) => ({ ...p, sortDateTo: e.target.value }))
@@ -430,8 +429,7 @@ const AcqConfirmationPage = () => {
                   <div className="acq-label">취득일자</div>
                   <div className="acq-date-field-wrapper">
                     <div className="acq-date-range">
-                      <TextField
-                        type="date"
+                      <DatePickerField
                         value={filters.acquireDateFrom}
                         onChange={(e) => {
                           setFilters((p) => ({ ...p, acquireDateFrom: e.target.value }))
@@ -441,8 +439,7 @@ const AcqConfirmationPage = () => {
                         }}
                       />
                       <span className="acq-date-sep">~</span>
-                      <TextField
-                        type="date"
+                      <DatePickerField
                         value={filters.acquireDateTo}
                         onChange={(e) => {
                           setFilters((p) => ({ ...p, acquireDateTo: e.target.value }))

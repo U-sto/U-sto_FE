@@ -2,6 +2,7 @@ import type { ChangeEvent, HTMLAttributes } from 'react'
 import './TextField.css'
 
 interface TextFieldProps {
+  id?: string
   placeholder?: string
   value: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
@@ -13,6 +14,7 @@ interface TextFieldProps {
 }
 
 const TextField = ({
+  id,
   placeholder,
   value,
   onChange,
@@ -24,6 +26,7 @@ const TextField = ({
 }: TextFieldProps) => {
   return (
     <input
+      id={id}
       type={type}
       className={`text-field ${className}`}
       placeholder={placeholder}

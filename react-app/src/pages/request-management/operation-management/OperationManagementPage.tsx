@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
 import RadioButton from '../../../components/common/RadioButton/RadioButton'
 import ManagementPageLayout from '../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
@@ -343,8 +344,7 @@ const OperationManagementPage = () => {
             <div className="operation-label">운용일자</div>
             <div className="operation-date-field-wrapper">
               <div className="operation-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.transferDateFrom}
                   onChange={(e) => {
                     const v = e.target.value
@@ -362,8 +362,7 @@ const OperationManagementPage = () => {
                   }}
                 />
                 <span className="operation-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.transferDateTo}
                   onChange={(e) => {
                     const v = e.target.value

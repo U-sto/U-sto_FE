@@ -4,6 +4,7 @@ import { useCommonCodeGroup } from '../../../../hooks/useCommonCodeGroup'
 import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../../api/codes'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
+import DatePickerField from '../../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../../components/common/Button/Button'
 import AssetManagementPageLayout from '../../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
 import DataTable, {
@@ -429,16 +430,14 @@ const ReturnManagementPage = () => {
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">반납일자</div>
               <div className="operation-ledger-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.returnDateFrom}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, returnDateFrom: e.target.value }))
                   }
                 />
                 <span className="operation-ledger-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.returnDateTo}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, returnDateTo: e.target.value }))

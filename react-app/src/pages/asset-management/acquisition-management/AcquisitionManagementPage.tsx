@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
 import TitlePill from '../../../components/common/TitlePill/TitlePill'
@@ -429,8 +430,7 @@ const AcquisitionManagementPage = () => {
             {/* Row 2: 취득일자, 정리일자, 운용상태, 내용연수 - 4열 동일 너비 */}
             <div className="acquisition-field">
               <label className="acquisition-label">취득일자</label>
-              <TextField
-                type="date"
+              <DatePickerField
                 value={form.acquireDate}
                 onChange={(e) => update('acquireDate', e.target.value)}
               />

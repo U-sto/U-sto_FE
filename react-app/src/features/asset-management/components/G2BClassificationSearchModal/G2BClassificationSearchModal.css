@@ -1,0 +1,50 @@
+/* 물품 분류만: 단일 열, large 모달에 맞춤 */
+.g2b-classification-only-modal.modal-large {
+  max-width: min(720px, calc(100vw - 40px));
+  max-height: min(720px, calc(100vh - 40px));
+}
+
+.g2b-classification-only-modal .modal-body {
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.g2b-classification-only-inner {
+  min-height: 420px;
+}
+
+.g2b-classification-only-content {
+  display: block;
+  padding: 16px 24px 24px;
+}
+
+.g2b-classification-only-content .g2b-section {
+  max-width: 100%;
+}
+
+/* 하단 총 n건 / 조회 n건 — 본문 대비 한 단계 작게 */
+.g2b-classification-only-modal .g2b-pagination-summary {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* 페이지네이션 버튼(« ‹ 1 2 › ») — 분류 모달만 소형 */
+.g2b-classification-only-modal .g2b-pagination {
+  min-height: 34px;
+  padding: 6px 12px;
+}
+
+.g2b-classification-only-modal .g2b-pagination-buttons {
+  gap: 4px;
+}
+
+.g2b-classification-only-modal .g2b-page-btn,
+.g2b-classification-only-modal .g2b-page-num {
+  width: 26px;
+  min-width: 26px;
+  height: 24px;
+  font-size: 12px;
+  border-radius: 3px;
+}

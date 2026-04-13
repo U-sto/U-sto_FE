@@ -7,7 +7,10 @@ export interface AiForecastRequestConditions {
   semester: number
   org_cd: string
   dept_cd: string
-  category: string
+  /**
+   * 물품분류(명). UI에서 비어 있으면 `전체`로 전송(전 구간 검색).
+   */
+  category?: string
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH'
 }
 
@@ -17,38 +20,55 @@ export interface AiForecastRequest {
 }
 
 /** POST /api/ai/forecast 200 응답 data 구조 (백엔드 스펙) */
-export interface AiForecastApiSummary {
-  target_text: string
-  risk_text: string
-  period_text: string
+
+/** section_1: 수요 예측 시계열 */
+export interface AiForecastApiTimeSeriesItem {
+  month: number
+  quantity: number
+  is_rop: boolean
 }
 
-export interface AiForecastApiChartForecastItem {
-  label: string
-  demand: number
-  threshold: number
+/** section_2: AI 전략적 조달 가이드 */
+export interface AiForecastApiStrategicGuide {
+  ai_summary_comment?: string
+  smart_forecasting?: string
+  time_to_procure?: string
+  budget_guide?: string
 }
 
-export interface AiForecastApiChartPortfolioItem {
-  item_name: string
-  x_rul: number
-  y_importance: number
-  group: string
+/** 히스토리 등에서 ai_insight가 객체로 올 때 (스웨거 스펙) */
+export interface AiForecastApiAiInsightObject {
+  report_title?: string
+  analysis_summary?: string
+  action_item?: string
+  alert_level?: string
 }
 
+/** section_3: 조달 권고안 */
 export interface AiForecastApiRecommendationItem {
+  id: number
   item_name: string
   quantity: number
-  budget: number
-  order_date: string
-  comment: string
+  estimated_budget: number
+  recommend_order_date: string
+  ai_insight?: string | AiForecastApiAiInsightObject | null
+  comment?: string | null
+}
+
+/** section_4: 알고리즘 가이드 */
+export interface AiForecastApiAlgorithmGuide {
+  formula_1?: string
+  formula_2?: string
+  formula_3?: string
 }
 
 export interface AiForecastApiData {
-  summary: AiForecastApiSummary
-  chart_forecast: AiForecastApiChartForecastItem[]
-  chart_portfolio: AiForecastApiChartPortfolioItem[]
-  recommendations: AiForecastApiRecommendationItem[]
+  /** 예측 시 사용한 질문 (히스토리 상세 등에서 내려주면 목록/결과에 그대로 사용) */
+  prompt?: string
+  section_1_time_series: AiForecastApiTimeSeriesItem[]
+  section_2_strategic_guide: AiForecastApiStrategicGuide
+  section_3_recommendations: AiForecastApiRecommendationItem[]
+  section_4_algorithm_guide?: AiForecastApiAlgorithmGuide
 }
 
 /**
@@ -93,6 +113,18 @@ export interface PortfolioMatrixChart {
   data: PortfolioPoint[]
 }
 
+/** AI 전략적 조달 가이드 섹션 한 항목 */
+export interface AiForecastGuideSection {
+  title: string
+  text: string
+}
+
+/** AI 전략적 조달 가이드 전체 */
+export interface AiForecastGuide {
+  highlight?: string
+  sections: AiForecastGuideSection[]
+}
+
 /** 조달 권고안 한 행 */
 export interface ProcurementRecommendationRow {
   no: number
@@ -103,10 +135,27 @@ export interface ProcurementRecommendationRow {
   aiComment: string
 }
 
+/** fetchAiForecast 호출 시 화면 표시용 요약 정보 (백엔드 응답에 없어 프론트에서 파생) */
+export interface AiForecastDisplaySummary {
+  target: string
+  risk: string
+  period: string
+}
+
+/** 알고리즘 가이드 팝업용 수식 항목 */
+export interface AiForecastAlgorithmGuideItem {
+  label: string
+  description: string
+}
+
 export interface AiForecastResponse {
   summary: AiForecastSummary
   demandTimeSeries: DemandTimeSeriesChart
   portfolioMatrix: PortfolioMatrixChart
+  /** AI 전략적 조달 가이드 */
+  guide?: AiForecastGuide
+  /** 알고리즘 가이드 팝업 항목 */
+  algorithmGuide: AiForecastAlgorithmGuideItem[]
   /** 조달 권고안 테이블 제목 (예: 2026학년도 1학기 조달권고안) */
   recommendationTitle: string
   recommendations: ProcurementRecommendationRow[]
@@ -116,50 +165,105 @@ function formatBudget(value: number): string {
   return `${value.toLocaleString('ko-KR')}원`
 }
 
-/** API 응답 data + 사용자 질문을 페이지/차트용 AiForecastResponse로 변환 */
+/** ai_insight가 문자열 또는 객체로 올 수 있음 — 테이블에는 문자열만 넘겨야 함 */
+function resolveRecommendationAiComment(r: AiForecastApiRecommendationItem): string {
+  const insight = r.ai_insight
+  if (insight == null) return r.comment ?? ''
+  if (typeof insight === 'string') return insight
+  if (typeof insight === 'object') {
+    const o = insight as AiForecastApiAiInsightObject
+    const text = o.analysis_summary ?? o.report_title ?? o.action_item
+    if (typeof text === 'string' && text.trim()) return text
+  }
+  return r.comment ?? ''
+}
+
+const ALGORITHM_FORMULA_LABELS: Record<'formula_1' | 'formula_2' | 'formula_3', string> = {
+  formula_1: '적정 권장 수량',
+  formula_2: '발주 시점 (ROP)',
+  formula_3: '잔여 수명 (RUL)',
+}
+
+/** API 응답 data + 사용자 질문 + 화면표시용 요약을 AiForecastResponse로 변환 */
 function mapApiDataToResponse(
   prompt: string,
   data: AiForecastApiData,
+  displaySummary?: AiForecastDisplaySummary,
 ): AiForecastResponse {
-  const summary = data.summary
-  const forecast = data.chart_forecast ?? []
-  const portfolio = data.chart_portfolio ?? []
-  const recs = data.recommendations ?? []
+  const timeSeries = Array.isArray(data.section_1_time_series) ? data.section_1_time_series : []
+  const strategicGuide = data.section_2_strategic_guide ?? {}
+  const recs = Array.isArray(data.section_3_recommendations) ? data.section_3_recommendations : []
+  const algoGuide = data.section_4_algorithm_guide
 
-  const demandTimeSeriesData = forecast.map((d, i) => ({
-    period: i + 1,
-    quantity: d.demand,
+  // section_1 → 수요 예측 시계열
+  const demandTimeSeriesData = timeSeries.map((d) => ({
+    period: d.month,
+    quantity: d.quantity,
   }))
-  const reorderIndex = forecast.findIndex((d) => d.threshold != null && d.demand >= d.threshold)
-  const reorderPointPeriod =
-    reorderIndex >= 0 ? reorderIndex + 1 : (forecast.length >= 1 ? forecast.length : undefined)
+  const ropItem = timeSeries.find((d) => d.is_rop)
+  const reorderPointPeriod = ropItem?.month
+
+  // section_2 → AI 전략적 조달 가이드
+  const guideSections: AiForecastGuideSection[] = []
+  if (strategicGuide.smart_forecasting) {
+    guideSections.push({
+      title: '수요 산출 근거 (Smart Forecasting)',
+      text: strategicGuide.smart_forecasting,
+    })
+  }
+  if (strategicGuide.time_to_procure) {
+    guideSections.push({
+      title: '조달 최적화 전략 (Time-to-Procure)',
+      text: strategicGuide.time_to_procure,
+    })
+  }
+  if (strategicGuide.budget_guide) {
+    guideSections.push({ title: '예산 가이드', text: strategicGuide.budget_guide })
+  }
+  const guide: AiForecastGuide = {
+    highlight: strategicGuide.ai_summary_comment,
+    sections: guideSections,
+  }
+
+  // section_4 → 알고리즘 가이드 팝업 항목
+  const algorithmGuide: AiForecastAlgorithmGuideItem[] = []
+  if (algoGuide) {
+    ;(
+      ['formula_1', 'formula_2', 'formula_3'] as const
+    ).forEach((key) => {
+      const text = algoGuide[key]
+      if (text) {
+        algorithmGuide.push({ label: ALGORITHM_FORMULA_LABELS[key], description: text })
+      }
+    })
+  }
+
+  const periodLabel = displaySummary?.period ?? ''
+  const queryText = data.prompt?.trim() || prompt
 
   return {
     summary: {
-      query: prompt,
-      target: summary?.target_text ?? '',
-      risk: summary?.risk_text ?? '',
-      period: summary?.period_text ?? '',
+      query: queryText,
+      target: displaySummary?.target ?? '',
+      risk: displaySummary?.risk ?? '',
+      period: periodLabel,
     },
-    demandTimeSeries: {
-      data: demandTimeSeriesData,
-      reorderPointPeriod,
-    },
-    portfolioMatrix: {
-      data: portfolio.map((p) => ({
-        rul: p.x_rul,
-        importance: p.y_importance,
-        category: p.group || undefined,
-      })),
-    },
-    recommendationTitle: `${summary?.period_text ?? ''} 조달권고안`,
+    demandTimeSeries: { data: demandTimeSeriesData, reorderPointPeriod },
+    portfolioMatrix: { data: [] },
+    guide,
+    algorithmGuide,
+    recommendationTitle: `${periodLabel} 조달권고안`,
     recommendations: recs.map((r, i) => ({
       no: i + 1,
       itemName: r.item_name,
       quantity: r.quantity,
-      estimatedBudget: formatBudget(r.budget),
-      recommendedOrderDeadline: r.order_date,
-      aiComment: r.comment,
+      estimatedBudget: formatBudget(
+        typeof r.estimated_budget === 'number' && !Number.isNaN(r.estimated_budget)
+          ? r.estimated_budget
+          : 0,
+      ),
+      recommendedOrderDeadline: r.recommend_order_date,
+      aiComment: resolveRecommendationAiComment(r),
     })),
   }
 }
@@ -206,21 +310,26 @@ export function buildForecastConditions(
   const departmentLabel = ui.operatingDept === '선택' ? '' : normalizeDeptName(ui.operatingDept)
   const deptCd = departmentLabel ? options?.deptLabelToCd?.[departmentLabel] ?? '' : ''
   const orgCd = options?.campusOrgCd?.trim() || ORG_CD_BY_CAMPUS[ui.campus] || '7008277'
-  const category = ui.itemCategoryName?.trim() || ''
+  const categoryTrimmed = ui.itemCategoryName?.trim() ?? ''
+  const categoryForApi = categoryTrimmed.length > 0 ? categoryTrimmed : '전체'
   const riskLevelByPropensity: Record<string, ForecastRiskLevel> = {
+    '리스크 선호': 'HIGH',
+    '리스크 중립': 'MEDIUM',
+    '리스크 회피': 'LOW',
     필수: 'HIGH',
     권장: 'MEDIUM',
     선택: 'LOW',
   }
   const riskLevel = (riskLevelByPropensity[ui.riskPropensity] ?? 'HIGH').toUpperCase() as ForecastRiskLevel
-  return {
+  const conditions: AiForecastRequestConditions = {
     year,
     semester,
     org_cd: orgCd,
     dept_cd: deptCd,
-    category,
     risk_level: riskLevel,
+    category: categoryForApi,
   }
+  return conditions
 }
 
 /**
@@ -231,6 +340,7 @@ export function buildForecastConditions(
 export async function fetchAiForecast(
   prompt: string,
   conditions: AiForecastRequestConditions,
+  displaySummary?: AiForecastDisplaySummary,
 ): Promise<AiForecastResponse> {
   const payload: AiForecastRequest = {
     prompt: prompt.trim(),
@@ -241,10 +351,14 @@ export async function fetchAiForecast(
     payload,
   )
   const body = res.data
+  console.log('[AI Forecast] 원본 응답:', body)
+  console.log('[AI Forecast] data 필드:', body?.data)
   if (!body?.data) {
     throw new Error(body?.message ?? '분석 결과를 불러오지 못했습니다.')
   }
-  return mapApiDataToResponse(prompt.trim(), body.data)
+  const mapped = mapApiDataToResponse(prompt.trim(), body.data, displaySummary)
+  console.log('[AI Forecast] 매핑된 결과:', mapped)
+  return mapped
 }
 
 /** 이전 AI 예측 기록 요약 한 건 */
@@ -259,38 +373,48 @@ export interface AiForecastHistoryItem {
 
 type AiForecastHistoryListApiItem =
   | string
-  | {
-      id?: string
-      forecastId?: string
-      title?: string
-      prompt?: string
-      createdAt?: string
-    }
+  | Record<string, unknown>
 
 type AiForecastHistoryListApiData = AiForecastHistoryListApiItem[]
+
+function pickString(obj: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const v = obj[key]
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return undefined
+}
 
 /** GET /api/ai/forecast - 이전 기록 목록 조회 */
 export async function fetchAiForecastHistory(): Promise<AiForecastHistoryItem[]> {
   const res = await http.get<ApiResponse<AiForecastHistoryListApiData>>('/api/ai/forecast')
   const body = res.data
+  console.log('[AI Forecast History] 원본 응답:', body)
   if (!body?.data) {
     throw new Error(body?.message ?? '이전 예측 이력을 불러오지 못했습니다.')
   }
 
   return body.data.map((raw, index) => {
     if (typeof raw === 'string') {
-      return {
-        id: raw,
-        title: `예측 ${index + 1}`,
-      }
+      return { id: raw, title: `예측 ${index + 1}` }
     }
-    const id = raw.id ?? raw.forecastId
-    const title = raw.title ?? raw.prompt ?? `예측 ${index + 1}`
-    return {
-      id: id ?? String(index),
-      title,
-      createdAt: raw.createdAt,
-    }
+    const obj = raw as Record<string, unknown>
+    const id = pickString(obj, 'id', 'forecastId', 'forecast_id') ?? String(index)
+    // 백엔드가 프롬프트를 어떤 필드명으로 주든 모두 체크
+    const title = String(
+      pickString(
+        obj,
+        'prompt',
+        'title',
+        'query',
+        'content',
+        'forecastPrompt',
+        'forecast_prompt',
+        'input',
+      ) ?? `예측 ${index + 1}`,
+    )
+    const createdAt = pickString(obj, 'createdAt', 'created_at', 'createdDate', 'date')
+    return { id, title, createdAt }
   })
 }
 
@@ -312,6 +436,15 @@ export async function fetchAiForecastHistoryDetail(
     throw new Error(body?.message ?? '이전 예측 내용을 불러오지 못했습니다.')
   }
   const apiData = body.data
-  const promptForDisplay = displayTitle || apiData.summary?.target_text || '이전 예측'
+  const promptForDisplay = apiData.prompt?.trim() || displayTitle || '이전 예측'
   return mapApiDataToResponse(promptForDisplay, apiData)
+}
+
+/**
+ * DELETE /api/ai/forecast?forecastId= — 이전 예측 기록 삭제
+ */
+export async function deleteAiForecastRecord(forecastId: string): Promise<void> {
+  await http.delete<ApiResponse<Record<string, unknown>>>('/api/ai/forecast', {
+    params: { forecastId },
+  })
 }

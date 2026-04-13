@@ -179,9 +179,20 @@ function DataTable<T>({
                       onRowClick
                         ? (e) => {
                             if (isInteractiveRowClickTarget(e.target)) return
+                            // 행의 체크박스가 있으면 함께 토글
+                            const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
+                              'input[type="checkbox"]',
+                            )
+                            if (checkbox) checkbox.click()
                             onRowClick(row, rowIndex)
                           }
-                        : undefined
+                        : (e) => {
+                            if (isInteractiveRowClickTarget(e.target)) return
+                            const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
+                              'input[type="checkbox"]',
+                            )
+                            if (checkbox) checkbox.click()
+                          }
                     }
                     onKeyDown={
                       onRowClick
@@ -189,6 +200,10 @@ function DataTable<T>({
                             if (e.key === 'Enter' || e.key === ' ') {
                               if (isInteractiveRowClickTarget(e.target)) return
                               e.preventDefault()
+                              const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
+                                'input[type="checkbox"]',
+                              )
+                              if (checkbox) checkbox.click()
                               onRowClick(row, rowIndex)
                             }
                           }

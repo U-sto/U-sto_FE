@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
 import RadioButton from '../../../components/common/RadioButton/RadioButton'
 import ManagementPageLayout from '../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
@@ -404,8 +405,7 @@ const ReturnManagementPage = () => {
             <div className="return-label">반납일자</div>
             <div className="return-date-field-wrapper">
               <div className="return-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.returnDateFrom}
                   onChange={(e) => {
                     setFilters((p) => ({ ...p, returnDateFrom: e.target.value }))
@@ -415,8 +415,7 @@ const ReturnManagementPage = () => {
                   }}
                 />
                 <span className="return-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.returnDateTo}
                   onChange={(e) => {
                     setFilters((p) => ({ ...p, returnDateTo: e.target.value }))

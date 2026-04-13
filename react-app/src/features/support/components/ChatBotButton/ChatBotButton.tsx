@@ -244,29 +244,28 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   }
 
   const handleDeleteSessionById = (sessionId: string) => {
-    setError(null)
-    setLoading(false)
     setSessionMenuOpenId(null)
+
+    // 세션이 1개뿐이면 메시지만 초기화 (빈 채팅방 유지)
     if (sessions.length <= 1) {
       setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId ? { ...session, messages: [] } : session,
-        ),
+        prev.map((s) => (s.id === sessionId ? { ...s, messages: [] } : s)),
       )
       return
     }
-    deleteChatThread(sessionId)
-      .then(() => {
-        setSessions((prev) => {
-          const filtered = prev.filter((s) => s.id !== sessionId)
-          const next = filtered[0]
-          if (next) setCurrentSessionId(next.id)
-          return filtered
-        })
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e.message : '채팅방 삭제에 실패했습니다.')
-      })
+
+    // UI에서 먼저 제거 (낙관적 업데이트)
+    setSessions((prev) => {
+      const filtered = prev.filter((s) => s.id !== sessionId)
+      const next = filtered[0]
+      if (next) setCurrentSessionId(next.id)
+      return filtered
+    })
+
+    // 서버 동기화 (실패해도 UI는 이미 반영됨)
+    deleteChatThread(sessionId).catch(() => {
+      // 서버 동기화 실패 무시
+    })
   }
 
   const scrollToBottom = useCallback(() => {
@@ -458,7 +457,7 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
                 <span className="chatbot-sidebar-new-icon" aria-hidden>
                   +
                 </span>
-                <span className="chatbot-sidebar-new-label">← 새 채팅</span>
+                <span className="chatbot-sidebar-new-label">새 채팅</span>
               </button>
             </div>
           </aside>

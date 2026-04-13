@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
+import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
 import AssetManagementPageLayout from '../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
 import DataTable, {
@@ -285,16 +286,14 @@ const DisposalManagementPage = () => {
             <div className="operation-ledger-field operation-ledger-field-span2">
               <div className="operation-ledger-label">처분일자</div>
               <div className="operation-ledger-date-range">
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.disposalDateFrom}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, disposalDateFrom: e.target.value }))
                   }
                 />
                 <span className="operation-ledger-date-sep">~</span>
-                <TextField
-                  type="date"
+                <DatePickerField
                   value={filters.disposalDateTo}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, disposalDateTo: e.target.value }))
