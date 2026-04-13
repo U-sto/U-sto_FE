@@ -1,0 +1,11 @@
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button {
+  border: var(--btn-reset-border);
+  background: var(--btn-reset-bg);
+  padding: var(--btn-reset-padding);
+  outline: var(--btn-reset-outline);
+}
