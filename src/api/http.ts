@@ -2,14 +2,13 @@ import axios, { type AxiosError } from 'axios'
 import { ACCESS_TOKEN_KEY } from './types'
 
 /**
- * 개발 시 baseURL '' → 같은 origin(localhost:5173)으로 요청 → Vite 프록시가 백엔드로 전달.
+ * baseURL '' → 같은 origin으로 요청.
+ * 개발: Vite 프록시(/api → http://13.124.10.41:8080)가 백엔드로 전달.
+ * 운영(Vercel): vercel.json rewrite(/api/* → 백엔드)가 프록시 역할.
  * 이렇게 해야 이메일 중복확인 후 세션 쿠키가 인증번호 발송 요청에 붙어서 "중복확인 필요" 에러가 사라짐.
- * 운영 빌드에서는 VITE_API_BASE_URL 또는 기본값 사용.
  */
 const http = axios.create({
-  baseURL: import.meta.env.DEV
-    ? ''
-    : (import.meta.env.VITE_API_BASE_URL ?? 'http://13.124.10.41:8080'),
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
