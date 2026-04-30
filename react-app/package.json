@@ -1,0 +1,30 @@
+{
+  "name": "usto-login-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync-g2b-drb-yr": "node scripts/runSyncG2bDrbYr.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "@types/react-datepicker": "^7.0.0",
+    "axios": "^1.13.6",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^1.8.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "react-datepicker": "^9.1.0",
+    "recharts": "^3.7.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2"
+  }
+}
