@@ -15,6 +15,7 @@ function isInteractiveRowClickTarget(target: EventTarget | null): boolean {
 export interface DataTableColumn<T> {
   key: string
   header: ReactNode
+  /** 픽셀 단위. `select`·`check`·순번 열 너비는 DataTable 상수(이 규칙이 있으면 width 무시) */
   width?: number
   render: (row: T) => ReactNode
   /** true면 해당 셀 클릭이 tr의 onRowClick으로 전파되지 않음(체크박스 열 권장) */
@@ -43,6 +44,34 @@ interface DataTableProps<T> {
   onRowClick?: (row: T, index: number) => void
   /** 선택된 행 스타일 */
   isRowSelected?: (row: T, index: number) => boolean
+}
+
+/** 체크 열 (20px 컨트롤 + 여백). 이 키에는 column.width 무시 */
+const CHECKBOX_COLUMN_WIDTH_PX = 40
+
+/** 체크 다음 순번 열: 「순번」·숫자 + 왼쪽 여백(12px) 반영 */
+const SEQUENCE_AFTER_CHECK_WIDTH_PX = 74
+
+function resolveColumnWidth<T>(
+  column: DataTableColumn<T>,
+  columnIndex: number,
+  columns: DataTableColumn<T>[],
+): number | undefined {
+  if (column.key === 'select' || column.key === 'check') {
+    return CHECKBOX_COLUMN_WIDTH_PX
+  }
+  if (column.width != null) return column.width
+  const first = columns[0]
+  const hasCheckboxFirst =
+    first != null && (first.key === 'select' || first.key === 'check')
+  if (
+    hasCheckboxFirst &&
+    columnIndex === 1 &&
+    (column.key === 'id' || column.key === 'no')
+  ) {
+    return SEQUENCE_AFTER_CHECK_WIDTH_PX
+  }
+  return undefined
 }
 
 function DataTable<T>({
@@ -144,16 +173,47 @@ function DataTable<T>({
       <div className={`${prefix}-table-wrap`}>
         <div className={`${prefix}-table-wrap-inner`}>
           <table className={`${prefix}-table-el management-table-el`}>
+            <colgroup>
+              {columns.map((column, columnIndex) => {
+                const colWidth = resolveColumnWidth(column, columnIndex, columns)
+                return (
+                  <col
+                    key={column.key}
+                    style={
+                      colWidth != null
+                        ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth }
+                        : undefined
+                    }
+                  />
+                )
+              })}
+            </colgroup>
             <thead>
               <tr>
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    className={`${prefix}-th-${column.key}`}
-                  >
-                    {column.header}
-                  </th>
-                ))}
+                {columns.map((column, columnIndex) => {
+                  const colWidth = resolveColumnWidth(column, columnIndex, columns)
+                  return (
+                    <th
+                      key={column.key}
+                      className={`${prefix}-th-${column.key}`}
+                      style={
+                        colWidth != null
+                          ? {
+                              width: colWidth,
+                              minWidth: colWidth,
+                              maxWidth: colWidth,
+                              boxSizing: 'border-box',
+                              ...(colWidth === SEQUENCE_AFTER_CHECK_WIDTH_PX
+                                ? { whiteSpace: 'nowrap' as const }
+                                : {}),
+                            }
+                          : undefined
+                      }
+                    >
+                      {column.header}
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>

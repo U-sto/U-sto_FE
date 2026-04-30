@@ -13,6 +13,10 @@ import { buildCombinedG2bListNoForFilter } from './g2bFilterNormalize'
 export type ItemAssetSearchRequest = {
   /** G2B 목록번호(코드) */
   g2bDcd?: string
+  /** (호환) G2B 목록번호 */
+  g2bCd?: string
+  /** (호환) G2B 품목번호 */
+  g2bItemNo?: string
   /** (호환) G2B 목록명 */
   g2bItemNm?: string
   /** 취득일자 시작/종료 */
@@ -21,6 +25,9 @@ export type ItemAssetSearchRequest = {
   /** 정리일자 시작/종료 */
   startArrgAt?: string
   endArrgAt?: string
+  /** (호환) 정리일자 키 */
+  startDrgAt?: string
+  endDrgAt?: string
   /** 부서코드 */
   deptCd?: string
   /** (호환) 부서명 */
@@ -225,7 +232,11 @@ function filtersToSearchRequest(filters: AssetLedgerFilters): ItemAssetSearchReq
     filters.g2bNumberPrefix,
     filters.g2bNumberSuffix,
   )
-  if (g2bDcd) req.g2bDcd = g2bDcd
+  if (g2bDcd) {
+    req.g2bDcd = g2bDcd
+    req.g2bCd = g2bDcd
+    req.g2bItemNo = g2bDcd
+  }
   // 목록명 기반 검색을 백엔드가 지원하는 경우를 대비해 같이 전달
   if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
 
@@ -237,8 +248,14 @@ function filtersToSearchRequest(filters: AssetLedgerFilters): ItemAssetSearchReq
   // 날짜: 취득/정리
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
-  if (filters.sortDateFrom) req.startArrgAt = filters.sortDateFrom
-  if (filters.sortDateTo) req.endArrgAt = filters.sortDateTo
+  if (filters.sortDateFrom) {
+    req.startArrgAt = filters.sortDateFrom
+    req.startDrgAt = filters.sortDateFrom
+  }
+  if (filters.sortDateTo) {
+    req.endArrgAt = filters.sortDateTo
+    req.endDrgAt = filters.sortDateTo
+  }
 
   // 운용상태 코드 매핑
   if (filters.operatingStatus && filters.operatingStatus !== '전체') {

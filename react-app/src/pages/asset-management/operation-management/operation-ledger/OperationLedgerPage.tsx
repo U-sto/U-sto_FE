@@ -19,7 +19,7 @@ import {
 } from '../../../../api/itemAssets'
 import { useAssetDetailOverrides } from '../../../../contexts/AssetDetailOverridesContext'
 import './OperationLedgerPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
 import {
   useOperatingStatusFilterOptions,
   resolveOperatingStatusFilterValue,
@@ -27,8 +27,6 @@ import {
 
 /** 상세 페이지 등 기존 import 호환용 — GET /api/item/assets 매핑 결과와 동일 */
 export type OperationLedgerRow = AssetLedgerRow
-
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 
 const INITIAL_FILTERS: AssetLedgerFilters = {
   g2bName: '',
@@ -72,6 +70,7 @@ const SearchIcon = () => (
 const OperationLedgerPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { getOverride } = useAssetDetailOverrides()
   const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
     useOperatingStatusFilterOptions()
@@ -194,6 +193,7 @@ const OperationLedgerPage = () => {
     {
       key: 'id',
       header: '순번',
+      width: 56,
       render: (row) => row.id,
     },
     {
@@ -328,7 +328,7 @@ const OperationLedgerPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field operation-ledger-field-span2">

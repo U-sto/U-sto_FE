@@ -53,6 +53,10 @@
   background-color: var(--usto-alt-white);
 }
 
+.gnb-menu-content .system-logo {
+  transform: translateX(-350px);
+}
+
 .gnb-dropdown {
   position: relative;
   display: inline-block;

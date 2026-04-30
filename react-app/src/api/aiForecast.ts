@@ -432,12 +432,16 @@ export async function fetchAiForecastHistory(): Promise<AiForecastHistoryItem[]>
     }
     const obj = raw as Record<string, unknown>
     const id = pickString(obj, 'id', 'forecastId', 'forecast_id') ?? String(index)
-    // 백엔드가 프롬프트를 어떤 필드명으로 주든 모두 체크
+    // 이름 변경(PATCH) 후 서버가 내려주는 표시용 제목이 있으면 그걸 우선 (prompt보다 앞에 두지 않으면 새로고침 시 예전 프롬프트로 덮임)
     const title = String(
       pickString(
         obj,
-        'prompt',
+        'name',
         'title',
+        'newTitle',
+        'displayName',
+        'recordTitle',
+        'prompt',
         'query',
         'content',
         'forecastPrompt',
@@ -451,17 +455,15 @@ export async function fetchAiForecastHistory(): Promise<AiForecastHistoryItem[]>
 }
 
 /**
- * GET /api/ai/forecast/contents - 특정 예측 기록 상세 조회
- * @param forecastId 기록 ID
- * @param displayTitle 요약 탭에 표시할 질문/제목 (없으면 target_text를 사용)
+ * GET /api/ai/forecast/contents/{forecastId} — 기록 내용 확인 (스웨거 기준)
  */
 export async function fetchAiForecastHistoryDetail(
   forecastId: string,
   displayTitle?: string,
 ): Promise<AiForecastResponse> {
+  const id = forecastId.trim()
   const res = await http.get<ApiResponse<AiForecastApiData>>(
-    '/api/ai/forecast/contents',
-    { params: { forecastId } },
+    `/api/ai/forecast/contents/${encodeURIComponent(id)}`,
   )
   const body = res.data
   if (!body?.data) {
@@ -479,4 +481,27 @@ export async function deleteAiForecastRecord(forecastId: string): Promise<void> 
   await http.delete<ApiResponse<Record<string, unknown>>>('/api/ai/forecast', {
     params: { forecastId },
   })
+}
+
+/**
+ * PATCH /api/ai/forecast/{forecastId} — 기록 이름 수정
+ * 스웨거에 `newTitle`·`forecastId`가 쿼리로만 적혀 있는 경우가 있어, 경로 + 쿼리로 맞춤.
+ * (빈 JSON 본문 `{}`만 보내면 Spring에서 400이 나는 경우가 있음)
+ */
+export async function patchAiForecastRecordTitle(
+  forecastId: string,
+  title: string,
+): Promise<void> {
+  const newTitle = title.trim()
+  const id = forecastId.trim()
+  await http.patch<ApiResponse<unknown>>(
+    `/api/ai/forecast/${encodeURIComponent(id)}`,
+    undefined,
+    {
+      params: {
+        forecastId: id,
+        newTitle,
+      },
+    },
+  )
 }

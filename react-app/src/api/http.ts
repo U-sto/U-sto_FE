@@ -48,12 +48,8 @@ http.interceptors.response.use(
       }
 
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        const shouldRedirect = window.confirm(
-          '로그인 정보가 만료되었습니다.\n다시 로그인 페이지로 이동하시겠습니까?',
-        )
-        if (shouldRedirect) {
-          window.location.href = '/login'
-        }
+        window.alert('로그인이 만료되어 로그인 화면으로 돌아갑니다.')
+        window.location.href = '/login'
       }
     }
 

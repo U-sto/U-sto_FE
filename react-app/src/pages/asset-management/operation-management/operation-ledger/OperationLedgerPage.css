@@ -323,6 +323,8 @@
   table-layout: fixed;
 }
 
+/* 선택 열·체크 셀: DataTable.css .management-table-el 공통 규칙 사용 */
+
 .operation-ledger-table-el thead th {
   background: var(--usto-primary-300);
   color: var(--usto-alt-white);
@@ -338,6 +340,13 @@
 .operation-ledger-table-el .operation-ledger-th-g2bNumber {
   width: 190px;
   min-width: 190px;
+}
+
+/* 순번 열 폭 축소: 우측 열(내용연수 등) 공간 확보 */
+.operation-ledger-table-el .operation-ledger-th-id {
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
 }
 
 .operation-ledger-table-el .operation-ledger-th-operatingStatus,
@@ -357,6 +366,14 @@
   width: 80px;
   min-width: 80px;
   white-space: nowrap;
+  padding-left: 10px;
+  padding-right: 6px;
+}
+
+/* 내용연수 본문: 왼쪽 간격 축소로 오른쪽 여유 확보 */
+.operation-ledger-table-el tbody td:nth-child(11) {
+  padding-left: 10px;
+  padding-right: 6px;
 }
 
 .operation-ledger-detail-content {

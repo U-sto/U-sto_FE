@@ -449,13 +449,13 @@
 }
 
 /* DataTable column widths */
-.disuse-table-el .disuse-th-id { width: 100px; }
+.disuse-table-el .disuse-th-id { width: 74px; min-width: 74px; max-width: 74px; }
 .disuse-table-el .disuse-th-disuseDate { width: 150px; }
 .disuse-table-el .disuse-th-disuseConfirmDate { width: 150px; }
 .disuse-table-el .disuse-th-registrantId { width: 150px; }
 .disuse-table-el .disuse-th-registrantName { width: 150px; }
 .disuse-table-el .disuse-th-approvalStatus { width: 100px; }
-.disuse-table-el .disuse-th-select { width: 56px; }
+.disuse-table-el .disuse-th-select { width: 40px; min-width: 40px; max-width: 40px; }
 .disuse-table-el .disuse-th-g2bNumber { width: 150px; }
 .disuse-table-el .disuse-th-g2bName { width: 150px; }
 .disuse-table-el .disuse-th-itemUniqueNumber { width: 150px; }

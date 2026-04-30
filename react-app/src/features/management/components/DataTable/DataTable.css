@@ -37,6 +37,58 @@
   padding: 28px 18px;
 }
 
+/*
+ * 체크·순번 열: 물품 관리(operation-ledger 전용 CSS에 있던 규칙을 공통화)
+ * — 관리자(요청관리) 페이지는 *-table-el만 있고 동일 클래스가 없어 이전에 비적용이었음.
+ */
+.management-table-el thead th[class*='-th-select'],
+.management-table-el thead th[class*='-th-check'] {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* 두 번째 열이 순번(id/no): 첫 열이 체크일 때만 (취득 확정 등 다른 두 번째 열과 구분) */
+.management-table-el thead tr th:nth-child(2)[class*='-th-id'],
+.management-table-el thead tr th:nth-child(2)[class*='-th-no'] {
+  width: 74px;
+  min-width: 74px;
+  max-width: 74px;
+  text-align: left;
+  padding-left: 12px;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.management-table-el tbody td:has(> input[type='checkbox']) {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  text-align: center;
+  vertical-align: middle;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* 순번 본문 셀: 헤더가 순번(id/no)인 테이블만 (취득 확정 두 번째 열 G2B번호 제외) */
+.management-table-el:has(thead tr th:nth-child(2)[class*='-th-id'])
+  tbody
+  tr
+  > td:nth-child(2),
+.management-table-el:has(thead tr th:nth-child(2)[class*='-th-no'])
+  tbody
+  tr
+  > td:nth-child(2) {
+  padding-left: 12px;
+  padding-right: 8px;
+  text-align: left;
+}
+
 /* 페이지네이션: 버튼은 데이터 테이블 너비 기준 정중앙, summary는 좌/우 배치 */
 .management-pagination {
   position: relative;
@@ -109,10 +161,12 @@
   background-color: var(--usto-primary-200);
 }
 
-/* 커스텀 체크박스 */
+/* 커스텀 체크박스 (브라우저 기본 원형/액센트 UI로 덮이지 않도록 appearance 고정) */
 .management-table-el input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
+  -moz-appearance: none;
+  box-sizing: border-box;
   width: 20px;
   height: 20px;
   min-width: 20px;
@@ -126,6 +180,18 @@
   transition: background-color 0.15s, border-color 0.15s;
   vertical-align: middle;
   position: relative;
+  margin: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.management-table-el input[type='checkbox']:disabled {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .management-table-el input[type='checkbox']:hover {

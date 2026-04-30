@@ -23,6 +23,7 @@ const OPER_STS_LABEL_TO_CODE_FALLBACK: Record<string, string> = {
 const APPR_LABEL_TO_CODE_TRANSFER_STYLE: Record<string, string> = {
   전체: '',
   대기: 'WAIT',
+  승인요청: 'REQUEST',
   반려: 'REJECT',
   확정: 'CONFIRM',
 }

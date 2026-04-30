@@ -1,0 +1,142 @@
+/* AI 예측 이전 기록 — 이름 수정 (PATCH 스웨거 톤: 민트 포인트 + 흰 패널) */
+.ai-forecast-rename-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.45);
+  overflow: auto;
+}
+
+.ai-forecast-rename-modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 26px 24px 22px;
+  background: var(--usto-alt-white);
+  border: 1px solid var(--usto-primary-300);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.ai-forecast-rename-modal__accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  border-radius: 10px 10px 0 0;
+  background: var(--usto-primary-300);
+}
+
+.ai-forecast-rename-modal__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--usto-gray-200);
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ai-forecast-rename-modal__close:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-rename-modal__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-forecast-rename-modal__title {
+  margin: 0 36px 8px 0;
+  font-family: var(--font-family);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-rename-modal__desc {
+  margin: 0 0 18px;
+  font-family: var(--font-family);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  color: var(--usto-gray-200);
+}
+
+.ai-forecast-rename-modal__label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-rename-modal__input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ai-forecast-rename-modal__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.ai-forecast-rename-modal__btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: var(--font-family);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ai-forecast-rename-modal__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ai-forecast-rename-modal__btn--outline {
+  background: var(--usto-alt-white);
+  border-color: var(--usto-primary-300);
+  color: var(--usto-primary-300);
+}
+
+.ai-forecast-rename-modal__btn--outline:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-rename-modal__btn--primary {
+  background: var(--usto-primary-300);
+  border-color: var(--usto-primary-300);
+  color: var(--usto-alt-white);
+}
+
+.ai-forecast-rename-modal__btn--primary:hover:not(:disabled) {
+  filter: brightness(0.95);
+}

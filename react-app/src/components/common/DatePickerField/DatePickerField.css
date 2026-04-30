@@ -20,6 +20,23 @@
   padding: 10px 0 8px !important;
 }
 
+.date-picker-calendar__header-selects {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-picker-calendar__header-select {
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--usto-primary-300);
+  border: 1px solid var(--usto-primary-200);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background-color: var(--usto-alt-white);
+}
+
 /* 년/월 텍스트 */
 .date-picker-calendar .react-datepicker__current-month {
   font-family: var(--font-family) !important;

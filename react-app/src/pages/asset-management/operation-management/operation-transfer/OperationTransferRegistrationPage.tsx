@@ -37,12 +37,11 @@ import {
 import '../operation-ledger/OperationLedgerPage.css'
 import '../return-management/ReturnManagementPage.css'
 import {
-  OPERATING_DEPARTMENT_FILTER_OPTIONS,
   OPERATING_DEPARTMENT_SELECT_OPTIONS,
   resolveDeptCdForOperation,
 } from '../../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 /** 공통코드 없을 때 resolveAssetStatusForForm 초기값 */
 const FALLBACK_ASSET_STATUS_LABELS = ['운용중', '반납', '불용', '처분']
 
@@ -178,6 +177,7 @@ const SearchIcon = () => (
 
 const OperationTransferRegistrationPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { operMId: operMIdParam } = useParams<{ operMId: string }>()
   const location = useLocation()
   const operMId = operMIdParam?.trim() ?? ''
@@ -630,7 +630,7 @@ const OperationTransferRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field">

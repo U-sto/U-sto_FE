@@ -9,8 +9,10 @@ import { pickFirstStringFromRecord } from './pickFromRecord'
 
 export type ItemDisposalSearchRequest = {
   /** 시작 처분 신청일자 */
+  startAplyAt?: string
   startApplYAt?: string
   /** 종료 처분 신청일자 */
+  endAplyAt?: string
   endApplYAt?: string
   /** 처분 유형 */
   dispType?: string
@@ -90,14 +92,36 @@ export type FetchItemDisposalsResponse = {
 
 const APPR_STS_MAP: Record<string, string> = {
   대기: 'WAIT',
+  승인요청: 'REQUEST',
   반려: 'REJECT',
   확정: 'CONFIRM',
 }
 
+const APPR_STS_CODE_TO_LABEL: Record<string, string> = {
+  WAIT: '대기',
+  REQUEST: '승인요청',
+  REJECT: '반려',
+  REJECTED: '반려',
+  CONFIRM: '확정',
+  APPROVED: '확정',
+}
+
+function mapApprovalStatusToLabel(raw: string | undefined): string {
+  const code = String(raw ?? '').trim()
+  if (!code) return ''
+  return APPR_STS_CODE_TO_LABEL[code] ?? code
+}
+
 function filtersToSearchRequest(filters: ItemDisposalFilters): ItemDisposalSearchRequest {
   const req: ItemDisposalSearchRequest = {}
-  if (filters.disposalDateFrom) req.startApplYAt = filters.disposalDateFrom
-  if (filters.disposalDateTo) req.endApplYAt = filters.disposalDateTo
+  if (filters.disposalDateFrom) {
+    req.startAplyAt = filters.disposalDateFrom
+    req.startApplYAt = filters.disposalDateFrom
+  }
+  if (filters.disposalDateTo) {
+    req.endAplyAt = filters.disposalDateTo
+    req.endApplYAt = filters.disposalDateTo
+  }
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
     req.apprSts = APPR_STS_MAP[filters.approvalStatus] ?? filters.approvalStatus
   }
@@ -123,7 +147,7 @@ function mapItemDisposalToRow(
   ])
   const registrantId = pickFirstStringFromRecord(rec, ['usrId', 'registrantId'])
   const registrantName = pickFirstStringFromRecord(rec, ['usrNm', 'registrantName'])
-  const approvalStatus = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
+  const approvalStatusRaw = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
 
   return {
     id: offset + index + 1,
@@ -132,7 +156,7 @@ function mapItemDisposalToRow(
     disposalConfirmDate,
     registrantId,
     registrantName,
-    approvalStatus,
+    approvalStatus: mapApprovalStatusToLabel(approvalStatusRaw),
   }
 }
 

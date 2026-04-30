@@ -13,7 +13,7 @@
   gap: 48px;
   max-width: 1200px;
   width: 100%;
-  margin-top: -32px;
+  margin-top: -22px;
 }
 
 .ai-forecast-info {
@@ -316,9 +316,12 @@
   color: var(--usto-gray-200);
   background: none;
   border: none;
-  padding: 12px 20px;
+  padding: 12px 32px;
+  min-width: 170px;
+  text-align: center;
   cursor: pointer;
   position: relative;
+  border-radius: 999px;
 }
 
 .ai-forecast-tab:hover {
@@ -326,25 +329,20 @@
 }
 
 .ai-forecast-tab--active {
-  color: var(--usto-primary-300);
+  color: var(--usto-alt-white);
   font-weight: 600;
+  background: #6f929d;
 }
 
 .ai-forecast-tab--active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--usto-primary-300);
+  content: none;
 }
 
 /* 분석 결과 영역 */
 .ai-forecast-result {
   flex: 1;
-  padding: 4px 32px 40px;
-  margin-top: -15px;
+  padding: 14px 32px 40px;
+  margin-top: 0;
   overflow-y: auto;
 }
 
@@ -558,6 +556,7 @@
 .ai-forecast-banner-sparkle {
   flex-shrink: 0;
   align-self: center;
+  transform: translate(5px, -17px);
 }
 
 .ai-forecast-result-row1 {
@@ -700,11 +699,15 @@
 }
 
 .ai-forecast-guide-highlight::before {
-  content: '◆';
+  content: '';
   flex-shrink: 0;
-  color: var(--usto-primary-300);
-  font-size: 11px;
-  margin-top: 3px;
+  width: 24px;
+  height: 24px;
+  margin-top: 6px;
+  background-image: url('/ai-forecast-star-icon.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .ai-forecast-guide-section {
@@ -767,7 +770,7 @@
 /* 이전 예측 이력 탭 — 상단 정렬로 제목 검색 위치 고정(항목 개수 변해도 검색창 안 움직임) */
 .ai-forecast-history {
   flex: 1;
-  padding: 28px 32px 40px;
+  padding: 38px 32px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -797,24 +800,27 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 900px;
+  max-width: 1064px;
+  margin-top: 100px;
 }
 
 .ai-forecast-history-search {
-  flex: 1;
-  min-width: 0;
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   margin-bottom: 20px;
 }
 
-.ai-forecast-history-search-header {
+.ai-forecast-history-search-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: 100%;
-  margin-bottom: 8px;
+}
+
+.ai-forecast-history-search-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .ai-forecast-history-search .visually-hidden {
@@ -831,16 +837,27 @@
 
 .ai-forecast-history-delete-btn {
   flex-shrink: 0;
-  padding: 8px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--usto-primary-300);
+  height: 32px;
+  min-width: 84px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1.5px solid #d52e2e !important;
   background: var(--usto-alt-white);
   font-family: var(--font-family);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--usto-primary-300);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: #d52e2e !important;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, border-color 0.2s;
+  line-height: 24px;
+}
+
+.ai-forecast-history-delete-btn:visited,
+.ai-forecast-history-delete-btn:active,
+.ai-forecast-history-delete-btn:focus-visible {
+  color: #d52e2e !important;
+  border-color: #d52e2e !important;
 }
 
 .ai-forecast-history-delete-btn:hover:not(:disabled) {
@@ -852,23 +869,125 @@
   cursor: not-allowed;
 }
 
-.ai-forecast-history-search-label {
-  display: block;
-  width: 100%;
-  cursor: text;
+.ai-forecast-history-sort {
   position: relative;
 }
 
-.ai-forecast-history-search-heading {
+.ai-forecast-history-sort-btn {
+  height: 32px;
+  width: 96px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1.5px solid var(--usto-gray-200);
+  background: var(--usto-alt-white);
   font-family: var(--font-family);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 300;
   letter-spacing: -0.03em;
-  color: var(--usto-primary-300);
+  color: var(--usto-alt-black);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
 }
 
-.ai-forecast-history-search-input {
-  font-size: 18px !important;
+.ai-forecast-history-sort-btn--open {
+  border-color: var(--usto-gray-200);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ai-forecast-history-sort-caret {
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--usto-gray-200);
+  border-bottom: 2px solid var(--usto-gray-200);
+  transform: rotate(45deg) translateY(-1px);
+  transition: transform 0.2s;
+}
+
+.ai-forecast-history-sort-caret.is-open {
+  transform: rotate(225deg) translateY(-1px);
+}
+
+.ai-forecast-history-sort-menu {
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 0;
+  width: 100%;
+  background: var(--usto-alt-white);
+  border: 1.5px solid var(--usto-gray-200);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.ai-forecast-history-sort-item {
+  width: 100%;
+  border: none;
+  background: var(--usto-alt-white);
+  text-align: left;
+  padding: 4px 10px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+  cursor: pointer;
+  line-height: 24px;
+}
+
+.ai-forecast-history-sort-item + .ai-forecast-history-sort-item {
+  border-top: 1px solid #d9d9d9;
+}
+
+.ai-forecast-history-sort-item:hover,
+.ai-forecast-history-sort-item.is-active {
+  background: #f6f7f8;
+}
+
+.ai-forecast-history-search-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 500px;
+  height: 40px;
+  border: 1.5px solid var(--usto-primary-300);
+  border-radius: 4px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  background: var(--usto-alt-white);
+  position: relative;
+}
+
+.ai-forecast-history-search-icon {
+  color: var(--usto-gray-200);
+  display: inline-flex;
+  align-items: center;
+}
+
+.ai-forecast-history-search-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ai-forecast-history-search-input-el {
+  border: none;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-history-search-input-el::placeholder {
+  color: var(--usto-gray-200);
 }
 
 .ai-forecast-history-empty--inline {
@@ -881,21 +1000,21 @@
 /* 페이지네이션 사용 시 목록 영역 높이 확보 → 이전/다음 줄 세로 위치 고정 */
 .ai-forecast-history-list-wrap {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   flex-shrink: 0;
 }
 
-.ai-forecast-history-list-wrap--with-pager {
-  min-height: 600px;
+.ai-forecast-history-list-wrap--with-scroll {
+  height: 522px;
   overflow-y: auto;
 }
 
 .ai-forecast-history-list {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 0;
 }
 
 .ai-forecast-history-item {
@@ -907,50 +1026,226 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  padding: 16px 24px;
+  border-radius: 10px;
+  background: var(--usto-alt-white);
 }
 
 .ai-forecast-history-checkbox {
-  flex-shrink: 0;
+  flex: 0 0 18px;
   width: 18px;
   height: 18px;
+  border: 1.5px solid var(--usto-primary-300);
+  border-radius: 4px;
+  background: var(--usto-alt-white);
   cursor: pointer;
-  accent-color: var(--usto-primary-300);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ai-forecast-history-button {
+.ai-forecast-history-checkbox::after {
+  content: '';
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid var(--usto-alt-white);
+  border-bottom: 2px solid var(--usto-alt-white);
+  transform: rotate(-45deg) translateY(-1px);
+  opacity: 0;
+}
+
+.ai-forecast-history-checkbox.is-checked {
+  background: var(--usto-primary-300);
+}
+
+.ai-forecast-history-checkbox.is-checked::after {
+  opacity: 1;
+}
+
+.ai-forecast-history-title-btn {
   flex: 1;
   min-width: 0;
   width: auto;
   text-align: left;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--usto-primary-200);
-  background: var(--usto-alt-white);
+  padding: 8px 0;
+  border: none;
+  background: none;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
-.ai-forecast-history-button:hover {
-  border-color: var(--usto-primary-300);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+.ai-forecast-history-title-btn:hover .ai-forecast-history-title {
+  color: var(--usto-alt-black);
 }
 
 .ai-forecast-history-title {
   font-family: var(--font-family);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
 }
 
 .ai-forecast-history-meta {
   font-family: var(--font-family);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: -0.03em;
   color: var(--usto-gray-200);
+  min-width: 92px;
+  text-align: right;
+}
+
+.ai-forecast-history-more-wrap {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.ai-forecast-history-more {
+  border: none;
+  background: none;
+  color: var(--usto-primary-300);
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.ai-forecast-history-more-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* 포털(body) + position:fixed 로 스크롤 영역(목록 높이)에 잘리지 않게 표시 */
+.ai-forecast-history-row-menu {
+  min-width: 168px;
+  padding: 5px 0;
+  border: 1px solid var(--usto-gray-100);
+  border-radius: 8px;
+  background: var(--usto-alt-white);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.ai-forecast-history-row-menu--portal {
+  position: fixed;
+  z-index: 10050;
+}
+
+.ai-forecast-history-row-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 7px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.ai-forecast-history-row-menu-item--rename {
+  color: var(--usto-alt-black);
+}
+
+.ai-forecast-history-row-menu-item--rename .ai-forecast-history-row-menu-icon {
+  color: var(--usto-gray-200);
+}
+
+.ai-forecast-history-row-menu-item--rename:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ai-forecast-history-row-menu-item--delete {
+  color: #d52e2e;
+}
+
+.ai-forecast-history-row-menu-item--delete:hover:not(:disabled) {
+  background: rgba(213, 46, 46, 0.06);
+}
+
+.ai-forecast-history-row-menu-item--delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-forecast-history-row-menu-divider {
+  height: 1px;
+  margin: 2px 12px;
+  background: var(--usto-gray-100);
+}
+
+.ai-forecast-history-row-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.ai-forecast-history-new-wrap {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.ai-forecast-history-new-btn {
+  height: 56px;
+  width: auto;
+  min-width: 220px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ai-forecast-history-new-icon {
+  width: 32px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-forecast-history-new-icon img {
+  display: block;
+  width: 32px;
+  height: 26px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.ai-forecast-history-new-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ai-forecast-history-new-btn:hover {
+  opacity: 0.9;
 }
 
 .ai-forecast-history-pager {

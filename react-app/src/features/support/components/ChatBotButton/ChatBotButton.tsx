@@ -6,6 +6,8 @@ import {
   deleteChatThread,
   getChatMessages,
   fetchAiItemAssets,
+  createChatThread,
+  patchChatThreadTitle,
 } from '../../../../api/supportChat'
 
 interface ChatBotButtonProps {
@@ -217,18 +219,23 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   }
 
   const handleNewSession = () => {
-    const newId = newSessionId()
-    const index = sessions.length + 1
-    const newSession: ChatSession = {
-      id: newId,
-      title: `새 채팅 ${index}`,
-      messages: [],
-    }
-    setSessions((prev) => [...prev, newSession])
-    setCurrentSessionId(newId)
-    setSessionMenuOpenId(null)
     setError(null)
     setLoading(false)
+    setSessionMenuOpenId(null)
+    void createChatThread()
+      .then((newId) => {
+        const index = sessions.length + 1
+        const newSession: ChatSession = {
+          id: newId,
+          title: `새 채팅 ${index}`,
+          messages: [],
+        }
+        setSessions((prev) => [...prev, newSession])
+        setCurrentSessionId(newId)
+      })
+      .catch(() => {
+        setError('새 채팅방을 만들 수 없습니다.')
+      })
   }
 
   const handleRenameSessionById = (sessionId: string) => {
@@ -241,6 +248,9 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       prev.map((s) => (s.id === sessionId ? { ...s, title: trimmed } : s)),
     )
     setSessionMenuOpenId(null)
+    void patchChatThreadTitle(sessionId, trimmed).catch(() => {
+      // 서버 반영 실패 시에도 로컬 이름은 유지
+    })
   }
 
   const handleDeleteSessionById = (sessionId: string) => {
@@ -290,20 +300,31 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
     if (!isOpen) return
     let cancelled = false
     getChatThreads()
-      .then((threadIds) => {
-        if (cancelled || !threadIds.length) return
-        setSessions((prev) => {
-          const prevById = new Map(prev.map((s) => [s.id, s] as const))
-          const newSessions: ChatSession[] = threadIds.map((id, i) => ({
-            id,
-            title: prevById.get(id)?.title ?? `채팅방 ${i + 1}`,
-            messages: prevById.get(id)?.messages ?? [],
-          }))
-          setCurrentSessionId((current) =>
-            current && newSessions.some((s) => s.id === current) ? current : newSessions[0].id,
-          )
-          return newSessions
-        })
+      .then(async (threadIds) => {
+        if (cancelled) return
+        if (threadIds.length > 0) {
+          setSessions((prev) => {
+            const prevById = new Map(prev.map((s) => [s.id, s] as const))
+            const newSessions: ChatSession[] = threadIds.map((id, i) => ({
+              id,
+              title: prevById.get(id)?.title ?? `채팅방 ${i + 1}`,
+              messages: prevById.get(id)?.messages ?? [],
+            }))
+            setCurrentSessionId((current) =>
+              current && newSessions.some((s) => s.id === current) ? current : newSessions[0].id,
+            )
+            return newSessions
+          })
+          return
+        }
+        try {
+          const id = await createChatThread()
+          if (cancelled) return
+          setSessions([{ id, title: '새 채팅 1', messages: [] }])
+          setCurrentSessionId(id)
+        } catch {
+          if (!cancelled) setError(null)
+        }
       })
       .catch(() => {
         if (!cancelled) setError(null)

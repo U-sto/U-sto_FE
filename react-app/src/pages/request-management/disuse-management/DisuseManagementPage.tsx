@@ -205,7 +205,6 @@ const DisuseManagementPage = () => {
     {
       key: 'select',
       stopRowClickPropagation: true,
-      width: 56,
       header: (
         <input
           type="checkbox"
@@ -226,7 +225,7 @@ const DisuseManagementPage = () => {
         />
       ),
     },
-    { key: 'id', header: '순번', width: 100, render: (row) => row.id },
+    { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'disuseDate', header: '불용일자', width: 150, render: (row) => row.disuseDate },
     {
       key: 'disuseConfirmDate',
@@ -240,7 +239,7 @@ const DisuseManagementPage = () => {
   ]
 
   const itemColumns: DataTableColumn<DisuseItemRow>[] = [
-    { key: 'select', header: <input type="checkbox" />, width: 56, render: () => <input type="checkbox" /> },
+    { key: 'select', header: <input type="checkbox" />, render: () => <input type="checkbox" /> },
     { key: 'g2bNumber', header: 'G2B목록번호', width: 150, render: (row) => row.g2bNumber },
     { key: 'g2bName', header: 'G2B목록명', width: 150, render: (row) => row.g2bName },
     { key: 'itemUniqueNumber', header: '물품고유번호', width: 150, render: (row) => row.itemUniqueNumber },

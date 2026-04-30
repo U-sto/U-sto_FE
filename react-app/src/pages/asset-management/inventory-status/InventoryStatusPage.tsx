@@ -13,7 +13,7 @@ import G2BSearchModal, {
   getG2BListNumberParts,
 } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import { useOperatingStatusFilterOptions } from '../../../hooks/useCommonCodeOptions'
 import {
   fetchAssetInventoryStatus,
@@ -22,8 +22,6 @@ import {
 } from '../../../api/itemAssetInventoryStatus'
 
 export type InventoryStatusRow = AssetInventoryStatusRow
-
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 
 const SearchIcon = () => (
   <svg
@@ -53,6 +51,7 @@ const SearchIcon = () => (
 
 const InventoryStatusPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { options: operatingStatusOptions } = useOperatingStatusFilterOptions()
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<InventoryStatusFilters>({
@@ -245,7 +244,7 @@ const InventoryStatusPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field operation-ledger-field-span2">

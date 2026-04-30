@@ -15,6 +15,8 @@ import type { ApiResponse } from './types'
 export type ItemReturningSearchRequest = {
   startAplyAt?: string
   endAplyAt?: string
+  startApplYAt?: string
+  endApplYAt?: string
   apprSts?: string
   /** 단건 조회 시 (백엔드 지원 시) */
   rtrnId?: string

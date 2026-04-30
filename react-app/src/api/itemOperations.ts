@@ -98,6 +98,7 @@ export type FetchItemOperationsResponse = {
 
 const APPR_STS_MAP: Record<string, string> = {
   대기: 'WAIT',
+  승인요청: 'REQUEST',
   반려: 'REJECT',
   확정: 'CONFIRM',
   전체: '',
@@ -218,8 +219,11 @@ export type OperationTransferItemRow = {
 
 const APPR_STS_CODE_TO_LABEL: Record<string, string> = {
   WAIT: '대기',
+  REQUEST: '승인요청',
   REJECT: '반려',
+  REJECTED: '반려',
   CONFIRM: '확정',
+  APPROVED: '확정',
 }
 
 function mapApprStsCodeToLabel(code: string): string {

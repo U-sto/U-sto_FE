@@ -449,13 +449,13 @@
 }
 
 /* DataTable column widths */
-.return-table-el .return-th-id { width: 100px; }
+.return-table-el .return-th-id { width: 74px; min-width: 74px; max-width: 74px; }
 .return-table-el .return-th-returnDate { width: 150px; }
 .return-table-el .return-th-returnConfirmDate { width: 150px; }
 .return-table-el .return-th-registrantId { width: 150px; }
 .return-table-el .return-th-registrantName { width: 150px; }
 .return-table-el .return-th-approvalStatus { width: 100px; }
-.return-table-el .return-th-select { width: 56px; }
+.return-table-el .return-th-select { width: 40px; min-width: 40px; max-width: 40px; }
 .return-table-el .return-th-g2bNumber { width: 150px; }
 .return-table-el .return-th-g2bName { width: 150px; }
 .return-table-el .return-th-itemUniqueNumber { width: 150px; }

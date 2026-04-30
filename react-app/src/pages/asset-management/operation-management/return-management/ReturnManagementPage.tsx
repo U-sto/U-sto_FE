@@ -41,8 +41,18 @@ const INITIAL_FILTERS: ReturnFilters = {
 /** 공통코드 미로딩 시 승인상태 → API 코드 (스웨거 apprSts 예: WAIT) */
 const FALLBACK_APPR_DESC_TO_CODE: Record<string, string> = {
   대기: 'WAIT',
+  승인요청: 'REQUEST',
   반려: 'REJECT',
   확정: 'CONFIRM',
+}
+
+const APPR_CODE_TO_LABEL_FALLBACK: Record<string, string> = {
+  WAIT: '대기',
+  REQUEST: '승인요청',
+  REJECT: '반려',
+  REJECTED: '반려',
+  CONFIRM: '확정',
+  APPROVED: '확정',
 }
 
 type ReturnRegistrationRow = {
@@ -72,8 +82,14 @@ function buildReturningSearchRequest(
   approvalDescToCode: Record<string, string>,
 ): ItemReturningSearchRequest {
   const req: ItemReturningSearchRequest = {}
-  if (filters.returnDateFrom) req.startAplyAt = filters.returnDateFrom
-  if (filters.returnDateTo) req.endAplyAt = filters.returnDateTo
+  if (filters.returnDateFrom) {
+    req.startAplyAt = filters.returnDateFrom
+    req.startApplYAt = filters.returnDateFrom
+  }
+  if (filters.returnDateTo) {
+    req.endAplyAt = filters.returnDateTo
+    req.endApplYAt = filters.returnDateTo
+  }
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
     const map =
       Object.keys(approvalDescToCode).length > 0
@@ -98,7 +114,11 @@ function mapMasterToRow(
     returnConfirmDate: formatReturningDateOnly(item.rtrnApprAt),
     registrantId: item.aplyUsrId ?? '',
     registrantName: item.aplyUsrNm ?? '',
-    approvalStatus: apprCodeToDesc[item.apprSts] ?? item.apprSts ?? '',
+    approvalStatus:
+      apprCodeToDesc[item.apprSts] ??
+      APPR_CODE_TO_LABEL_FALLBACK[item.apprSts] ??
+      item.apprSts ??
+      '',
   }
 }
 

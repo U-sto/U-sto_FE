@@ -223,7 +223,6 @@ const OperationManagementPage = () => {
       {
         key: 'select',
         header: '',
-        width: 56,
         render: (row) => (
           <input
             type="checkbox"
@@ -235,7 +234,7 @@ const OperationManagementPage = () => {
           />
         ),
       },
-      { key: 'id', header: '순번', width: 100, render: (row) => row.id },
+      { key: 'id', header: '순번', render: (row) => row.id },
       {
         key: 'operationDate',
         header: '운용일자',
@@ -275,7 +274,6 @@ const OperationManagementPage = () => {
       {
         key: 'select',
         header: '',
-        width: 56,
         render: () => <input type="checkbox" disabled />,
       },
       {

@@ -12,7 +12,7 @@ import G2BSearchModal, {
   getG2BListNumberParts,
 } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../../operation-management/operation-ledger/OperationLedgerPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
 import {
   downloadItemAssetsPrintPdf,
   fetchItemAssetsPrint,
@@ -22,7 +22,6 @@ import {
 
 type PrintoutFilters = ItemAssetsPrintFilters
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const PRINT_STATUS_OPTIONS = ['전체', '미출력', '출력']
 
 type PrintoutRow = PrintoutListRow
@@ -67,6 +66,7 @@ const INITIAL_FILTERS: PrintoutFilters = {
 }
 
 const PrintoutManagementPage = () => {
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<PrintoutFilters>({ ...INITIAL_FILTERS })
   const [searchedFilters, setSearchedFilters] = useState<PrintoutFilters>(() => ({
@@ -305,7 +305,7 @@ const PrintoutManagementPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
 

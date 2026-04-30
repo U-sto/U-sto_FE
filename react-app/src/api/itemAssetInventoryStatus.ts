@@ -18,6 +18,8 @@ export type AssetInventoryStatusFilters = {
 
 type AssetInventoryStatusSearchRequest = {
   g2bDcd?: string
+  g2bCd?: string
+  g2bItemNo?: string
   g2bItemNm?: string
   itmNo?: string
   itemUnqNo?: string
@@ -25,6 +27,8 @@ type AssetInventoryStatusSearchRequest = {
   endAcqAt?: string
   startArrgAt?: string
   endArrgAt?: string
+  startDrgAt?: string
+  endDrgAt?: string
   deptCd?: string
   deptNm?: string
   operSts?: string
@@ -108,7 +112,11 @@ function filtersToSearchRequest(filters: AssetInventoryStatusFilters): AssetInve
     filters.g2bNumberPrefix,
     filters.g2bNumberSuffix,
   )
-  if (g2bDcd) req.g2bDcd = g2bDcd
+  if (g2bDcd) {
+    req.g2bDcd = g2bDcd
+    req.g2bCd = g2bDcd
+    req.g2bItemNo = g2bDcd
+  }
   if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
   if (filters.itemUniqueNumber?.trim()) {
     req.itmNo = filters.itemUniqueNumber.trim()
@@ -116,8 +124,14 @@ function filtersToSearchRequest(filters: AssetInventoryStatusFilters): AssetInve
   }
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
-  if (filters.sortDateFrom) req.startArrgAt = filters.sortDateFrom
-  if (filters.sortDateTo) req.endArrgAt = filters.sortDateTo
+  if (filters.sortDateFrom) {
+    req.startArrgAt = filters.sortDateFrom
+    req.startDrgAt = filters.sortDateFrom
+  }
+  if (filters.sortDateTo) {
+    req.endArrgAt = filters.sortDateTo
+    req.endDrgAt = filters.sortDateTo
+  }
   if (filters.operatingDept && filters.operatingDept !== '전체') {
     applyDeptLabelToSearchRequest(req, filters.operatingDept)
   }
