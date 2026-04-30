@@ -5,6 +5,18 @@
   color: var(--usto-text-secondary, #5c5c5c);
 }
 
+/* 반납/처분 등록: flex 안에서 테이블이 가로로 과도하게 늘어나지 않도록 */
+.return-registration-ledger-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.return-registration-ledger-table-wrap .operation-ledger-table {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* 반납 등록 페이지: 물품 운용 대장 목록 테이블 최대 3행 노출, 나머지 스크롤 */
 .return-registration-ledger-table-wrap .operation-ledger-table-wrap-inner {
   max-height: 180px;

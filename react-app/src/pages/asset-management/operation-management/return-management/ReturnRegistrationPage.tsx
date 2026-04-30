@@ -15,7 +15,7 @@ import G2BSearchModal, {
   type G2BItem,
   getG2BListNumberParts,
 } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
 import {
   useOperatingStatusFilterOptions,
   useItemStatusSelectOptions,
@@ -42,7 +42,6 @@ import {
   buildSelectOptionsWithPlaceholder,
 } from '../../../../api/codes'
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const REASON_OPTIONS = ['선택', '교체', '폐기', '기타']
 
 /** 공통코드 미로딩 시 반납 사유 라벨 → API 코드 */
@@ -134,6 +133,7 @@ const SearchIcon = () => (
 
 const ReturnRegistrationPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { rtrnMid: rtrnMidParam } = useParams<{ rtrnMid?: string }>()
   const rtrnMid = rtrnMidParam?.trim() ?? ''
   const isEditMode = rtrnMid.length > 0
@@ -507,7 +507,7 @@ const ReturnRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field">

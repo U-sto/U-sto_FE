@@ -29,6 +29,11 @@ export type AcqConfirmationFilters = {
   operatingDept: string
 }
 
+type AcqConfirmationSearchRequestCompat = ItemAcquisitionSearchRequest & {
+  /** (호환) 목록번호 단일키 */
+  g2bDcd?: string
+}
+
 export type AcqConfirmationRow = {
   id: number
   /** 취득 건 UUID — 승인요청 API path */
@@ -58,6 +63,21 @@ export type FetchAcqConfirmationResponse = {
   totalCount: number
 }
 
+const APPR_STS_CODE_TO_LABEL: Record<string, string> = {
+  WAIT: '대기',
+  REQUEST: '승인요청',
+  REJECT: '반려',
+  REJECTED: '반려',
+  CONFIRM: '확정',
+  APPROVED: '확정',
+}
+
+function mapApprovalStatusToLabel(raw: string | undefined): string {
+  const code = String(raw ?? '').trim()
+  if (!code) return ''
+  return APPR_STS_CODE_TO_LABEL[code] ?? code
+}
+
 /**
  * GET /api/item/acquisitions 응답 content 한 건 → 취득확정관리 테이블 행으로 변환
  * 실제 API 연동 시 응답 data.content.map(mapItemAcquisitionToRow) 후 사용
@@ -83,13 +103,14 @@ export function mapItemAcquisitionToAcqConfirmationRow(
         : `${item.drbYr}년`
       : '',
     quantity: item.acqQty,
-    approvalStatus: item.apprSts,
+    approvalStatus: mapApprovalStatusToLabel(item.apprSts),
   }
 }
 
 /** 승인상태 화면 라벨 → API 코드 (공통코드 API 실패 시 폴백) */
 export const DEFAULT_APPR_STS_DESCRIPTION_TO_CODE: Record<string, string> = {
   대기: 'WAIT',
+  승인요청: 'REQUEST',
   반려: 'REJECT',
   확정: 'CONFIRM',
 }
@@ -98,15 +119,18 @@ export const DEFAULT_APPR_STS_DESCRIPTION_TO_CODE: Record<string, string> = {
 function filtersToSearchRequest(
   filters: AcqConfirmationFilters,
   approvalDescToCode: Record<string, string> = DEFAULT_APPR_STS_DESCRIPTION_TO_CODE,
-): ItemAcquisitionSearchRequest {
-  const req: ItemAcquisitionSearchRequest = {}
+): AcqConfirmationSearchRequestCompat {
+  const req: AcqConfirmationSearchRequestCompat = {}
   const from = filters.g2bNumberFrom?.trim() ?? ''
   const to = filters.g2bNumberTo?.trim() ?? ''
 
   const g2bParts = buildAcquisitionG2bSearchFields(from, to)
   if (g2bParts.g2b0Cd) req.g2b0Cd = g2bParts.g2b0Cd
   if (g2bParts.g2bDCd) req.g2bDCd = g2bParts.g2bDCd
-  if (g2bParts.g2bCd) req.g2bCd = g2bParts.g2bCd
+  if (g2bParts.g2bCd) {
+    req.g2bCd = g2bParts.g2bCd
+    req.g2bDcd = g2bParts.g2bCd
+  }
 
   if (filters.g2bName?.trim()) {
     req.g2bItemNm = filters.g2bName.trim()

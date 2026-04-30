@@ -1,6 +1,6 @@
 import ReactDatePicker, { registerLocale } from 'react-datepicker'
 import { ko } from 'date-fns/locale'
-import { format, parse, isValid } from 'date-fns'
+import { format, parse, isValid, getDaysInMonth } from 'date-fns'
 import type { ChangeEvent } from 'react'
 import 'react-datepicker/dist/react-datepicker.css'
 import './DatePickerField.css'
@@ -35,6 +35,10 @@ const DatePickerField = ({
     onChange(syntheticEvent)
   }
 
+  const currentYear = new Date().getFullYear()
+  const yearOptions = Array.from({ length: 31 }, (_, idx) => currentYear - 15 + idx)
+  const monthOptions = Array.from({ length: 12 }, (_, idx) => idx)
+
   return (
     <ReactDatePicker
       selected={selected}
@@ -48,6 +52,76 @@ const DatePickerField = ({
       showMonthDropdown
       showYearDropdown
       dropdownMode="select"
+      renderCustomHeader={({ date, changeYear, changeMonth }) => {
+        const baseDate = selected ?? date
+        const year = baseDate.getFullYear()
+        const month = baseDate.getMonth()
+        const day = baseDate.getDate()
+        const dayOptions = Array.from(
+          { length: getDaysInMonth(new Date(year, month, 1)) },
+          (_, idx) => idx + 1,
+        )
+
+        const applyDateByHeader = (nextYear: number, nextMonth: number, nextDay: number) => {
+          const safeDay = Math.min(
+            Math.max(nextDay, 1),
+            getDaysInMonth(new Date(nextYear, nextMonth, 1)),
+          )
+          handleChange(new Date(nextYear, nextMonth, safeDay))
+        }
+
+        return (
+          <div className="date-picker-calendar__header-selects">
+            <select
+              className="date-picker-calendar__header-select"
+              value={year}
+              onChange={(e) => {
+                const nextYear = Number(e.target.value)
+                changeYear(nextYear)
+                applyDateByHeader(nextYear, month, day)
+              }}
+              disabled={readOnly}
+            >
+              {yearOptions.map((yearOption) => (
+                <option key={yearOption} value={yearOption}>
+                  {yearOption}년
+                </option>
+              ))}
+            </select>
+            <select
+              className="date-picker-calendar__header-select"
+              value={month}
+              onChange={(e) => {
+                const nextMonth = Number(e.target.value)
+                changeMonth(nextMonth)
+                applyDateByHeader(year, nextMonth, day)
+              }}
+              disabled={readOnly}
+            >
+              {monthOptions.map((monthOption) => (
+                <option key={monthOption} value={monthOption}>
+                  {monthOption + 1}월
+                </option>
+              ))}
+            </select>
+            <select
+              className="date-picker-calendar__header-select"
+              value={day}
+              onChange={(e) => {
+                const nextDay = Number(e.target.value)
+                applyDateByHeader(year, month, nextDay)
+              }}
+              disabled={readOnly}
+            >
+              {dayOptions.map((dayOption) => (
+                <option key={dayOption} value={dayOption}>
+                  {dayOption}일
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      }}
       autoComplete="off"
     />
   )

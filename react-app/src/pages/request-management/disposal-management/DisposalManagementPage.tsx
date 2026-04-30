@@ -166,6 +166,10 @@ const DisposalManagementPage = () => {
       else next.delete(dispMId)
       return next
     })
+    if (checked && dispMId) {
+      setSelectedRegistration({ dispMId })
+      setItemPage(1)
+    }
   }
 
   // API 응답 row 타입이 동일하지만, 이 페이지에서 사용하는 타입과 맞추기 위해 명시적으로 선언
@@ -181,7 +185,6 @@ const DisposalManagementPage = () => {
           aria-label="전체 선택"
         />
       ),
-      width: 56,
       render: (row) => (
         <input
           type="checkbox"
@@ -192,24 +195,7 @@ const DisposalManagementPage = () => {
         />
       ),
     },
-    {
-      key: 'select',
-      header: '',
-      width: 56,
-      render: (row) => (
-        <input
-          type="radio"
-          name="disposal-registration-select"
-          disabled={!row.dispMId}
-          checked={selectedRegistration?.dispMId === row.dispMId}
-          onChange={() => {
-            setSelectedRegistration({ dispMId: row.dispMId })
-            setItemPage(1)
-          }}
-        />
-      ),
-    },
-    { key: 'id', header: '순번', width: 100, render: (row) => row.id },
+    { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'disposalDate', header: '처분일자', width: 150, render: (row) => row.disposalDate },
     { key: 'disposalConfirmDate', header: '처분확정일자', width: 150, render: (row) => row.disposalConfirmDate },
     { key: 'registrantId', header: '등록자ID', width: 150, render: (row) => row.registrantId },
@@ -350,6 +336,12 @@ const DisposalManagementPage = () => {
         getRowKey={(row) => row.id}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
+        onRowClick={(row) => {
+          if (!row.dispMId) return
+          setSelectedRegistration({ dispMId: row.dispMId })
+          setItemPage(1)
+        }}
+        isRowSelected={(row) => selectedRegistration?.dispMId === row.dispMId}
         renderActions={() => (
           <div className="disposal-table-actions">
             <Button

@@ -1,8 +1,8 @@
 import http from './http'
 import type { ApiResponse } from './types'
 
-export interface AiChatRequest {
-  session_id: string
+/** POST /api/ai/chat/threads/{threadId}/messages 요청 바디 (경로에 threadId 포함) */
+export interface AiChatMessageRequest {
   query: string
 }
 
@@ -45,7 +45,7 @@ export async function getChatThreads(): Promise<string[]> {
 
 /**
  * 채팅방 입장 시 이전 대화 맥락 조회
- * GET /api/ai/chat/messages/{threadId}/serch
+ * GET /api/ai/chat/threads/{threadId}/messages
  */
 export interface ChatContextMessage {
   order: number
@@ -57,10 +57,33 @@ export async function getChatMessages(
   threadId: string,
 ): Promise<ChatContextMessage[]> {
   const res = await http.get<ApiResponse<ChatContextMessage[]>>(
-    `/api/ai/chat/messages/${encodeURIComponent(threadId)}/serch`,
+    `/api/ai/chat/threads/${encodeURIComponent(threadId)}/messages`,
   )
   const data = res.data?.data
   return Array.isArray(data) ? data : []
+}
+
+function parseThreadIdFromCreateResponse(
+  raw: unknown,
+): string | null {
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>
+    if (typeof o.threadId === 'string' && o.threadId.trim()) return o.threadId.trim()
+    if (typeof o.id === 'string' && o.id.trim()) return o.id.trim()
+  }
+  return null
+}
+
+/**
+ * 쓰레드 생성(첫 대화)
+ * POST /api/ai/chat/threads
+ */
+export async function createChatThread(): Promise<string> {
+  const res = await http.post<ApiResponse<unknown>>('/api/ai/chat/threads')
+  const id = parseThreadIdFromCreateResponse(res.data?.data)
+  if (id) return id
+  throw new Error('쓰레드 생성 응답에 threadId가 없습니다.')
 }
 
 /**
@@ -78,29 +101,41 @@ export async function searchChatMessages(content: string): Promise<string[]> {
 
 /**
  * 채팅방(쓰레드) 삭제
- * DELETE /api/ai/chat/threads?threadId=...
+ * DELETE /api/ai/chat/threads/{threadId}
  */
 export async function deleteChatThread(threadId: string): Promise<void> {
   await http.delete<ApiResponse<Record<string, unknown>>>(
-    '/api/ai/chat/threads',
-    { params: { threadId } },
+    `/api/ai/chat/threads/${encodeURIComponent(threadId)}`,
   )
 }
 
 /**
- * AI 챗봇 대화 API
- * POST /api/ai/chat
+ * 쓰레드 이름 수정
+ * PATCH /api/ai/chat/threads/{threadId}
+ */
+export async function patchChatThreadTitle(
+  threadId: string,
+  title: string,
+): Promise<void> {
+  await http.patch<ApiResponse<Record<string, unknown>>>(
+    `/api/ai/chat/threads/${encodeURIComponent(threadId)}`,
+    { title: title.trim() },
+  )
+}
+
+/**
+ * AI 챗봇 대화
+ * POST /api/ai/chat/threads/{threadId}/messages
  */
 export async function sendAiChat(
-  sessionId: string,
+  threadId: string,
   query: string,
 ): Promise<string> {
-  const payload: AiChatRequest = {
-    session_id: sessionId,
+  const payload: AiChatMessageRequest = {
     query: query.trim(),
   }
   const res = await http.post<ApiResponse<AiChatResponseData>>(
-    '/api/ai/chat',
+    `/api/ai/chat/threads/${encodeURIComponent(threadId)}/messages`,
     payload,
   )
   const body = res.data

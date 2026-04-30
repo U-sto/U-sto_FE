@@ -11,7 +11,7 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import {
   useOperatingStatusFilterOptions,
   useItemStatusSelectOptions,
@@ -35,7 +35,6 @@ import {
   buildSelectOptionsWithPlaceholder,
 } from '../../../api/codes'
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const REASON_OPTIONS_FALLBACK = ['선택', '교체', '폐기', '기타']
 
 /** 공통코드 미로딩 시 불용 사유 라벨 → API 코드 */
@@ -132,6 +131,7 @@ const SearchIcon = () => (
 
 const DisuseRegistrationPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { dsuMId: dsuMIdParam } = useParams<{ dsuMId?: string }>()
   const dsuMId = dsuMIdParam?.trim() ?? ''
   const isEditMode = dsuMId.length > 0
@@ -455,7 +455,7 @@ const DisuseRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field">

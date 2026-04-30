@@ -24,7 +24,7 @@ import {
 } from '../../../api/itemDisposals'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import {
   useOperatingStatusFilterOptions,
   resolveOperatingStatusFilterValue,
@@ -43,7 +43,6 @@ type RegistrationFilters = {
   sortDateTo: string
 }
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 // 처분정리구분(표시: 한글, 전송: 코드)
 const DISPOSAL_SORT_OPTIONS = ['폐기', '매각', '멸실', '도난']
 const DISPOSAL_TYPE_MAP: Record<string, string> = {
@@ -121,6 +120,7 @@ const SearchIcon = () => (
 
 const DisposalRegistrationPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { dispMId: dispMIdParam } = useParams<{ dispMId?: string }>()
   const dispMId = dispMIdParam?.trim() ?? ''
   const isEditMode = dispMId.length > 0
@@ -495,7 +495,7 @@ const DisposalRegistrationPage = () => {
                 onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, operatingDept: value }))
                 }
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field">

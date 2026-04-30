@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import SparkleIcon from '../../components/common/SparkleIcon/SparkleIcon'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import AiForecastPageLayout from '../../components/layout/management/AiForecastPageLayout/AiForecastPageLayout'
 import TextField from '../../components/common/TextField/TextField'
 import Button from '../../components/common/Button/Button'
@@ -14,6 +14,7 @@ import {
   fetchAiForecastHistory,
   fetchAiForecastHistoryDetail,
   deleteAiForecastRecord,
+  patchAiForecastRecordTitle,
   type AiForecastResponse,
   type AiForecastDisplaySummary,
   type ProcurementRecommendationRow,
@@ -25,7 +26,49 @@ import {
 } from '../../api/organization'
 import G2BClassificationSearchModal from '../../features/asset-management/components/G2BClassificationSearchModal/G2BClassificationSearchModal'
 import RiskPropensityHelpTooltip from './RiskPropensityHelpTooltip'
+import AiForecastRenameModal from './AiForecastRenameModal'
 import './AiForecastPage.css'
+
+const HistoryRowMenuPencilIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path
+      d="M4 20h4l10.5-10.5-4-4L4 16v4zM13.5 6.5l4 4"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const HistoryRowMenuDeleteIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+    <circle cx="12" cy="12" r="9" fill="#d52e2e" />
+    <path
+      d="M9 9l6 6M15 9l-6 6"
+      stroke="var(--usto-alt-white)"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+/** 이전 예측 이력 행 — 더보기(⋮) */
+const HistoryRowMenuMoreIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
+    className="ai-forecast-history-more-icon"
+  >
+    <circle cx="12" cy="6" r="2" fill="currentColor" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <circle cx="12" cy="18" r="2" fill="currentColor" />
+  </svg>
+)
 
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -96,8 +139,6 @@ function buildAutoPrompt(condition: {
 
 type TabId = 'query' | 'result' | 'history'
 
-const HISTORY_PAGE_SIZE = 10
-
 function parseHistorySortTime(createdAt?: string): number {
   if (!createdAt?.trim()) return NaN
   const t = Date.parse(createdAt)
@@ -118,15 +159,35 @@ const AiForecastPage = () => {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [historyLoaded, setHistoryLoaded] = useState(false)
-  const [historyPageIndex, setHistoryPageIndex] = useState(0)
   /** 이전 예측 이력 탭 — 제목 검색 */
   const [historyTitleSearch, setHistoryTitleSearch] = useState('')
   const [historySelectedIds, setHistorySelectedIds] = useState<Set<string>>(() => new Set())
   const [historyDeleting, setHistoryDeleting] = useState(false)
+  const [historySort, setHistorySort] = useState<'latest' | 'oldest'>('latest')
+  const [historySortOpen, setHistorySortOpen] = useState(false)
+  const historySortRef = useRef<HTMLDivElement | null>(null)
+  /** 행 우측 … 메뉴 (이름 수정 / 분석 삭제) — 스크롤 영역에 잘리지 않도록 body 포털 + fixed */
+  const [historyRowMenuOpenId, setHistoryRowMenuOpenId] = useState<string | null>(null)
+  const [historyRowMenuPos, setHistoryRowMenuPos] = useState<{
+    top: number
+    left: number
+  } | null>(null)
+  const historyRowMenuRef = useRef<HTMLDivElement | null>(null)
+  const historyRowMenuPortalRef = useRef<HTMLDivElement | null>(null)
+  const historyListScrollRef = useRef<HTMLDivElement | null>(null)
+  const [renameModalItem, setRenameModalItem] = useState<AiForecastHistoryItem | null>(null)
   const [operatingDeptOptions, setOperatingDeptOptions] = useState<string[]>(['선택'])
   const [deptLabelToCd, setDeptLabelToCd] = useState<Record<string, string>>({})
   const [orgCdForForecast, setOrgCdForForecast] = useState('7008277')
   const [isG2BClassificationModalOpen, setIsG2BClassificationModalOpen] = useState(false)
+
+  const handleSidebarTabChange = (tab: 'ai' | 'history') => {
+    if (tab === 'history') {
+      setActiveTab('history')
+      return
+    }
+    setActiveTab(result ? 'result' : 'query')
+  }
 
   const getFirstSelectableDept = (options: string[]) => options.find((opt) => opt !== '선택') ?? '선택'
 
@@ -185,17 +246,19 @@ const AiForecastPage = () => {
     })()
   }, [activeTab, historyLoaded, historyLoading])
 
-  /** 최신순(생성일 내림차순). 날짜 없는 항목은 뒤로 */
+  /** 생성일 정렬 (최신순/오래된순). 날짜 없는 항목은 뒤로 */
   const sortedHistory = useMemo(() => {
     return [...history].sort((a, b) => {
       const ta = parseHistorySortTime(a.createdAt)
       const tb = parseHistorySortTime(b.createdAt)
-      if (!Number.isNaN(ta) && !Number.isNaN(tb)) return tb - ta
+      if (!Number.isNaN(ta) && !Number.isNaN(tb)) {
+        return historySort === 'latest' ? tb - ta : ta - tb
+      }
       if (!Number.isNaN(ta)) return -1
       if (!Number.isNaN(tb)) return 1
       return 0
     })
-  }, [history])
+  }, [history, historySort])
 
   const filteredHistory = useMemo(() => {
     const q = historyTitleSearch.trim().toLowerCase()
@@ -207,24 +270,79 @@ const AiForecastPage = () => {
     )
   }, [sortedHistory, historyTitleSearch])
 
-  const historyTotalPages = Math.max(1, Math.ceil(filteredHistory.length / HISTORY_PAGE_SIZE))
-
-  const paginatedHistory = useMemo(() => {
-    const start = historyPageIndex * HISTORY_PAGE_SIZE
-    return filteredHistory.slice(start, start + HISTORY_PAGE_SIZE)
-  }, [filteredHistory, historyPageIndex])
-
-  useEffect(() => {
-    setHistoryPageIndex(0)
-  }, [historyTitleSearch])
+  const historyRowMenuItem = useMemo(
+    () =>
+      historyRowMenuOpenId
+        ? filteredHistory.find((h) => h.id === historyRowMenuOpenId) ?? null
+        : null,
+    [filteredHistory, historyRowMenuOpenId],
+  )
 
   useEffect(() => {
-    setHistoryPageIndex((p) => Math.min(p, Math.max(0, historyTotalPages - 1)))
-  }, [historyTotalPages])
-
-  useEffect(() => {
-    if (activeTab !== 'history') setHistorySelectedIds(new Set())
+    if (activeTab !== 'history') {
+      setHistorySelectedIds(new Set())
+      setHistoryRowMenuOpenId(null)
+      setRenameModalItem(null)
+    }
   }, [activeTab])
+
+  useEffect(() => {
+    if (!historySortOpen) return
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (!historySortRef.current?.contains(target)) {
+        setHistorySortOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleDocumentClick)
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick)
+    }
+  }, [historySortOpen])
+
+  const updateHistoryRowMenuPosition = useCallback(() => {
+    const el = historyRowMenuRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setHistoryRowMenuPos({ top: rect.bottom + 6, left: rect.left })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!historyRowMenuOpenId) {
+      setHistoryRowMenuPos(null)
+      return
+    }
+    updateHistoryRowMenuPosition()
+  }, [historyRowMenuOpenId, updateHistoryRowMenuPosition])
+
+  useEffect(() => {
+    if (!historyRowMenuOpenId) return
+    const onScrollOrResize = () => updateHistoryRowMenuPosition()
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+    const scrollEl = historyListScrollRef.current
+    scrollEl?.addEventListener('scroll', onScrollOrResize)
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+      scrollEl?.removeEventListener('scroll', onScrollOrResize)
+    }
+  }, [historyRowMenuOpenId, updateHistoryRowMenuPosition])
+
+  useEffect(() => {
+    if (!historyRowMenuOpenId) return
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      if (historyRowMenuRef.current?.contains(target)) return
+      if (historyRowMenuPortalRef.current?.contains(target)) return
+      if (target.closest('.ai-forecast-history-more')) return
+      setHistoryRowMenuOpenId(null)
+    }
+    document.addEventListener('mousedown', handleDocumentClick)
+    return () => document.removeEventListener('mousedown', handleDocumentClick)
+  }, [historyRowMenuOpenId])
 
   const toggleHistorySelect = (id: string) => {
     setHistorySelectedIds((prev) => {
@@ -266,6 +384,30 @@ const AiForecastPage = () => {
       }
     } finally {
       setHistoryDeleting(false)
+    }
+  }
+
+  const handleRenameHistoryItem = (item: AiForecastHistoryItem) => {
+    setRenameModalItem(item)
+    setHistoryRowMenuOpenId(null)
+  }
+
+  const handleDeleteHistoryItem = async (id: string) => {
+    if (!window.confirm('이 분석 기록을 삭제할까요?')) return
+    setHistoryDeleting(true)
+    try {
+      await deleteAiForecastRecord(id)
+      setHistory((prev) => prev.filter((h) => h.id !== id))
+      setHistorySelectedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    } finally {
+      setHistoryDeleting(false)
+      setHistoryRowMenuOpenId(null)
     }
   }
 
@@ -345,30 +487,11 @@ const AiForecastPage = () => {
   ]
 
   return (
-    <AiForecastPageLayout depthLabel="사용주기 AI 예측">
-      <div className="ai-forecast-tabs">
-        <button
-          type="button"
-          className={`ai-forecast-tab ${activeTab === 'query' ? 'ai-forecast-tab--active' : ''}`}
-          onClick={() => setActiveTab('query')}
-        >
-          사용주기 AI 예측
-        </button>
-        <button
-          type="button"
-          className={`ai-forecast-tab ${activeTab === 'result' ? 'ai-forecast-tab--active' : ''}`}
-          onClick={() => setActiveTab('result')}
-        >
-          분석 결과
-        </button>
-        <button
-          type="button"
-          className={`ai-forecast-tab ${activeTab === 'history' ? 'ai-forecast-tab--active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          이전 예측 이력
-        </button>
-      </div>
+    <AiForecastPageLayout
+      depthLabel={activeTab === 'history' ? '이전 분석 결과' : 'AI 예측'}
+      activeSidebarTab={activeTab === 'history' ? 'history' : 'ai'}
+      onSidebarTabChange={handleSidebarTabChange}
+    >
 
       {activeTab === 'history' && historyLoading && (
         <main className="ai-forecast-history ai-forecast-history--no-data">
@@ -572,7 +695,13 @@ const AiForecastPage = () => {
               <div className="ai-forecast-result-inner">
                   <div className="ai-forecast-result-banner">
                     <div className="ai-forecast-result-banner-text">
-                      <SparkleIcon size={40} color="var(--usto-primary-300)" className="ai-forecast-banner-sparkle" />
+                      <img
+                        src="/ai-forecast-star-icon.svg"
+                        alt=""
+                        width={38}
+                        height={38}
+                        className="ai-forecast-banner-sparkle"
+                      />
                       <div>
                         <p>입력하신 조건에 따라</p>
                         <p>다음과 같이 분석이 완료되었습니다.</p>
@@ -705,30 +834,73 @@ const AiForecastPage = () => {
           ) : (
             <div className="ai-forecast-history-inner">
               <div className="ai-forecast-history-search" role="search">
-                <div className="ai-forecast-history-search-header">
-                  <span className="ai-forecast-history-search-heading" id="ai-forecast-history-search-title">
-                    제목 검색
-                  </span>
-                  <button
-                    type="button"
-                    className="ai-forecast-history-delete-btn"
-                    disabled={historyDeleting || historySelectedIds.size === 0}
-                    onClick={() => void handleDeleteSelectedHistory()}
-                  >
-                    {historyDeleting ? '삭제 중...' : '삭제'}
-                  </button>
+                <div className="ai-forecast-history-search-row">
+                  <label className="ai-forecast-history-search-label" htmlFor="ai-forecast-history-search-input">
+                    <span className="visually-hidden">검색어</span>
+                    <span className="ai-forecast-history-search-icon" aria-hidden>
+                      <SearchIcon />
+                    </span>
+                    <input
+                      id="ai-forecast-history-search-input"
+                      value={historyTitleSearch}
+                      onChange={(e) => setHistoryTitleSearch(e.target.value)}
+                      placeholder="제목으로 검색"
+                      className="ai-forecast-history-search-input-el"
+                      autoComplete="off"
+                    />
+                  </label>
+                  <div className="ai-forecast-history-search-actions">
+                    <button
+                      type="button"
+                      className="ai-forecast-history-delete-btn"
+                      disabled={historyDeleting || historySelectedIds.size === 0}
+                      onClick={() => void handleDeleteSelectedHistory()}
+                    >
+                      {historyDeleting ? '삭제 중...' : '선택삭제'}
+                    </button>
+                    <div className="ai-forecast-history-sort" ref={historySortRef}>
+                      <button
+                        type="button"
+                        className={`ai-forecast-history-sort-btn${historySortOpen ? ' ai-forecast-history-sort-btn--open' : ''}`}
+                        aria-label="정렬"
+                        aria-expanded={historySortOpen}
+                        onClick={() => setHistorySortOpen((prev) => !prev)}
+                      >
+                        <span>정렬</span>
+                        <span
+                          className={`ai-forecast-history-sort-caret${historySortOpen ? ' is-open' : ''}`}
+                          aria-hidden
+                        />
+                      </button>
+                      {historySortOpen && (
+                        <div className="ai-forecast-history-sort-menu" role="menu">
+                          <button
+                            type="button"
+                            className={`ai-forecast-history-sort-item${historySort === 'latest' ? ' is-active' : ''}`}
+                            onClick={() => {
+                              setHistorySort('latest')
+                              setHistorySortOpen(false)
+                            }}
+                            role="menuitem"
+                          >
+                            최신 순
+                          </button>
+                          <button
+                            type="button"
+                            className={`ai-forecast-history-sort-item${historySort === 'oldest' ? ' is-active' : ''}`}
+                            onClick={() => {
+                              setHistorySort('oldest')
+                              setHistorySortOpen(false)
+                            }}
+                            role="menuitem"
+                          >
+                            오래된 순
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <label className="ai-forecast-history-search-label" htmlFor="ai-forecast-history-search-input">
-                  <span className="visually-hidden">검색어</span>
-                  <TextField
-                    id="ai-forecast-history-search-input"
-                    value={historyTitleSearch}
-                    onChange={(e) => setHistoryTitleSearch(e.target.value)}
-                    placeholder="제목에 포함된 글자로 찾기"
-                    className="ai-forecast-history-search-input"
-                    autoComplete="off"
-                  />
-                </label>
               </div>
               {filteredHistory.length === 0 ? (
                 <p className="ai-forecast-history-empty ai-forecast-history-empty--inline">
@@ -737,30 +909,29 @@ const AiForecastPage = () => {
               ) : (
                 <>
               <div
-                className={
-                  filteredHistory.length > HISTORY_PAGE_SIZE
-                    ? 'ai-forecast-history-list-wrap ai-forecast-history-list-wrap--with-pager'
-                    : 'ai-forecast-history-list-wrap'
-                }
+                ref={historyListScrollRef}
+                className="ai-forecast-history-list-wrap ai-forecast-history-list-wrap--with-scroll"
               >
               <ul className="ai-forecast-history-list">
-                {paginatedHistory.map((item) => (
+                {filteredHistory.map((item) => (
                   <li key={item.id} className="ai-forecast-history-item">
                     <div className="ai-forecast-history-row">
-                      <input
-                        type="checkbox"
-                        className="ai-forecast-history-checkbox"
-                        checked={historySelectedIds.has(item.id)}
-                        onChange={() => toggleHistorySelect(item.id)}
-                        onClick={(e) => e.stopPropagation()}
+                      <button
+                        type="button"
+                        className={`ai-forecast-history-checkbox${historySelectedIds.has(item.id) ? ' is-checked' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleHistorySelect(item.id)
+                        }}
                         aria-label={`${item.title} 선택`}
+                        aria-pressed={historySelectedIds.has(item.id)}
                       />
                       <button
                         type="button"
-                        className="ai-forecast-history-button"
+                        className="ai-forecast-history-title-btn"
                         onClick={async () => {
                           try {
-                            const detail = await fetchAiForecastHistoryDetail(item.id, item.title)
+                            const detail = await fetchAiForecastHistoryDetail(item.id)
                             setResult(detail)
                             setActiveTab('result')
                           } catch (e) {
@@ -773,40 +944,84 @@ const AiForecastPage = () => {
                         }}
                       >
                         <div className="ai-forecast-history-title">{item.title}</div>
-                        {item.createdAt && (
-                          <div className="ai-forecast-history-meta">{item.createdAt}</div>
-                        )}
                       </button>
+                      <div className="ai-forecast-history-meta">{item.createdAt ?? '-'}</div>
+                      <div
+                        className="ai-forecast-history-more-wrap"
+                        ref={historyRowMenuOpenId === item.id ? historyRowMenuRef : undefined}
+                      >
+                        <button
+                          type="button"
+                          className="ai-forecast-history-more"
+                          aria-label="더보기"
+                          aria-expanded={historyRowMenuOpenId === item.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setHistoryRowMenuOpenId((prev) =>
+                              prev === item.id ? null : item.id,
+                            )
+                          }}
+                        >
+                          <HistoryRowMenuMoreIcon />
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))}
               </ul>
               </div>
-              {filteredHistory.length > HISTORY_PAGE_SIZE && (
-                <div className="ai-forecast-history-pager" role="navigation" aria-label="예측 이력 페이지">
-                  <button
-                    type="button"
-                    className="ai-forecast-history-pager-btn"
-                    disabled={historyPageIndex <= 0}
-                    onClick={() => setHistoryPageIndex((p) => Math.max(0, p - 1))}
+              {historyRowMenuOpenId &&
+                historyRowMenuPos &&
+                historyRowMenuItem &&
+                createPortal(
+                  <div
+                    ref={historyRowMenuPortalRef}
+                    className="ai-forecast-history-row-menu ai-forecast-history-row-menu--portal"
+                    style={{
+                      top: historyRowMenuPos.top,
+                      left: historyRowMenuPos.left,
+                    }}
+                    role="menu"
                   >
-                    이전
-                  </button>
-                  <span className="ai-forecast-history-pager-info">
-                    {historyPageIndex + 1} / {historyTotalPages}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="ai-forecast-history-row-menu-item ai-forecast-history-row-menu-item--rename"
+                      onClick={() => handleRenameHistoryItem(historyRowMenuItem)}
+                    >
+                      <span className="ai-forecast-history-row-menu-icon" aria-hidden>
+                        <HistoryRowMenuPencilIcon />
+                      </span>
+                      <span>이름 수정</span>
+                    </button>
+                    <div className="ai-forecast-history-row-menu-divider" aria-hidden />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="ai-forecast-history-row-menu-item ai-forecast-history-row-menu-item--delete"
+                      disabled={historyDeleting}
+                      onClick={() => void handleDeleteHistoryItem(historyRowMenuItem.id)}
+                    >
+                      <span className="ai-forecast-history-row-menu-icon" aria-hidden>
+                        <HistoryRowMenuDeleteIcon />
+                      </span>
+                      <span>분석 삭제</span>
+                    </button>
+                  </div>,
+                  document.body,
+                )}
+              <div className="ai-forecast-history-new-wrap">
+                <button
+                  type="button"
+                  className="ai-forecast-history-new-btn"
+                  onClick={() => setActiveTab('query')}
+                >
+                  <span className="ai-forecast-history-new-icon" aria-hidden>
+                    <img src="/AIchartIcon.png" alt="" width={32} height={26} />
                   </span>
-                  <button
-                    type="button"
-                    className="ai-forecast-history-pager-btn"
-                    disabled={historyPageIndex >= historyTotalPages - 1}
-                    onClick={() =>
-                      setHistoryPageIndex((p) => Math.min(historyTotalPages - 1, p + 1))
-                    }
-                  >
-                    다음
-                  </button>
-                </div>
-              )}
+                  <span className="ai-forecast-history-new-text">새로운 분석 생성</span>
+                </button>
+              </div>
                 </>
               )}
             </div>
@@ -818,6 +1033,18 @@ const AiForecastPage = () => {
         onClose={() => setIsG2BClassificationModalOpen(false)}
         onSelect={(pick) => {
           setAnalysisCondition((prev) => ({ ...prev, itemCategoryName: pick.name }))
+        }}
+      />
+      <AiForecastRenameModal
+        isOpen={!!renameModalItem}
+        initialTitle={renameModalItem?.title ?? ''}
+        onClose={() => setRenameModalItem(null)}
+        onConfirm={async (title) => {
+          if (!renameModalItem) return
+          await patchAiForecastRecordTitle(renameModalItem.id, title)
+          setHistory((prev) =>
+            prev.map((h) => (h.id === renameModalItem.id ? { ...h, title } : h)),
+          )
         }}
       />
     </AiForecastPageLayout>

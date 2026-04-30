@@ -29,7 +29,7 @@ import {
 } from '../../../api/codes'
 import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import './AcqConfirmationPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 
 type Filters = {
   g2bName: string
@@ -125,10 +125,7 @@ const AcqConfirmationPage = () => {
 
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
 
-  const operatingDeptOptions = useMemo(
-    () => OPERATING_DEPARTMENT_FILTER_OPTIONS,
-    [],
-  )
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
 
   const [tableData, setTableData] = useState<AcqTableRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
@@ -262,7 +259,6 @@ const AcqConfirmationPage = () => {
           aria-label="현재 페이지 전체 선택"
         />
       ),
-      width: 56,
       render: (row) => (
         <input
           type="checkbox"

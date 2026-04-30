@@ -125,6 +125,24 @@ export function applyDeptLabelToSearchRequest(
   const all = options?.allLabel ?? '전체'
   const t = label?.trim() ?? ''
   if (!t || t === all) return
+  /**
+   * 동적 부서 옵션(buildOperatingDepartmentSelect)에서 중복 라벨은
+   * "부서명 (deptCd)" 형태로 내려온다.
+   * 예) "학생지원팀 (D00123)" → deptNm: "학생지원팀", deptCd: "D00123"
+   */
+  const match = t.match(/^(.*)\s\(([A-Za-z0-9_-]{2,32})\)$/)
+  if (match) {
+    const deptNm = match[1]?.trim() ?? ''
+    const token = match[2]?.trim() ?? ''
+    const upper = token.toUpperCase()
+    // 캠퍼스 표기(ERICA/SEOUL)는 deptCd가 아니므로 제외
+    if (deptNm && upper !== 'ERICA' && upper !== 'SEOUL') {
+      target.deptNm = deptNm
+      target.deptCd = token
+      return
+    }
+  }
+
   const cd = resolveDeptCdForOperation(t)
   if (cd) target.deptCd = cd
   target.deptNm = t

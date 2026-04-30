@@ -1,20 +1,29 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../GNBWithMenu/GNBWithMenu'
 import '../ManagementLayoutBase/ManagementLayoutBase.css'
 import './AiForecastPageLayout.css'
+import ChatBotButton from '../../../../features/support/components/ChatBotButton/ChatBotButton'
+
+export type AiForecastSidebarTab = 'ai' | 'history'
 
 interface AiForecastPageLayoutProps {
   depthLabel: string
+  activeSidebarTab: AiForecastSidebarTab
+  onSidebarTabChange: (tab: AiForecastSidebarTab) => void
   children: ReactNode
 }
 
-const SIDEBAR_ITEMS = [
-  { label: '사용주기 AI 예측', path: '/ai-forecast' },
+const SIDEBAR_ITEMS: { label: string; key: AiForecastSidebarTab }[] = [
+  { label: '사용주기 AI 예측', key: 'ai' },
+  { label: '이전 분석 결과', key: 'history' },
 ]
 
-const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProps) => {
-  const navigate = useNavigate()
+const AiForecastPageLayout = ({
+  depthLabel,
+  activeSidebarTab,
+  onSidebarTabChange,
+  children,
+}: AiForecastPageLayoutProps) => {
   const prefix = 'management'
 
   return (
@@ -31,11 +40,11 @@ const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProp
             <div className={`${prefix}-sidebar-menu-list`}>
               {SIDEBAR_ITEMS.map((item) => (
                 <button
-                  key={item.path}
+                  key={item.key}
                   type="button"
-                  className={`${prefix}-sidebar-menu-item ${prefix}-sidebar-menu-item-active`}
-                  onClick={() => navigate(item.path)}
-                  aria-current="page"
+                  className={`${prefix}-sidebar-menu-item ${activeSidebarTab === item.key ? `${prefix}-sidebar-menu-item-active` : ''}`}
+                  onClick={() => onSidebarTabChange(item.key)}
+                  aria-current={activeSidebarTab === item.key ? 'page' : undefined}
                 >
                   {item.label}
                 </button>
@@ -47,7 +56,7 @@ const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProp
         <main className={`${prefix}-main`}>
           <section className={`${prefix}-depthbar`}>
             <div className={`${prefix}-depthbar-bg`} />
-            <div className={`${prefix}-depthbar-track ai-forecast-depthbar-track`}>
+            <div className={`${prefix}-depthbar-track ${prefix}-depthbar-track-single`}>
               <div className={`${prefix}-depth-pill ${prefix}-depth-pill-active`}>
                 <span className={`${prefix}-depth-text`}>{depthLabel}</span>
               </div>
@@ -57,6 +66,8 @@ const AiForecastPageLayout = ({ depthLabel, children }: AiForecastPageLayoutProp
           <div className={`${prefix}-main-body`}>{children}</div>
         </main>
       </div>
+
+      <ChatBotButton />
     </div>
   )
 }

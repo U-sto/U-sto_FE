@@ -126,8 +126,14 @@ export async function fetchDisuseList(
   const { page, pageSize, filters } = params
 
   const searchRequest: Record<string, string> = {}
-  if (filters.disuseDateFrom) searchRequest.startAplyAt = filters.disuseDateFrom
-  if (filters.disuseDateTo) searchRequest.endAplyAt = filters.disuseDateTo
+  if (filters.disuseDateFrom) {
+    searchRequest.startAplyAt = filters.disuseDateFrom
+    searchRequest.startApplYAt = filters.disuseDateFrom
+  }
+  if (filters.disuseDateTo) {
+    searchRequest.endAplyAt = filters.disuseDateTo
+    searchRequest.endApplYAt = filters.disuseDateTo
+  }
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
     searchRequest.apprSts = APPR_STS_CODE_MAP[filters.approvalStatus] ?? filters.approvalStatus
   }

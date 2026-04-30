@@ -31,7 +31,7 @@ import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import './AcquisitionListPage.css'
-import { OPERATING_DEPARTMENT_FILTER_OPTIONS } from '../../../constants/departments'
+import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import DeleteConfirmModal from '../../../components/common/DeleteConfirmModal/DeleteConfirmModal'
 
 type AcquisitionListFilters = {
@@ -58,7 +58,6 @@ const INITIAL_FILTERS: AcquisitionListFilters = {
   operatingDept: '전체',
 }
 
-const OPERATING_DEPT_OPTIONS = OPERATING_DEPARTMENT_FILTER_OPTIONS
 const APPROVAL_STATUS_FALLBACK_OPTIONS = ['전체', '대기', '반려', '확정']
 
 const SearchIcon = () => (
@@ -89,6 +88,7 @@ const SearchIcon = () => (
 
 const AcquisitionListPage = () => {
   const navigate = useNavigate()
+  const operatingDeptOptions = useOperatingDepartmentFilterOptions()
   const { group: apprGroup } = useCommonCodeGroup(CODE_GROUP.APPR_STATUS)
   const approvalDescToCode = useMemo(
     () => buildDescriptionToCodeMap(apprGroup ?? undefined),
@@ -388,7 +388,7 @@ const AcquisitionListPage = () => {
                 placeholder="전체"
                 value={filters.operatingDept}
                 onChange={(value: string) => setFilters((prev) => ({ ...prev, operatingDept: value }))}
-                options={OPERATING_DEPT_OPTIONS}
+                options={operatingDeptOptions}
               />
             </div>
             <div className="operation-ledger-field">

@@ -543,7 +543,7 @@
 }
 
 /* DataTable column widths (class from DataTable: acq-th-{key}) */
-.acq-table-el .acq-th-select { width: 56px; }
+.acq-table-el .acq-th-select { width: 40px; min-width: 40px; max-width: 40px; }
 .acq-table-el .acq-th-g2bNumber { width: 120px; }
 .acq-table-el .acq-th-g2bName { width: 150px; }
 .acq-table-el .acq-th-acquireDate { width: 100px; }
