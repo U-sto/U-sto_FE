@@ -1,43 +1,9 @@
-# 1. 저장소 전체를 기본 무시 후, 아래 ! 규칙으로 허용할 경로만 추적
-*
-
-# 2. react-app 폴더와 그 내부의 src만 허용
-!/react-app/
-!/react-app/src/
-!/react-app/src/**
-!/react-app/public/
-!/react-app/public/**
-
-# 3. 루트에 있는 src 폴더는 절대 무시 (이게 핵심입니다)
-/src/
-
-# 4. react-app 실행에 필요한 최소한의 설정들 (필요 없다면 제외 가능)
-!/react-app/package.json
-!/react-app/index.html
-!/react-app/vite.config.ts
-!/react-app/tsconfig.json
-!/react-app/tsconfig.node.json
-
-# 5. 기타 루트에 있는 모든 지저분한 파일들 무시
-.changeset/
-dist/
-docs/
 node_modules/
+dist/
 .vite/
+
 .env
-.nvmrc
-.prettierrc
-CHANGELOG.md
-CONTRIBUTING.md
-eslint.config.js
-jest.config.js
-LICENSE
-pnpm-lock.yaml
-README*.md
-RELEASES.md
-ROADMAP.md
-server.json
-tsconfig.json
-tsup.config.ts
-cspell.json
-!/.gitignore
+.env.local
+
+react-app/
+figma-node-result.json
