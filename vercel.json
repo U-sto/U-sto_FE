@@ -1,4 +1,14 @@
 {
+  "routes": [
+    {
+      "src": "/favicon.ico",
+      "dest": "/usto_symbol.svg"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
   "rewrites": [
     {
       "source": "/favicon.ico",
