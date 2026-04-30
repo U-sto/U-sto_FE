@@ -32,7 +32,6 @@ CONTRIBUTING.md
 eslint.config.js
 jest.config.js
 LICENSE
-package.json
 pnpm-lock.yaml
 README*.md
 RELEASES.md
