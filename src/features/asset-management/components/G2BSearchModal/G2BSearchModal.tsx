@@ -19,6 +19,8 @@ export type G2BItem = {
   identificationCode?: string
   sortDate?: string
   operatingStatus?: string
+  /** API drbYr (내용연수) */
+  drbYr?: string | number
   usefulLife?: string
   acquireAmount?: string
 }
@@ -57,6 +59,7 @@ export type ItemDetail = {
   name: string
   sortDate?: string
   operatingStatus?: string
+  drbYr?: string | number
   usefulLife?: string
   acquireAmount?: string
 }
@@ -118,10 +121,18 @@ function mapCategoryToClassification(dto: G2BCategoryDto, index: number): ItemCl
   }
 }
 
+function formatDrbYrForDisplay(drbYr: unknown): string | undefined {
+  if (drbYr == null || drbYr === '') return undefined
+  const s = String(drbYr).trim()
+  if (!s) return undefined
+  return s.endsWith('년') ? s : `${s}년`
+}
+
 function mapItemToDetail(dto: G2BItemDto, index: number): ItemDetail {
   const identificationCode = dto.dCd ?? dto.identificationCode ?? dto.itemCode ?? ''
   const name = dto.dNm ?? dto.name ?? dto.itemName ?? ''
   const classificationCode = dto.classificationCode ?? dto.categoryCode ?? ''
+  const fromDrb = formatDrbYrForDisplay(dto.drbYr)
   return {
     id: dto.id ?? String(index),
     sequence: dto.sequence ?? index + 1,
@@ -130,7 +141,8 @@ function mapItemToDetail(dto: G2BItemDto, index: number): ItemDetail {
     name,
     sortDate: dto.sortDate,
     operatingStatus: dto.operatingStatus,
-    usefulLife: dto.usefulLife,
+    drbYr: dto.drbYr,
+    usefulLife: fromDrb ?? dto.usefulLife,
     acquireAmount: dto.upr != null ? String(dto.upr) : dto.acquireAmount,
   }
 }
@@ -358,7 +370,7 @@ const G2BSearchModal = ({ isOpen, onClose, onSelect }: G2BSearchModalProps) => {
         categoryCode: classificationCd,
         identificationCode: identificationCd,
         sortDate: selectedItemDetail.sortDate ?? '',
-        operatingStatus: selectedItemDetail.operatingStatus ?? '',
+        drbYr: selectedItemDetail.drbYr,
         usefulLife: selectedItemDetail.usefulLife ?? '',
         acquireAmount: selectedItemDetail.acquireAmount ?? '',
       })

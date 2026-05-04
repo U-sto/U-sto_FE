@@ -20,21 +20,19 @@ import {
   fetchOperatingDepartments,
   buildOperatingDepartmentSelect,
 } from '../../../api/organization'
-import {
-  CODE_GROUP,
-  buildDescriptionToCodeMap,
-  buildSelectOptionsWithPlaceholder,
-} from '../../../api/codes'
+import { CODE_GROUP, buildDescriptionToCodeMap } from '../../../api/codes'
 import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import './AcquisitionManagementPage.css'
-import { OPERATING_DEPARTMENT_SELECT_OPTIONS } from '../../../constants/departments'
+import {
+  OPERATING_DEPARTMENT_SELECT_OPTIONS,
+  resolveDeptCdForOperation,
+} from '../../../constants/departments'
 
 type FormState = {
   g2bName: string
   g2bNumber: string
   acquireDate: string
   sortDate: string
-  operatingStatus: string
   usefulLife: string
   acquireAmount: string
   quantity: string
@@ -49,7 +47,6 @@ const INITIAL_FORM: FormState = {
   g2bNumber: '',
   acquireDate: '',
   sortDate: '',
-  operatingStatus: '',
   usefulLife: '',
   acquireAmount: '',
   quantity: '',
@@ -72,9 +69,6 @@ const ARRG_CODE_TO_LABEL: Record<string, string> = {
   ARRG: '정리',
   ETC: '기타',
 }
-/** 미선택/빈 값일 때만 사용 — 등록 연동 확인용, TODO: 운용부서 코드 확정 후 제거·매핑 적용 */
-const TEMP_DEFAULT_ARRG_TY = 'BUY'
-const TEMP_DEFAULT_DEPT_CD = 'A350'
 
 /** date input용 YYYY-MM-DD */
 function toDateInputValue(s: string): string {
@@ -145,7 +139,6 @@ function buildFormFromDetail(
     g2bNumber: item.g2bItemNo ?? '',
     acquireDate: toDateInputValue(item.acqAt),
     sortDate: toDateInputValue(item.apprAt),
-    operatingStatus: item.operSts ?? '',
     usefulLife: formatUsefulLife(item.drbYr ?? ''),
     acquireAmount: item.acqUpr != null ? String(item.acqUpr) : '',
     quantity: item.acqQty != null ? String(item.acqQty) : '',
@@ -181,12 +174,18 @@ const AcquisitionManagementPage = () => {
     }
     return inv
   }, [arrgDescToCode])
-  const arrgOptions = useMemo(() => {
+  /** 드롭다운: placeholder는 Dropdown의 `placeholder`로만 표시, 옵션 목록에 '선택' 문자열은 넣지 않음 */
+  const arrgDropdownOptions = useMemo(() => {
     if (Object.keys(arrgDescToCode).length > 0) {
-      return buildSelectOptionsWithPlaceholder(arrgDescToCode)
+      return Object.keys(arrgDescToCode).sort((a, b) => a.localeCompare(b, 'ko-KR'))
     }
-    return ACQUIRE_SORT_OPTIONS
+    return ACQUIRE_SORT_OPTIONS.filter((o) => o !== '선택')
   }, [arrgDescToCode])
+
+  const deptDropdownOptions = useMemo(
+    () => deptOptions.filter((o) => o !== '선택'),
+    [deptOptions],
+  )
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
@@ -252,7 +251,7 @@ const AcquisitionManagementPage = () => {
         }
       } catch {
         if (!cancelled) {
-          setDeptOptions([...OPERATING_DEPARTMENT_SELECT_OPTIONS])
+          setDeptOptions(OPERATING_DEPARTMENT_SELECT_OPTIONS.filter((o) => o !== '선택'))
           setDeptLabelToCd({})
         }
       }
@@ -292,17 +291,37 @@ const AcquisitionManagementPage = () => {
       return
     }
 
-    const sort =
-      form.acquireSortType && form.acquireSortType !== '선택' ? form.acquireSortType : null
-    const arrgTy = sort
-      ? arrgDescToCode[sort] ?? ARRG_TY_MAP[sort] ?? TEMP_DEFAULT_ARRG_TY
-      : TEMP_DEFAULT_ARRG_TY
+    const sortLabel = form.acquireSortType.trim()
+    if (!sortLabel) {
+      window.alert('취득정리구분을 선택해 주세요.')
+      return
+    }
+    const arrgTy = arrgDescToCode[sortLabel] ?? ARRG_TY_MAP[sortLabel]
+    if (!arrgTy) {
+      window.alert('취득정리구분을 확인할 수 없습니다.')
+      return
+    }
+
+    const deptLabel = form.operatingDept.trim()
+    if (!deptLabel) {
+      window.alert('운용부서를 선택해 주세요.')
+      return
+    }
     const deptCd =
+      (deptLabelToCd[deptLabel] ?? '').trim() ||
       form.operatingDeptCode.trim() ||
-      (form.operatingDept && form.operatingDept !== '선택'
-        ? deptLabelToCd[form.operatingDept] ?? ''
-        : '') ||
-      TEMP_DEFAULT_DEPT_CD
+      resolveDeptCdForOperation(deptLabel)
+    if (!deptCd) {
+      window.alert('운용부서 코드를 확인할 수 없습니다. 운용부서를 다시 선택해 주세요.')
+      return
+    }
+
+    const acqUprRaw = String(form.acquireAmount).replace(/,/g, '').trim()
+    const acqUpr = Number.parseFloat(acqUprRaw)
+    if (!Number.isFinite(acqUpr) || acqUpr <= 0) {
+      window.alert('취득단가를 0보다 큰 값으로 입력해 주세요.')
+      return
+    }
 
     setSaving(true)
     try {
@@ -310,6 +329,7 @@ const AcquisitionManagementPage = () => {
         await updateItemAcquisition(acquisitionId, {
           ...(g2bDCd ? { g2bDCd } : {}),
           acqAt: form.acquireDate,
+          acqUpr,
           acqQty: qty,
           arrgTy,
           deptCd,
@@ -324,6 +344,7 @@ const AcquisitionManagementPage = () => {
         g2b0Cd,
         ...(g2bDCd ? { g2bDCd } : {}),
         acqAt: form.acquireDate,
+        acqUpr,
         acqQty: qty,
         arrgTy,
         deptCd,
@@ -351,8 +372,11 @@ const AcquisitionManagementPage = () => {
     update('g2bName', item.name)
     update('g2bNumber', g2bNumberJoined || item.number)
     if (item.sortDate !== undefined) update('sortDate', item.sortDate)
-    if (item.operatingStatus !== undefined) update('operatingStatus', item.operatingStatus)
-    if (item.usefulLife !== undefined) update('usefulLife', item.usefulLife)
+    const lifeFromDrb =
+      item.drbYr != null && String(item.drbYr).trim() !== ''
+        ? formatUsefulLife(String(item.drbYr))
+        : (item.usefulLife ?? '')
+    update('usefulLife', lifeFromDrb)
     if (item.acquireAmount !== undefined) update('acquireAmount', item.acquireAmount)
   }
 
@@ -446,12 +470,7 @@ const AcquisitionManagementPage = () => {
             </div>
             <div className="acquisition-field">
               <label className="acquisition-label">운용상태</label>
-              <TextField
-                value={form.operatingStatus}
-                placeholder=""
-                readOnly
-                className="acquisition-readonly"
-              />
+              <TextField value="운용" placeholder="" readOnly className="acquisition-readonly" />
             </div>
             <div className="acquisition-field">
               <label className="acquisition-label">내용연수</label>
@@ -465,12 +484,11 @@ const AcquisitionManagementPage = () => {
 
             {/* Row 3: 취득금액, 수량, 취득정리구분 - 3열 */}
             <div className="acquisition-field">
-              <label className="acquisition-label">취득금액</label>
+              <label className="acquisition-label">취득단가</label>
               <TextField
                 value={form.acquireAmount}
+                onChange={(e) => update('acquireAmount', e.target.value)}
                 placeholder=""
-                readOnly
-                className="acquisition-readonly"
               />
             </div>
             <div className="acquisition-field">
@@ -488,7 +506,7 @@ const AcquisitionManagementPage = () => {
                 placeholder="선택"
                 value={form.acquireSortType}
                 onChange={(value: string) => update('acquireSortType', value)}
-                options={arrgOptions}
+                options={arrgDropdownOptions}
               />
             </div>
 
@@ -500,15 +518,15 @@ const AcquisitionManagementPage = () => {
                 placeholder="선택"
                 value={form.operatingDept}
                 onChange={handleOperatingDeptChange}
-                options={deptOptions}
+                options={deptDropdownOptions}
               />
             </div>
             <div className="acquisition-field acquisition-field-span2">
               <label className="acquisition-label">운용부서코드</label>
               <TextField
                 value={form.operatingDeptCode}
-                placeholder="예: A350"
-                onChange={(e) => update('operatingDeptCode', e.target.value)}
+                placeholder=""
+                readOnly
                 className="acquisition-readonly"
               />
             </div>

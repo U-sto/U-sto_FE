@@ -51,6 +51,8 @@ export type G2BItemDto = {
   name?: string
   dNm?: string
   upr?: number
+  /** 내용연수(년) */
+  drbYr?: string | number
   sortDate?: string
   operatingStatus?: string
   usefulLife?: string

@@ -14,6 +14,8 @@ export type CreateItemAcquisitionBody = {
   /** 물품식별코드(G2B 목록번호 뒤칸) */
   g2bDCd?: string
   acqAt: string
+  /** 취득단가 */
+  acqUpr: number
   acqQty: number
   arrgTy: string
   deptCd: string
@@ -89,6 +91,8 @@ export type UpdateItemAcquisitionBody = {
   /** 물품식별코드(G2B 목록번호 뒤칸) */
   g2bDCd?: string
   acqAt: string
+  /** 취득단가 */
+  acqUpr: number
   acqQty: number
   arrgTy: string
   deptCd: string
