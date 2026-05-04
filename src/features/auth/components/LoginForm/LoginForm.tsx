@@ -5,10 +5,12 @@ import PasswordField from '../../../../components/common/PasswordField/PasswordF
 import Checkbox from '../../../../components/common/Checkbox/Checkbox'
 import Button from '../../../../components/common/Button/Button'
 import { login, saveLoginToken } from '../../../../api/auth'
+import { useAuthUser } from '../../../../contexts/AuthUserContext'
 import './LoginForm.css'
 
 const LoginForm = () => {
   const navigate = useNavigate()
+  const { refresh } = useAuthUser()
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)
@@ -26,6 +28,7 @@ const LoginForm = () => {
     try {
       const res = await login({ usrId: userId.trim(), pwd: password })
       saveLoginToken(res.data)
+      await refresh()
       navigate('/home')
     } catch (e) {
       setError(e instanceof Error ? e.message : '로그인에 실패했습니다.')
