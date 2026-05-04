@@ -14,7 +14,7 @@ const SystemLogo = () => {
   return (
     <button type="button" className="system-logo" onClick={handleClick}>
       <span className="system-logo-icon">
-        <img src="/usto_symbol.svg" alt="" width={42} height={29} />
+        <img src="/usto_symbol.svg" alt="" width={148} height={121} />
       </span>
       <span className="system-logo-text">물품관리시스템</span>
     </button>
