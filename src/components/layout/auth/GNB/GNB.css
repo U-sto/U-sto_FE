@@ -16,7 +16,9 @@
   background-color: var(--usto-alt-white);
   display: flex;
   align-items: center;
-  padding-left: 400px;
+  padding-left: var(--gnb-h-padding);
+  padding-right: var(--gnb-h-padding);
+  box-sizing: border-box;
 }
 
 .gnb-title {
@@ -28,15 +30,10 @@
   color: var(--usto-primary-300);
 }
 
-@media (max-width: 1920px) {
-  .gnb-main {
-    padding-left: 40px;
-  }
-}
-
 @media (max-width: 768px) {
   .gnb-main {
     padding-left: 20px;
+    padding-right: 20px;
   }
   
   .gnb-title {

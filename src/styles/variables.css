@@ -33,4 +33,11 @@
   --shadow-drop: 0px 8px 10px 0px rgba(234, 237, 237, 1);
   --usto-shadow-sidebar: 8px 0 10px 0 rgba(234, 237, 237, 1);
   --usto-primary-300-70: rgba(88, 130, 142, 0.7);
+
+  /**
+   * GNB 좌우 여백·탭 간격 — 고정 400px/1920 분기 제거, 뷰포트 비율로 1920·2560 등 획일
+   * (관리 GNBWithMenu·로그인 GNB 공통)
+   */
+  --gnb-h-padding: clamp(32px, 6vw, 160px);
+  --gnb-tab-gap: clamp(40px, 5vw, 120px);
 }

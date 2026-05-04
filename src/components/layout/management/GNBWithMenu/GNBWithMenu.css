@@ -1,6 +1,7 @@
 .gnb-with-menu {
   width: 100%;
   position: relative;
+  box-sizing: border-box;
 }
 
 .gnb-top-bar {
@@ -16,7 +17,7 @@
   gap: 8px;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 400px;
+  padding: 0 var(--gnb-h-padding);
   height: 40px;
   background-color: var(--usto-primary-200);
 }
@@ -46,15 +47,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 400px;
+  padding: 0 var(--gnb-h-padding);
   min-height: 80px;
   background-color: var(--usto-alt-white);
 }
 
 .gnb-menu-content .system-logo {
-  transform: translateX(-350px);
+  flex-shrink: 0;
 }
 
 .gnb-dropdown {
@@ -80,22 +82,25 @@
   justify-content: flex-end;
   align-items: flex-start;
   gap: 0;
-  padding: 24px 345px 28px 40px;
+  padding: 24px var(--gnb-h-padding) 28px var(--gnb-h-padding);
   box-sizing: border-box;
 }
 
+/* 헤더·메뉴 항목이 같은 좌측 기준선에서 시작하도록 컬럼 안쪽 여백 통일 */
 .gnb-mega-column {
   min-width: 120px;
+  padding-left: 14px;
+  box-sizing: border-box;
 }
 
 /* 관리자 ~ 물품관리 간격 */
 .gnb-mega-column:nth-child(1) {
-  margin-right: 55px;
+  margin-right: 50px;
 }
 
 /* 물품관리 ~ AI예측 간격 */
 .gnb-mega-column:nth-child(2) {
-  margin-right: 70px;
+  margin-right: 60px;
 }
 
 .gnb-mega-column-header {
@@ -132,7 +137,8 @@
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--usto-alt-black);
-  padding: 7px 8px;
+  /* 좌측은 컬럼 padding과 맞춤 — 헤더(p)와 첫 글자 정렬 */
+  padding: 7px 8px 7px 0;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
   border: none;
@@ -167,9 +173,9 @@
   flex-direction: column;
 }
 
-/* 하위 항목: 들여쓰기·한 단계 작은 글자로 구분, 색은 본문과 동일해 가독성 확보 */
+/* 하위 항목: 상위 대비 들여쓰기만 추가(컬럼 기준선은 상위와 동일) */
 .gnb-dropdown-submenu .gnb-dropdown-item {
-  padding-left: 20px;
+  padding-left: 18px;
   font-size: 15px;
   font-weight: 400;
   color: var(--usto-alt-black);
@@ -202,8 +208,10 @@
 .gnb-menu-tabs {
   display: flex;
   align-items: center;
-  gap: 120px;
+  gap: var(--gnb-tab-gap);
   justify-content: flex-end;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .gnb-menu-tab {
@@ -228,14 +236,6 @@
   width: 100%;
   height: 1px;
   background-color: var(--usto-gray-100);
-}
-
-@media (max-width: 1920px) {
-  .gnb-user-section,
-  .gnb-menu-content {
-    padding-left: 40px;
-    padding-right: 40px;
-  }
 }
 
 @media (max-width: 768px) {
