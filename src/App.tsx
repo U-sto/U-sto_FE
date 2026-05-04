@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppResetProvider } from './contexts/AppResetContext'
 import { AssetDetailOverridesProvider } from './contexts/AssetDetailOverridesContext'
 import { AuthUserProvider } from './contexts/AuthUserContext'
-import RequireOrgAdminRoute from './components/auth/RequireOrgAdminRoute'
 import AssetManagementRoutes from './routes/AssetManagementRoutes'
 import UserInfoRoutes from './routes/UserInfoRoutes'
 import './styles/variables.css'
@@ -63,46 +62,11 @@ function App() {
               <Route path="/find-password/complete" element={<FindPasswordCompletePage />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/user-info/*" element={<UserInfoRoutes />} />
-              <Route
-                path="/acq-confirmation"
-                element={
-                  <RequireOrgAdminRoute>
-                    <AcqConfirmationPage />
-                  </RequireOrgAdminRoute>
-                }
-              />
-              <Route
-                path="/operation-management"
-                element={
-                  <RequireOrgAdminRoute>
-                    <OperationManagementPage />
-                  </RequireOrgAdminRoute>
-                }
-              />
-              <Route
-                path="/return-management"
-                element={
-                  <RequireOrgAdminRoute>
-                    <ReturnManagementPage />
-                  </RequireOrgAdminRoute>
-                }
-              />
-              <Route
-                path="/disuse-management"
-                element={
-                  <RequireOrgAdminRoute>
-                    <DisuseManagementPage />
-                  </RequireOrgAdminRoute>
-                }
-              />
-              <Route
-                path="/disposal-management"
-                element={
-                  <RequireOrgAdminRoute>
-                    <DisposalManagementPage />
-                  </RequireOrgAdminRoute>
-                }
-              />
+              <Route path="/acq-confirmation" element={<AcqConfirmationPage />} />
+              <Route path="/operation-management" element={<OperationManagementPage />} />
+              <Route path="/return-management" element={<ReturnManagementPage />} />
+              <Route path="/disuse-management" element={<DisuseManagementPage />} />
+              <Route path="/disposal-management" element={<DisposalManagementPage />} />
               <Route path="/asset-management/*" element={<AssetManagementRoutes />} />
               <Route path="/ai-forecast" element={<AiForecastPage />} />
             </Routes>

@@ -6,6 +6,10 @@ interface PasswordFieldProps {
   value: string
   onChange: (e: ChangeEvent<HTMLInputElement>) => void
   autoComplete?: string
+  /** 회원정보 등: 값은 고정(마스킹)이고 표시/숨김 토글만 허용 */
+  readOnly?: boolean
+  /** 눈 아이콘으로 표시/숨김 전환 시 (true = text로 보이는 모드) */
+  onVisibilityChange?: (visible: boolean) => void
 }
 
 const PasswordField = ({
@@ -13,11 +17,17 @@ const PasswordField = ({
   value,
   onChange,
   autoComplete = 'off',
+  readOnly = false,
+  onVisibilityChange,
 }: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = useState(false)
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
+    setShowPassword((prev) => {
+      const next = !prev
+      onVisibilityChange?.(next)
+      return next
+    })
   }
 
   return (
@@ -29,6 +39,8 @@ const PasswordField = ({
         value={value}
         onChange={onChange}
         autoComplete={autoComplete}
+        readOnly={readOnly}
+        aria-readonly={readOnly || undefined}
       />
       <button
         type="button"

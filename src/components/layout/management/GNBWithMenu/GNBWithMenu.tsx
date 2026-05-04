@@ -1,15 +1,14 @@
-import { useState, useRef, useEffect, useId, useMemo, type KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SystemLogo from '../../../common/SystemLogo/SystemLogo'
 import { logout } from '../../../../api/auth'
 import { useAuthUser } from '../../../../contexts/AuthUserContext'
 import { menuData, type MenuItem, type MenuSection } from '../../../../constants/menu'
-import { isOrganizationAdministrator } from '../../../../utils/userRole'
 import './GNBWithMenu.css'
 
 const GNBWithMenu = () => {
   const navigate = useNavigate()
-  const { user, loading, clear } = useAuthUser()
+  const { clear } = useAuthUser()
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState<number>(-1)
   const menuRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -28,19 +27,6 @@ const GNBWithMenu = () => {
       navigate('/login')
     }
   }
-
-  const showAdminMenu = !loading && isOrganizationAdministrator(user?.roleNm)
-  const visibleMenuSections = useMemo(
-    () => menuData.filter((s) => s.id !== 'admin' || showAdminMenu),
-    [showAdminMenu],
-  )
-
-  useEffect(() => {
-    if (activeDropdown === 'admin' && !showAdminMenu) {
-      setActiveDropdown(null)
-      setFocusedIndex(-1)
-    }
-  }, [activeDropdown, showAdminMenu])
 
   const handleItemClick = (item: MenuItem) => {
     if (item.path) {
@@ -191,7 +177,7 @@ const GNBWithMenu = () => {
       <div className="gnb-menu-content">
         <SystemLogo />
         <div className="gnb-menu-tabs">
-          {visibleMenuSections.map((section) => (
+          {menuData.map((section) => (
             <div key={section.id} className="gnb-dropdown">
               <button
                 type="button"
@@ -218,12 +204,12 @@ const GNBWithMenu = () => {
           role="menu"
           tabIndex={-1}
           onKeyDown={(e) => {
-            const section = visibleMenuSections.find((s) => s.id === activeDropdown)
+            const section = menuData.find((s) => s.id === activeDropdown)
             if (section) handleMenuKeyDown(e, section)
           }}
         >
           <div className="gnb-mega-menu-inner">
-            {visibleMenuSections.map((section) => (
+            {menuData.map((section) => (
               <div key={section.id} className="gnb-mega-column">
                 <p className={`gnb-mega-column-header${activeDropdown === section.id ? ' gnb-mega-column-header--active' : ''}`}>
                   {section.label}

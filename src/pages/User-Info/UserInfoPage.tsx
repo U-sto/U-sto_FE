@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
 import TextField from '../../components/common/TextField/TextField'
+import PasswordField from '../../components/common/PasswordField/PasswordField'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import { getUserInfo } from '../../api/users'
 import { formatPhoneNumber } from '../../utils/formatPhoneNumber'
@@ -17,6 +18,9 @@ const UserInfoPage = () => {
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  /** 비밀번호 칸: 숨김은 •, 보기는 * — 실제 비밀번호는 서버에서 내려주지 않음 */
+  const [passwordMaskRevealed, setPasswordMaskRevealed] = useState(false)
+  const passwordDisplayValue = passwordMaskRevealed ? '********' : '\u2022'.repeat(8)
 
   useEffect(() => {
     let cancelled = false
@@ -119,11 +123,20 @@ const UserInfoPage = () => {
                   변경
                 </button>
               </div>
-              <TextField
-                value="********"
-                readOnly
-                className="user-info-input user-info-input-readonly"
-              />
+              <div className="user-info-password-wrap">
+                <PasswordField
+                  value={passwordDisplayValue}
+                  onChange={() => {}}
+                  readOnly
+                  autoComplete="off"
+                  onVisibilityChange={setPasswordMaskRevealed}
+                />
+              </div>
+              {passwordMaskRevealed ? (
+                <p className="user-info-password-hint" role="note">
+                  보안을 위해 실제 비밀번호는 표시되지 않습니다. 변경은 우측 상단「변경」을 이용해 주세요.
+                </p>
+              ) : null}
             </div>
             <div className="user-info-field">
               <div className="user-info-label-row">

@@ -144,8 +144,10 @@ export async function fetchItemReturningList(
   if (!payload) {
     return { data: [], totalCount: 0 }
   }
+  const rows = payload.content ?? []
+  const limit = Math.max(1, params.pageSize)
   return {
-    data: payload.content ?? [],
+    data: rows.length > limit ? rows.slice(0, limit) : rows,
     totalCount: payload.totalElements ?? 0,
   }
 }
@@ -179,8 +181,10 @@ export async function fetchItemReturningItems(
   if (!payload) {
     return { data: [], totalCount: 0 }
   }
+  const rows = payload.content ?? []
+  const limit = Math.max(1, params.pageSize)
   return {
-    data: payload.content ?? [],
+    data: rows.length > limit ? rows.slice(0, limit) : rows,
     totalCount: payload.totalElements ?? 0,
   }
 }

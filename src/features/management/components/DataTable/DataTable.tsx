@@ -52,6 +52,9 @@ const CHECKBOX_COLUMN_WIDTH_PX = 40
 /** 체크 다음 순번 열: 「순번」·숫자 + 왼쪽 여백(12px) 반영 */
 const SEQUENCE_AFTER_CHECK_WIDTH_PX = 74
 
+/** 페이지 번호 버튼은 한 번에 최대 이 개수만 표시 (1–10, 11–20 …). ‹›는 1페이지씩, ≪≫는 블록 단위 */
+const PAGE_NUMBER_WINDOW = 10
+
 function resolveColumnWidth<T>(
   column: DataTableColumn<T>,
   columnIndex: number,
@@ -100,8 +103,9 @@ function DataTable<T>({
 
     if (isServerSide && propTotalCount != null) {
       const pages = Math.max(1, Math.ceil(propTotalCount / safePageSize))
+      /** 서버가 요청 size 무시하고 더 많은 content를 줄 때에도 표시 행 수는 pageSize로 고정 */
       return {
-        pageData: data,
+        pageData: data.slice(0, safePageSize),
         totalPages: pages,
       }
     }
@@ -138,28 +142,20 @@ function DataTable<T>({
 
   const effectiveTotal = propTotalCount ?? data.length
 
-  /** 현재 페이지 중심으로 일정 범위만 노출, 처음/끝·말줄임으로 레이아웃 보존 */
+  /** 현재 페이지가 속한 구간의 시작(1, 11, 21 …). 번호 목록은 이 구간에서만 보이고, 10번을 눌러도 11이 끼어 보이지 않음 */
+  const pageBlockStart = useMemo(() => {
+    return Math.floor((currentPage - 1) / PAGE_NUMBER_WINDOW) * PAGE_NUMBER_WINDOW + 1
+  }, [currentPage])
+
   const visiblePageNumbers = useMemo(() => {
-    const total = totalPages
-    if (total <= 7) {
-      return Array.from({ length: total }, (_, i) => i + 1)
-    }
-    const current = currentPage
-    const windowSize = 2
-    const start = Math.max(1, current - windowSize)
-    const end = Math.min(total, current + windowSize)
-    const list: (number | 'ellipsis')[] = []
-    if (start > 1) {
-      list.push(1)
-      if (start > 2) list.push('ellipsis')
-    }
-    for (let p = start; p <= end; p++) list.push(p)
-    if (end < total) {
-      if (end < total - 1) list.push('ellipsis')
-      list.push(total)
-    }
+    const end = Math.min(totalPages, pageBlockStart + PAGE_NUMBER_WINDOW - 1)
+    const list: number[] = []
+    for (let p = pageBlockStart; p <= end; p++) list.push(p)
     return list
-  }, [totalPages, currentPage])
+  }, [totalPages, pageBlockStart])
+
+  const canPrevBlock = pageBlockStart > 1
+  const canNextBlock = pageBlockStart + PAGE_NUMBER_WINDOW <= totalPages
 
   return (
     <section className={tableClassNames}>
@@ -297,36 +293,52 @@ function DataTable<T>({
           <button
             type="button"
             className={pageBtnClass}
+            onClick={() => handlePageChange(Math.max(1, pageBlockStart - PAGE_NUMBER_WINDOW))}
+            disabled={!canPrevBlock}
+            aria-label="이전 10페이지 구간"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            className={pageBtnClass}
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
+            aria-label="이전 페이지"
           >
             ‹
           </button>
-          {visiblePageNumbers.map((pageNumber, idx) =>
-            pageNumber === 'ellipsis' ? (
-              <span key={`ellipsis-${idx}`} className={pageNumClass} aria-hidden>
-                …
-              </span>
-            ) : (
-              <button
-                key={pageNumber}
-                type="button"
-                className={`${pageNumClass} ${
-                  pageNumber === currentPage ? pageNumActiveClass : ''
-                }`.trim()}
-                onClick={() => handlePageChange(pageNumber)}
-              >
-                {pageNumber}
-              </button>
-            ),
-          )}
+          {visiblePageNumbers.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              className={`${pageNumClass} ${
+                pageNumber === currentPage ? pageNumActiveClass : ''
+              }`.trim()}
+              onClick={() => handlePageChange(pageNumber)}
+            >
+              {pageNumber}
+            </button>
+          ))}
           <button
             type="button"
             className={pageBtnClass}
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
+            aria-label="다음 페이지"
           >
             ›
+          </button>
+          <button
+            type="button"
+            className={pageBtnClass}
+            onClick={() =>
+              handlePageChange(Math.min(totalPages, pageBlockStart + PAGE_NUMBER_WINDOW))
+            }
+            disabled={!canNextBlock}
+            aria-label="다음 10페이지 구간"
+          >
+            »
           </button>
         </div>
         <div className={`${summaryClass} management-pagination-summary`} aria-live="polite">
