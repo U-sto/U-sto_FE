@@ -107,10 +107,23 @@ const APPR_STS_CODE_TO_LABEL: Record<string, string> = {
   APPROVED: '확정',
 }
 
+const DISP_TYPE_CODE_TO_LABEL: Record<string, string> = {
+  DISCARD: '폐기',
+  SALE: '매각',
+  LOSS: '멸실',
+  THEFT: '도난',
+}
+
 function mapApprovalStatusToLabel(raw: string | undefined): string {
   const code = String(raw ?? '').trim()
   if (!code) return ''
   return APPR_STS_CODE_TO_LABEL[code] ?? code
+}
+
+function mapDisposalTypeToLabel(raw: string | undefined): string {
+  const code = String(raw ?? '').trim()
+  if (!code) return ''
+  return DISP_TYPE_CODE_TO_LABEL[code] ?? code
 }
 
 function filtersToSearchRequest(filters: ItemDisposalFilters): ItemDisposalSearchRequest {
@@ -151,7 +164,9 @@ function mapItemDisposalToRow(
   const registrantId = pickFirstStringFromRecord(rec, ['aplyUsrId', 'usrId', 'registrantId'])
   const registrantName = pickFirstStringFromRecord(rec, ['aplyUsrNm', 'usrNm', 'registrantName'])
   const approvalStatusRaw = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
-  const disposalType = pickFirstStringFromRecord(rec, ['dispType'])
+  const disposalType = mapDisposalTypeToLabel(
+    pickFirstStringFromRecord(rec, ['dispType', 'disp_type', 'disposalType']),
+  )
 
   return {
     id: offset + index + 1,
