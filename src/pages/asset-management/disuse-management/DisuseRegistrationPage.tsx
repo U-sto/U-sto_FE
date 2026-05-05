@@ -4,7 +4,6 @@ import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
 import Button from '../../../components/common/Button/Button'
-import TitlePill from '../../../components/common/TitlePill/TitlePill'
 import AssetManagementPageLayout from '../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
 import DataTable, {
   type DataTableColumn,
@@ -599,7 +598,9 @@ const DisuseRegistrationPage = () => {
 
       <div className="operation-ledger-detail-content" hidden={isEditMode && loadingDetail}>
         <div className="operation-ledger-detail-header-row">
-          <TitlePill>{isEditMode ? '불용 수정 정보' : '불용 등록 정보'}</TitlePill>
+          <div className="operation-ledger-table-label">
+            {isEditMode ? '불용 수정 정보' : '불용 등록 정보'}
+          </div>
         </div>
         <section className="operation-ledger-detail-panel return-registration-info-panel">
           <div className="return-registration-info-inner">
@@ -629,6 +630,7 @@ const DisuseRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">물품상태</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={disuseInfo.assetStatus}
                   onChange={(value: string) =>
@@ -641,6 +643,7 @@ const DisuseRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">사유</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={disuseInfo.reason}
                   onChange={(value: string) =>

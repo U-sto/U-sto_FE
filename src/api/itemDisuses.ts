@@ -1,5 +1,6 @@
 import http from './http'
 import type { ApiResponse } from './types'
+import { pickFirstStringFromRecord } from './pickFromRecord'
 
 /* ─── 승인상태 매핑 ─── */
 
@@ -157,14 +158,21 @@ export async function fetchDisuseList(
 
   return {
     data: content.map((item, i) => {
-      const rawSts = String(item.apprSts ?? '')
+      const rec = item as Record<string, unknown>
+      const rawSts = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
       return {
         id: offset + i + 1,
-        dsuMId: String(item.dsuMId ?? ''),
-        disuseDate: String(item.aplyAt ?? ''),
-        disuseConfirmDate: String(item.apprAt ?? ''),
-        registrantId: String(item.aplyUsrId ?? ''),
-        registrantName: String(item.aplyUsrNm ?? ''),
+        dsuMId: pickFirstStringFromRecord(rec, ['dsuMId', 'dsuMid', 'id']),
+        disuseDate: pickFirstStringFromRecord(rec, ['aplyAt', 'applYAt', 'applyDt', 'dsuAt']),
+        disuseConfirmDate: pickFirstStringFromRecord(rec, [
+          'apprAt',
+          'dsuApprAt',
+          'disuseApprAt',
+          'confirmAt',
+          'cnfmAt',
+        ]),
+        registrantId: pickFirstStringFromRecord(rec, ['aplyUsrId', 'regUsrId', 'usrId']),
+        registrantName: pickFirstStringFromRecord(rec, ['aplyUsrNm', 'regUsrNm', 'usrNm']),
         approvalStatus: APPR_STS_MAP[rawSts] ?? rawSts,
       }
     }),
@@ -173,13 +181,20 @@ export async function fetchDisuseList(
 }
 
 function mapDisuseMaster(item: DisuseListContent): DisuseMaster {
+  const rec = item as Record<string, unknown>
   return {
-    dsuMId: String(item.dsuMId ?? ''),
-    aplyAt: String(item.aplyAt ?? ''),
-    apprAt: String(item.apprAt ?? ''),
-    aplyUsrId: String(item.aplyUsrId ?? ''),
-    aplyUsrNm: String(item.aplyUsrNm ?? ''),
-    apprSts: String(item.apprSts ?? ''),
+    dsuMId: pickFirstStringFromRecord(rec, ['dsuMId', 'dsuMid', 'id']),
+    aplyAt: pickFirstStringFromRecord(rec, ['aplyAt', 'applYAt', 'applyDt', 'dsuAt']),
+    apprAt: pickFirstStringFromRecord(rec, [
+      'apprAt',
+      'dsuApprAt',
+      'disuseApprAt',
+      'confirmAt',
+      'cnfmAt',
+    ]),
+    aplyUsrId: pickFirstStringFromRecord(rec, ['aplyUsrId', 'regUsrId', 'usrId']),
+    aplyUsrNm: pickFirstStringFromRecord(rec, ['aplyUsrNm', 'regUsrNm', 'usrNm']),
+    apprSts: pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus']),
     itemSts: typeof item.itemSts === 'string' ? item.itemSts : undefined,
     dsuRsn: typeof item.dsuRsn === 'string' ? item.dsuRsn : undefined,
   }

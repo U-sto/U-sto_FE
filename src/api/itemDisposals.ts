@@ -64,6 +64,7 @@ export type DisposalRegistrationRow = {
   dispMId: string
   disposalDate: string
   disposalConfirmDate: string
+  disposalType: string
   registrantId: string
   registrantName: string
   approvalStatus: string
@@ -138,22 +139,26 @@ function mapItemDisposalToRow(
   const dispMId =
     pickFirstStringFromRecord(rec, ['dispMId']) ||
     (typeof item.id === 'string' ? item.id : '')
-  const disposalDate = pickFirstStringFromRecord(rec, ['applYAt', 'disdAt', 'disdDate'])
+  const disposalDate = pickFirstStringFromRecord(rec, ['applYAt', 'aplyAt', 'disdAt', 'disdDate'])
   const disposalConfirmDate = pickFirstStringFromRecord(rec, [
     'apprAt',
+    'dispApprAt',
+    'disposalApprAt',
     'confirmAt',
     'cnfmAt',
     'disdCfmAt',
   ])
-  const registrantId = pickFirstStringFromRecord(rec, ['usrId', 'registrantId'])
-  const registrantName = pickFirstStringFromRecord(rec, ['usrNm', 'registrantName'])
+  const registrantId = pickFirstStringFromRecord(rec, ['aplyUsrId', 'usrId', 'registrantId'])
+  const registrantName = pickFirstStringFromRecord(rec, ['aplyUsrNm', 'usrNm', 'registrantName'])
   const approvalStatusRaw = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
+  const disposalType = pickFirstStringFromRecord(rec, ['dispType'])
 
   return {
     id: offset + index + 1,
     dispMId,
     disposalDate,
     disposalConfirmDate,
+    disposalType,
     registrantId,
     registrantName,
     approvalStatus: mapApprovalStatusToLabel(approvalStatusRaw),
@@ -164,10 +169,17 @@ function mapItemDisposalToMaster(item: ItemDisposalContent): DisposalMaster {
   const rec = item as Record<string, unknown>
   return {
     dispMId: pickFirstStringFromRecord(rec, ['dispMId', 'id']),
-    aplyAt: pickFirstStringFromRecord(rec, ['applYAt', 'disdAt', 'disdDate']),
-    apprAt: pickFirstStringFromRecord(rec, ['apprAt', 'confirmAt', 'cnfmAt', 'disdCfmAt']),
-    aplyUsrId: pickFirstStringFromRecord(rec, ['usrId', 'registrantId']),
-    aplyUsrNm: pickFirstStringFromRecord(rec, ['usrNm', 'registrantName']),
+    aplyAt: pickFirstStringFromRecord(rec, ['applYAt', 'aplyAt', 'disdAt', 'disdDate']),
+    apprAt: pickFirstStringFromRecord(rec, [
+      'apprAt',
+      'dispApprAt',
+      'disposalApprAt',
+      'confirmAt',
+      'cnfmAt',
+      'disdCfmAt',
+    ]),
+    aplyUsrId: pickFirstStringFromRecord(rec, ['aplyUsrId', 'usrId', 'registrantId']),
+    aplyUsrNm: pickFirstStringFromRecord(rec, ['aplyUsrNm', 'usrNm', 'registrantName']),
     apprSts: pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus']),
     dispType: typeof item.dispType === 'string' ? item.dispType : undefined,
   }

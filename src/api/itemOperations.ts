@@ -316,6 +316,8 @@ function mapOperationRegistrationRecord(
       'startAplyAt',
     ]),
     transferConfirmDate: pickFromRecord(item, [
+      'operApprAt',
+      'oper_appr_at',
       'apprCfmAt',
       'apprCnfAt',
       'oprCnfAt',

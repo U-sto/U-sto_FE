@@ -198,6 +198,7 @@ const DisposalManagementPage = () => {
     { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'disposalDate', header: '처분일자', width: 150, render: (row) => row.disposalDate },
     { key: 'disposalConfirmDate', header: '처분확정일자', width: 150, render: (row) => row.disposalConfirmDate },
+    { key: 'disposalType', header: '처분정리구분', width: 150, render: (row) => row.disposalType },
     { key: 'registrantId', header: '등록자ID', width: 150, render: (row) => row.registrantId },
     { key: 'registrantName', header: '등록자명', width: 150, render: (row) => row.registrantName },
     { key: 'approvalStatus', header: '승인상태', width: 100, render: (row) => row.approvalStatus },
