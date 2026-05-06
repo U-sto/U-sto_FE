@@ -222,6 +222,11 @@
   color: var(--usto-primary-300);
 }
 
+/* 공통 .button:hover 배경이 primary-300일 때 글자도 초록이면 안 보임 → 흰색 */
+.operation-ledger-btn-outline:hover:not(:disabled) {
+  color: var(--usto-alt-white);
+}
+
 .operation-ledger-btn-primary {
   background: var(--usto-primary-300);
   border: 1px solid var(--usto-primary-300);
@@ -349,11 +354,15 @@
   max-width: 56px;
 }
 
+/* 운용상태·물품상태: 폭만 지정, 좌우 여백은 운용부서와 동일하게 공통 th 패딩(18px) 상속 */
 .operation-ledger-table-el .operation-ledger-th-operatingStatus,
 .operation-ledger-table-el .operation-ledger-th-itemStatus {
-  width: 90px;
-  min-width: 90px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   white-space: nowrap;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 /* G2B목록명은 더 넓게, 내용연수는 더 좁게 (긴 목록명 줄바꿈/두줄 방지) */
@@ -363,18 +372,15 @@
 }
 
 .operation-ledger-table-el .operation-ledger-th-usefulLife {
-  width: 80px;
-  min-width: 80px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   white-space: nowrap;
-  padding-left: 10px;
-  padding-right: 6px;
+  text-align: left;
+  box-sizing: border-box;
 }
 
-/* 내용연수 본문: 왼쪽 간격 축소로 오른쪽 여유 확보 */
-.operation-ledger-table-el tbody td:nth-child(11) {
-  padding-left: 10px;
-  padding-right: 6px;
-}
+/* 내용연수 본문 여백은 DataTable.css `.management-td-usefulLife` (nth-child(11)은 열 개수가 달라 깨짐) */
 
 .operation-ledger-detail-content {
   width: 100%;
@@ -520,6 +526,13 @@
 
 .operation-ledger-page-num-active {
   color: var(--usto-primary-300);
+}
+
+/* 보유 현황 목록 등 — 수량 열 헤더(여백은 공통 th와 동일) */
+.operation-ledger-table-el .operation-ledger-th-qty {
+  white-space: nowrap;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {

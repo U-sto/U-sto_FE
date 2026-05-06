@@ -269,6 +269,7 @@ function DataTable<T>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
+                        className={`management-td-${column.key}`}
                         onClick={
                           column.stopRowClickPropagation
                             ? (e) => {

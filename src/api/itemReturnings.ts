@@ -13,6 +13,7 @@ import http from './http'
 import type { ApiResponse } from './types'
 
 export type ItemReturningSearchRequest = {
+  /** 반납일(신청일) 구간 — 응답 행 필드명은 보통 aplyAt */
   startAplyAt?: string
   endAplyAt?: string
   startApplYAt?: string
@@ -21,6 +22,7 @@ export type ItemReturningSearchRequest = {
   /** 단건 조회 시 (백엔드 지원 시) */
   rtrnId?: string
   rtrnMid?: string
+  [key: string]: unknown
 }
 
 export type ItemReturningPageable = {
@@ -134,10 +136,14 @@ export async function fetchItemReturningList(
     page: params.page - 1,
     size: params.pageSize,
   }
+  const searchRequest = params.searchRequest
   const res = await http.get<ApiResponse<ItemReturningsListData>>('/api/item/returnings', {
     params: {
-      searchRequest: JSON.stringify(params.searchRequest),
+      searchRequest: JSON.stringify(searchRequest),
       pageable: JSON.stringify(pageable),
+      // 일부 백엔드는 JSON 문자열보다 평탄 query(startAplyAt, apprSts 등)만 받음
+      ...(searchRequest as Record<string, unknown>),
+      ...pageable,
     },
   })
   const payload = res.data.data

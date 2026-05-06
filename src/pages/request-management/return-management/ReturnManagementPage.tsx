@@ -9,7 +9,10 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import FilterPanel from '../../../features/management/components/FilterPanel/FilterPanel'
 import { useManagementFilter } from '../../../hooks/useManagementFilter'
-import { useApprovalStatusFilterOptions } from '../../../hooks/useCommonCodeOptions'
+import {
+  useApprovalStatusFilterOptions,
+  resolveApprovalFilterTransferStyle,
+} from '../../../hooks/useCommonCodeOptions'
 import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
 import {
@@ -37,7 +40,7 @@ const INITIAL_FILTERS: Filters = {
   approvalStatus: '전체',
 }
 
-/** 공통코드 미로딩 시 승인상태 → API 코드 */
+/** 공통코드 미로딩 시 테이블 표시용 코드→라벨 역맵 빌드 */
 const FALLBACK_APPR_DESC_TO_CODE: Record<string, string> = {
   대기: 'WAIT',
   승인요청: 'REQUEST',
@@ -90,11 +93,10 @@ function buildReturningSearchRequest(
     req.endApplYAt = filters.returnDateTo
   }
   if (filters.approvalStatus && filters.approvalStatus !== '전체') {
-    const map =
-      Object.keys(approvalDescToCode).length > 0
-        ? approvalDescToCode
-        : FALLBACK_APPR_DESC_TO_CODE
-    req.apprSts = map[filters.approvalStatus] ?? filters.approvalStatus
+    req.apprSts = resolveApprovalFilterTransferStyle(
+      filters.approvalStatus,
+      approvalDescToCode,
+    )
   }
   return req
 }

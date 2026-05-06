@@ -151,6 +151,7 @@ const InventoryStatusPage = () => {
     { key: 'operatingDept', header: '운용부서', render: (row) => row.operatingDept },
     { key: 'operatingStatus', header: '운용상태', render: (row) => row.operatingStatus },
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
+    { key: 'qty', header: '수량', width: 64, render: (row) => String(row.qty) },
   ]
 
   const handleReset = () => {

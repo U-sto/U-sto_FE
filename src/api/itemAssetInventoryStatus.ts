@@ -50,6 +50,8 @@ type AssetInventoryStatusContent = {
   g2bItemNm?: string
   acqAt?: string
   acqUpr?: number
+  /** 정리일자(목록 응답 우선) */
+  arrgAt?: string
   arrAt?: string
   drgAt?: string
   deptNm?: string
@@ -57,6 +59,7 @@ type AssetInventoryStatusContent = {
   operSts?: string
   drbYr?: string | number
   rmk?: string
+  qty?: number | string
   [key: string]: unknown
 }
 
@@ -82,6 +85,7 @@ export type AssetInventoryStatusRow = {
   acqUpr: number
   drbYr: string
   rmk: string
+  qty: number
 }
 
 const OPER_STS_MAP: Record<string, string> = {
@@ -155,6 +159,15 @@ function mapContentToRow(
         : `${String(drbYrRaw)}년`
       : ''
 
+  const qtyRaw = item.qty
+  let qty = 0
+  if (typeof qtyRaw === 'number' && Number.isFinite(qtyRaw)) {
+    qty = qtyRaw
+  } else if (qtyRaw != null && qtyRaw !== '') {
+    const n = Number(qtyRaw)
+    if (Number.isFinite(n)) qty = n
+  }
+
   return {
     id: offset + index + 1,
     acqId: String(item.acqId ?? ''),
@@ -163,7 +176,7 @@ function mapContentToRow(
     itemUniqueNumber: String(item.itmNo ?? item.itemUnqNo ?? ''),
     acquireDate: String(item.acqAt ?? ''),
     acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
-    sortDate: String(item.arrAt ?? item.drgAt ?? ''),
+    sortDate: String(item.arrgAt ?? item.arrAt ?? item.drgAt ?? ''),
     operatingDept: String(item.deptNm ?? ''),
     deptCd: String(item.deptCd ?? ''),
     operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')),
@@ -172,6 +185,7 @@ function mapContentToRow(
     acqUpr: acqUprValue,
     drbYr: drbYrRaw != null ? String(drbYrRaw) : '',
     rmk: String(item.rmk ?? ''),
+    qty,
   }
 }
 
@@ -242,6 +256,7 @@ type AssetInventoryStatusDetailItemContent = {
   g2bItemNo?: string
   itmNo?: string
   acqAt?: string
+  arrgAt?: string
   arrAt?: string
   operSts?: string
   drbYr?: string | number
@@ -302,7 +317,7 @@ export async function fetchAssetInventoryStatusDetail(
       g2bNumber: String(item.g2bNo ?? item.g2bItemNo ?? ''),
       itemUniqueNumber: String(item.itmNo ?? ''),
       acquireDate: String(item.acqAt ?? ''),
-      sortDate: String(item.arrAt ?? ''),
+      sortDate: String(item.arrgAt ?? item.arrAt ?? ''),
       operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')),
       usefulLife,
       acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',

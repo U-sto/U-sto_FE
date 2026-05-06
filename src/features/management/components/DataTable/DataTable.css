@@ -89,6 +89,12 @@
   text-align: left;
 }
 
+/* 내용연수 열: 본문 셀만 왼쪽 여백 (페이지별 nth-child 규칙에 덮이지 않도록 여기서 통일) */
+.management-table-el tbody td.management-td-usefulLife {
+  padding-left: 28px;
+  padding-right: 18px;
+}
+
 /* 페이지네이션: 버튼은 데이터 테이블 너비 기준 정중앙, summary는 좌/우 배치 */
 .management-pagination {
   position: relative;
