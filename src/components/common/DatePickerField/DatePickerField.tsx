@@ -45,6 +45,7 @@ const DatePickerField = ({
       onChange={handleChange}
       dateFormat="yyyy-MM-dd"
       locale="ko"
+      disabledKeyboardNavigation
       placeholderText={placeholder}
       readOnly={readOnly}
       className={`text-field date-picker-field ${className}`}

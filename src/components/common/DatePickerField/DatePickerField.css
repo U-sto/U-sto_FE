@@ -73,11 +73,17 @@
   color: var(--usto-primary-300) !important;
 }
 
-/* 선택·키보드 포커스(처음 열면 오늘에 붙는 상자) */
-.date-picker-calendar .react-datepicker__day--selected,
-.date-picker-calendar .react-datepicker__day--keyboard-selected {
+/* 실제 선택된 날짜만 진하게 표시 */
+.date-picker-calendar .react-datepicker__day--selected {
   background-color: var(--usto-primary-300) !important;
   color: white !important;
+}
+
+.date-picker-calendar
+  .react-datepicker__day--keyboard-selected:not(.react-datepicker__day--selected) {
+  background-color: transparent !important;
+  color: var(--usto-alt-black) !important;
+  box-shadow: none !important;
 }
 
 .date-picker-calendar .react-datepicker__day--today.react-datepicker__day--selected,
