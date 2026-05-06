@@ -67,20 +67,21 @@
   color: var(--usto-primary-300) !important;
 }
 
-/* 선택된 날짜 */
+/* 오늘 (아래 선택·포커스 규칙보다 위에 둬야 겹칠 때 글자 대비 유지) */
+.date-picker-calendar .react-datepicker__day--today {
+  font-weight: 700 !important;
+  color: var(--usto-primary-300) !important;
+}
+
+/* 선택·키보드 포커스(처음 열면 오늘에 붙는 상자) */
 .date-picker-calendar .react-datepicker__day--selected,
 .date-picker-calendar .react-datepicker__day--keyboard-selected {
   background-color: var(--usto-primary-300) !important;
   color: white !important;
 }
 
-/* 오늘 날짜 */
-.date-picker-calendar .react-datepicker__day--today {
-  font-weight: 700 !important;
-  color: var(--usto-primary-300) !important;
-}
-
-.date-picker-calendar .react-datepicker__day--today.react-datepicker__day--selected {
+.date-picker-calendar .react-datepicker__day--today.react-datepicker__day--selected,
+.date-picker-calendar .react-datepicker__day--today.react-datepicker__day--keyboard-selected {
   color: white !important;
 }
 

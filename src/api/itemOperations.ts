@@ -7,7 +7,8 @@
 import http from './http'
 import type { ApiResponse } from './types'
 import { applyDeptLabelToSearchRequest } from '../constants/departments'
-import { buildCombinedG2bListNoForFilter } from './g2bFilterNormalize'
+import { buildCombinedG2bListNoForFilter, filterByG2bItemNmIncludes } from './g2bFilterNormalize'
+import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 import { pickFirstStringFromRecord as pickFromRecord } from './pickFromRecord'
 
 export type ItemOperationSearchRequest = {
@@ -107,9 +108,6 @@ const APPR_STS_MAP: Record<string, string> = {
 function filtersToSearchRequest(filters: OperationLedgerFilters): ItemOperationSearchRequest {
   const req: ItemOperationSearchRequest = {}
 
-  // 화면에서 들어오는 값들을 백엔드가 받을 가능성이 높은 키로 최대한 매핑
-  if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
-
   const g2bNo = buildCombinedG2bListNoForFilter(
     filters.g2bNumberPrefix,
     filters.g2bNumberSuffix,
@@ -161,6 +159,29 @@ export async function fetchItemOperations(
   params: FetchItemOperationsParams,
 ): Promise<FetchItemOperationsResponse> {
   const { page, pageSize, filters } = params
+  const term = filters.g2bName?.trim()
+
+  if (term) {
+    const searchRequest = filtersToSearchRequest({
+      ...filters,
+      g2bName: '',
+    }) as Record<string, unknown>
+    const raw = await fetchSearchRequestSingleBatch<ItemOperationContent>(
+      '/api/item/operations',
+      searchRequest,
+    )
+    const matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as ItemOperationContent[]
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    return {
+      data: pageItems.map((item, index) => mapItemOperationToRow(item, index, offset)),
+      totalCount,
+    }
+  }
 
   const searchRequest = filtersToSearchRequest(filters)
   const pageable: ItemOperationPageable = { page: page - 1, size: pageSize }

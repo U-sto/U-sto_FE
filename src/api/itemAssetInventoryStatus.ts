@@ -1,7 +1,8 @@
 import http from './http'
 import type { ApiResponse } from './types'
 import { applyDeptLabelToSearchRequest } from '../constants/departments'
-import { buildCombinedG2bListNoForFilter } from './g2bFilterNormalize'
+import { buildCombinedG2bListNoForFilter, filterByG2bItemNmIncludes } from './g2bFilterNormalize'
+import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 
 export type AssetInventoryStatusFilters = {
   g2bName: string
@@ -117,7 +118,6 @@ function filtersToSearchRequest(filters: AssetInventoryStatusFilters): AssetInve
     req.g2bCd = g2bDcd
     req.g2bItemNo = g2bDcd
   }
-  if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
   if (filters.itemUniqueNumber?.trim()) {
     req.itmNo = filters.itemUniqueNumber.trim()
     req.itemUnqNo = filters.itemUniqueNumber.trim()
@@ -181,6 +181,30 @@ export async function fetchAssetInventoryStatus(params: {
   filters: AssetInventoryStatusFilters
 }): Promise<{ data: AssetInventoryStatusRow[]; totalCount: number }> {
   const { page, pageSize, filters } = params
+  const term = filters.g2bName?.trim()
+
+  if (term) {
+    const searchRequest = filtersToSearchRequest({
+      ...filters,
+      g2bName: '',
+    }) as Record<string, unknown>
+    const raw = await fetchSearchRequestSingleBatch<AssetInventoryStatusContent>(
+      '/api/item/asset-inventory-status',
+      searchRequest,
+    )
+    const matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as AssetInventoryStatusContent[]
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    return {
+      data: pageItems.map((item, index) => mapContentToRow(item, index, offset)),
+      totalCount,
+    }
+  }
+
   const searchRequest = filtersToSearchRequest(filters)
   const pageable: Pageable = { page: page - 1, size: pageSize }
 

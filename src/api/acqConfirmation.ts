@@ -14,7 +14,8 @@ import type {
   ItemAcquisitionsData,
 } from './itemAcquisitions'
 import { applyDeptLabelToSearchRequest } from '../constants/departments'
-import { buildAcquisitionG2bSearchFields } from './g2bFilterNormalize'
+import { buildAcquisitionG2bSearchFields, filterByG2bItemNmIncludes } from './g2bFilterNormalize'
+import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 
 export type AcqConfirmationFilters = {
   g2bName: string
@@ -132,10 +133,6 @@ function filtersToSearchRequest(
     req.g2bDcd = g2bParts.g2bCd
   }
 
-  if (filters.g2bName?.trim()) {
-    req.g2bItemNm = filters.g2bName.trim()
-  }
-
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
   if (filters.sortDateFrom) req.startApprAt = filters.sortDateFrom
@@ -155,11 +152,32 @@ export async function fetchAcqConfirmationList(
   params: FetchAcqConfirmationParams
 ): Promise<FetchAcqConfirmationResponse> {
   const { page, pageSize, filters, approvalDescToCode } = params
+  const codeMap = approvalDescToCode ?? DEFAULT_APPR_STS_DESCRIPTION_TO_CODE
+  const term = filters.g2bName?.trim()
 
-  const searchRequest = filtersToSearchRequest(
-    filters,
-    approvalDescToCode ?? DEFAULT_APPR_STS_DESCRIPTION_TO_CODE,
-  )
+  if (term) {
+    const searchRequest = filtersToSearchRequest({ ...filters, g2bName: '' }, codeMap) as Record<
+      string,
+      unknown
+    >
+    const raw = await fetchSearchRequestSingleBatch<ItemAcquisitionContent>(
+      '/api/item/acquisitions',
+      searchRequest,
+    )
+    const matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as ItemAcquisitionContent[]
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    const data = pageItems.map((item, index) =>
+      mapItemAcquisitionToAcqConfirmationRow(item, index, offset),
+    )
+    return { data, totalCount }
+  }
+
+  const searchRequest = filtersToSearchRequest(filters, codeMap)
   const pageable: ItemAcquisitionPageable = {
     page: page - 1,
     size: pageSize,
@@ -182,11 +200,11 @@ export async function fetchAcqConfirmationList(
     return { data: [], totalCount: 0 }
   }
 
+  const content = payload.content ?? []
   const offset = (page - 1) * pageSize
-  const data = payload.content.map((item, index) =>
+  const data = content.map((item, index) =>
     mapItemAcquisitionToAcqConfirmationRow(item, index, offset),
   )
-  const totalCount = payload.totalElements ?? 0
 
-  return { data, totalCount }
+  return { data, totalCount: payload.totalElements ?? 0 }
 }

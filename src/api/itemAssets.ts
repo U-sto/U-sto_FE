@@ -8,7 +8,11 @@ import axios from 'axios'
 import http from './http'
 import type { ApiResponse } from './types'
 import { applyDeptLabelToSearchRequest } from '../constants/departments'
-import { buildCombinedG2bListNoForFilter } from './g2bFilterNormalize'
+import {
+  buildCombinedG2bListNoForFilter,
+  filterByG2bItemNmIncludes,
+} from './g2bFilterNormalize'
+import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 
 export type ItemAssetSearchRequest = {
   /** G2B 목록번호(코드) */
@@ -54,6 +58,8 @@ export type ItemAssetContent = {
   itmNo?: string
   acqAt?: string
   acqUpr?: number
+  /** 정리일자(목록 응답에서 주로 사용) */
+  arrgAt?: string
   drgAt?: string
   deptNm?: string
   deptCd?: string
@@ -237,9 +243,6 @@ function filtersToSearchRequest(filters: AssetLedgerFilters): ItemAssetSearchReq
     req.g2bCd = g2bDcd
     req.g2bItemNo = g2bDcd
   }
-  // 목록명 기반 검색을 백엔드가 지원하는 경우를 대비해 같이 전달
-  if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
-
   if (filters.itemUniqueNumber?.trim()) {
     req.itmNo = filters.itemUniqueNumber.trim()
     req.itemUnqNo = filters.itemUniqueNumber.trim()
@@ -286,7 +289,7 @@ function mapItemAssetToRow(item: ItemAssetContent, index: number, offset: number
     itmNo: String(item.itmNo ?? item.itemUnqNo ?? ''),
     itemUniqueNumber: String(item.itmNo ?? item.itemUnqNo ?? ''),
     acquireDate: String(item.acqAt ?? ''),
-    sortDate: String(item.drgAt ?? ''),
+    sortDate: String(item.arrgAt ?? item.drgAt ?? ''),
     acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
     operatingDept: String(item.deptNm ?? ''),
     deptCd: item.deptCd != null && String(item.deptCd).trim() !== '' ? String(item.deptCd) : undefined,
@@ -297,6 +300,27 @@ function mapItemAssetToRow(item: ItemAssetContent, index: number, offset: number
 
 export async function fetchItemAssets(params: FetchItemAssetsParams): Promise<FetchItemAssetsResponse> {
   const { page, pageSize, filters } = params
+  const term = filters.g2bName?.trim()
+
+  if (term) {
+    const searchRequest = filtersToSearchRequest({ ...filters, g2bName: '' }) as Record<string, unknown>
+    const raw = await fetchSearchRequestSingleBatch<ItemAssetContent>(
+      '/api/item/assets',
+      searchRequest,
+    )
+    const matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as ItemAssetContent[]
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    return {
+      data: pageItems.map((item, index) => mapItemAssetToRow(item, index, offset)),
+      totalCount,
+    }
+  }
+
   const searchRequest = filtersToSearchRequest(filters)
   const pageable: ItemAssetPageable = { page: page - 1, size: pageSize }
 
@@ -394,7 +418,6 @@ function printFiltersToSearchRequest(filters: ItemAssetsPrintFilters): ItemAsset
     filters.g2bNumberSuffix,
   )
   if (g2bNo) req.g2bNo = g2bNo
-  if (filters.g2bName?.trim()) req.g2bItemNm = filters.g2bName.trim()
   if (filters.itemUniqueNumber?.trim()) req.itemNo = filters.itemUniqueNumber.trim()
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
@@ -450,6 +473,32 @@ export async function fetchItemAssetsPrint(params: {
   filters: ItemAssetsPrintFilters
 }): Promise<{ data: PrintoutListRow[]; totalCount: number }> {
   const { page, pageSize, filters } = params
+  const term = filters.g2bName?.trim()
+
+  if (term) {
+    const searchRequest = printFiltersToSearchRequest({
+      ...filters,
+      g2bName: '',
+    }) as Record<string, unknown>
+    const raw = await fetchSearchRequestSingleBatch<ItemAssetPrintContent>(
+      '/api/item/assets/print',
+      searchRequest,
+    )
+    const matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as ItemAssetPrintContent[]
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    return {
+      data: pageItems.map((item, index) =>
+        mapItemPrintToRow(item as ItemAssetPrintContent, index, offset),
+      ),
+      totalCount,
+    }
+  }
+
   const searchRequest = printFiltersToSearchRequest(filters)
   const pageable: ItemAssetPageable = { page: page - 1, size: pageSize }
 

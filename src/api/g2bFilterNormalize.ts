@@ -86,3 +86,26 @@ export function buildCombinedG2bListNoForFilter(
   if (!p) return undefined
   return [p.g2b0Cd, p.g2bDCd].filter(Boolean).join('-') || undefined
 }
+
+const G2B_NAME_MATCH_KEYS = ['g2bItemNm', 'g2bOnm', 'g2bNm', 'g2bDn'] as const
+
+export function recordMatchesG2bNamePartial(item: Record<string, unknown>, term: string): boolean {
+  const q = term.trim()
+  if (!q) return true
+  for (const k of G2B_NAME_MATCH_KEYS) {
+    const v = item[k]
+    if (v != null && String(v).includes(q)) return true
+  }
+  return false
+}
+
+/** 목록명 부분 일치 — 응답 행의 흔한 필드명을 순회해 contains 검사 */
+export function filterByG2bItemNmIncludes<T extends Record<string, unknown>>(
+  items: T[],
+  term: string | undefined,
+): T[] {
+  const q = term?.trim() ?? ''
+  if (!q) return items
+  return items.filter((it) => recordMatchesG2bNamePartial(it, q))
+}
+
