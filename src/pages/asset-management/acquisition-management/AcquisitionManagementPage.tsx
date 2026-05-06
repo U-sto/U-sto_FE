@@ -182,11 +182,6 @@ const AcquisitionManagementPage = () => {
     return ACQUIRE_SORT_OPTIONS.filter((o) => o !== '선택')
   }, [arrgDescToCode])
 
-  const deptDropdownOptions = useMemo(
-    () => deptOptions.filter((o) => o !== '선택'),
-    [deptOptions],
-  )
-
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -195,6 +190,11 @@ const AcquisitionManagementPage = () => {
     ...OPERATING_DEPARTMENT_SELECT_OPTIONS,
   ])
   const [deptLabelToCd, setDeptLabelToCd] = useState<Record<string, string>>({})
+
+  const deptDropdownOptions = useMemo(
+    () => deptOptions.filter((o) => o !== '선택'),
+    [deptOptions],
+  )
   const [detail, setDetail] = useState<ItemAcquisitionContent | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
 

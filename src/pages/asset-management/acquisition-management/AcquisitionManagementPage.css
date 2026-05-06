@@ -244,6 +244,13 @@
   color: var(--usto-primary-300);
 }
 
+/* 공통 .button:hover가 배경을 primary-300으로 올려 글자색(primary-300)과 겹침 → 호버 대비 복구 */
+.button.acquisition-btn-outline:hover:not(:disabled) {
+  background-color: var(--usto-primary-100);
+  color: var(--usto-primary-300);
+  border-color: var(--usto-primary-300);
+}
+
 .acquisition-btn-primary {
   background: var(--usto-primary-300);
   border: 1px solid var(--usto-primary-300);
