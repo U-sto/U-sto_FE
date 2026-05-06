@@ -296,6 +296,16 @@ const AcquisitionListPage = () => {
           : String(row.acquireAmount),
     },
     { key: 'operatingDept', header: '운용부서', render: (row) => row.operatingDept },
+    { key: 'operatingStatus', header: '운용상태', render: (row) => row.operatingStatus },
+    { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
+    {
+      key: 'quantity',
+      header: '수량',
+      render: (row) =>
+        typeof row.quantity === 'number'
+          ? row.quantity.toLocaleString('ko-KR')
+          : String(row.quantity),
+    },
     { key: 'approvalStatus', header: '승인상태', render: (row) => row.approvalStatus },
   ]
 
@@ -326,6 +336,10 @@ const AcquisitionListPage = () => {
   }
 
   const handleEdit = () => {
+    if (selectedAcqIds.size === 0) {
+      window.alert('수정할 건을 선택해 주세요.')
+      return
+    }
     if (selectedAcqIds.size !== 1) {
       window.alert('수정할 건을 1건만 선택해 주세요.')
       return
