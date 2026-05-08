@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../components/common/Button/Button'
@@ -67,6 +67,8 @@ const DisposalManagementPage = () => {
   const [itemTotalCount, setItemTotalCount] = useState(0)
   const [itemError, setItemError] = useState<string | null>(null)
   const [checkedDispMIds, setCheckedDispMIds] = useState<Set<string>>(new Set())
+  /** 초기화 시 DataTable 내부 선택/드래그 상태까지 재생성 */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
 
@@ -148,6 +150,15 @@ const DisposalManagementPage = () => {
     }
   }, [itemPage, selectedRegistration?.dispMId])
 
+  /** 체크가 풀려 선택 집합에 없어지면 하단 처분 물품 목록도 비움 */
+  useEffect(() => {
+    const id = selectedRegistration?.dispMId
+    if (id != null && !checkedDispMIds.has(id)) {
+      setSelectedRegistration(null)
+      setItemPage(1)
+    }
+  }, [checkedDispMIds, selectedRegistration?.dispMId])
+
   const allRegistrationsChecked =
     registrationData.length > 0 && registrationData.every((row) => checkedDispMIds.has(row.dispMId))
 
@@ -160,17 +171,39 @@ const DisposalManagementPage = () => {
   }
 
   const toggleOneRegistration = (dispMId: string, checked: boolean) => {
+    if (!dispMId) return
     setCheckedDispMIds((prev) => {
       const next = new Set(prev)
       if (checked) next.add(dispMId)
       else next.delete(dispMId)
       return next
     })
-    if (checked && dispMId) {
-      setSelectedRegistration({ dispMId })
-      setItemPage(1)
+    if (checked) {
+      queueMicrotask(() => {
+        setSelectedRegistration({ dispMId })
+        setItemPage(1)
+      })
     }
   }
+
+  const setRequestDisposalRegCheckboxChecked = useCallback(
+    (row: ApiDisposalRegistrationRow, checked: boolean) => {
+      if (!row.dispMId) return
+      setCheckedDispMIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.add(row.dispMId)
+        else next.delete(row.dispMId)
+        return next
+      })
+      if (checked) {
+        queueMicrotask(() => {
+          setSelectedRegistration({ dispMId: row.dispMId })
+          setItemPage(1)
+        })
+      }
+    },
+    [],
+  )
 
   // API 응답 row 타입이 동일하지만, 이 페이지에서 사용하는 타입과 맞추기 위해 명시적으로 선언
   const registrationColumns: DataTableColumn<ApiDisposalRegistrationRow>[] = [
@@ -229,7 +262,9 @@ const DisposalManagementPage = () => {
     setItemPage(1)
     setItemData([])
     setItemTotalCount(0)
+    setItemError(null)
     setCheckedDispMIds(new Set())
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleReject = async () => {
@@ -327,6 +362,7 @@ const DisposalManagementPage = () => {
       {registrationError && <div className="disposal-error-text">{registrationError}</div>}
 
       <DataTable<ApiDisposalRegistrationRow>
+        key={`request-disposal-reg-${dataTableEpoch}`}
         pageKey="disposal"
         title="처분 등록 목록"
         data={registrationData}
@@ -337,11 +373,10 @@ const DisposalManagementPage = () => {
         getRowKey={(row) => row.id}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
-        onRowClick={(row) => {
-          if (!row.dispMId) return
-          setSelectedRegistration({ dispMId: row.dispMId })
-          setItemPage(1)
-        }}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.dispMId && checkedDispMIds.has(row.dispMId))
+        }
+        setRowCheckboxChecked={setRequestDisposalRegCheckboxChecked}
         isRowSelected={(row) => selectedRegistration?.dispMId === row.dispMId}
         renderActions={() => (
           <div className="disposal-table-actions">
@@ -364,6 +399,7 @@ const DisposalManagementPage = () => {
       />
       {itemError && <div className="disposal-error-text">{itemError}</div>}
       <DataTable<DisposalItemRow>
+        key={`request-disposal-items-${dataTableEpoch}`}
         pageKey="disposal"
         title="처분 물품 목록"
         data={itemData}

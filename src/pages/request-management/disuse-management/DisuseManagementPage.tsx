@@ -65,6 +65,8 @@ const DisuseManagementPage = () => {
   const [itemPage, setItemPage] = useState(1)
   const [itemData, setItemData] = useState<DisuseItemRow[]>([])
   const [itemTotalCount, setItemTotalCount] = useState(0)
+  /** 초기화 시 DataTable 내부 선택/드래그 상태까지 초기화 */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const loadRegistrations = useCallback(async () => {
     try {
@@ -126,6 +128,14 @@ const DisuseManagementPage = () => {
     }
   }, [itemPage, selectedDsuMId])
 
+  /** 체크가 풀려 선택 집합에 없어지면 하단 불용 물품 목록도 비움 */
+  useEffect(() => {
+    if (selectedDsuMId != null && !selectedDsuMIds.has(selectedDsuMId)) {
+      setSelectedDsuMId(null)
+      setItemPage(1)
+    }
+  }, [selectedDsuMIds, selectedDsuMId])
+
   const pageDsuMIds = useMemo(
     () => registrationData.map((r) => r.dsuMId).filter((id) => id.length > 0),
     [registrationData],
@@ -145,15 +155,25 @@ const DisuseManagementPage = () => {
     })
   }
 
-  const toggleRowSelected = (dsuMId: string) => {
-    if (!dsuMId) return
-    setSelectedDsuMIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(dsuMId)) next.delete(dsuMId)
-      else next.add(dsuMId)
-      return next
-    })
-  }
+  const setRequestDisuseRegCheckboxChecked = useCallback(
+    (row: DisuseRegistrationRow, checked: boolean) => {
+      const id = row.dsuMId
+      if (!id) return
+      setSelectedDsuMIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.add(id)
+        else next.delete(id)
+        return next
+      })
+      if (checked) {
+        queueMicrotask(() => {
+          setSelectedDsuMId(id)
+          setItemPage(1)
+        })
+      }
+    },
+    [],
+  )
 
   const handleAdminReject = async () => {
     const ids = [...selectedDsuMIds]
@@ -218,7 +238,9 @@ const DisuseManagementPage = () => {
         <input
           type="checkbox"
           checked={row.dsuMId ? selectedDsuMIds.has(row.dsuMId) : false}
-          onChange={() => toggleRowSelected(row.dsuMId)}
+          onChange={(e) =>
+            setRequestDisuseRegCheckboxChecked(row, e.target.checked)
+          }
           onClick={(e) => e.stopPropagation()}
           disabled={!row.dsuMId}
           aria-label={`불용 건 선택 ${row.id}`}
@@ -261,6 +283,12 @@ const DisuseManagementPage = () => {
   const handleResetClick = () => {
     onReset()
     setQuery({ page: 1, filters: INITIAL_FILTERS })
+    setSelectedDsuMIds(new Set())
+    setSelectedDsuMId(null)
+    setItemPage(1)
+    setItemData([])
+    setItemTotalCount(0)
+    setDataTableEpoch((n) => n + 1)
   }
 
   const actionBusy = adminActionLoading !== null
@@ -328,6 +356,7 @@ const DisuseManagementPage = () => {
         </FilterPanel>
 
         <DataTable<DisuseRegistrationRow>
+          key={`request-disuse-reg-${dataTableEpoch}`}
           pageKey="disuse"
           title="불용 등록 목록"
           data={registrationData}
@@ -338,11 +367,10 @@ const DisuseManagementPage = () => {
           variant="upper"
           columns={registrationColumns}
           getRowKey={(row, index) => row.dsuMId || `disuse-reg-${row.id}-${index}`}
-          onRowClick={(row) => {
-            if (!row.dsuMId) return
-            setSelectedDsuMId(row.dsuMId)
-            setItemPage(1)
-          }}
+          getRowCheckboxChecked={(row) =>
+            Boolean(row.dsuMId && selectedDsuMIds.has(row.dsuMId))
+          }
+          setRowCheckboxChecked={setRequestDisuseRegCheckboxChecked}
           isRowSelected={(row) => row.dsuMId === selectedDsuMId}
           renderActions={() => (
             <div className="disuse-table-actions">
@@ -366,6 +394,7 @@ const DisuseManagementPage = () => {
           )}
         />
         <DataTable<DisuseItemRow>
+          key={`request-disuse-items-${dataTableEpoch}`}
           pageKey="disuse"
           title="불용 물품 목록"
           data={itemData}

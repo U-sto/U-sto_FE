@@ -1,13 +1,23 @@
-import { useMemo, useState, type Key, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type Key, type ReactNode } from 'react'
 import type { ManagementPageKey } from '../../../../components/layout/management/ManagementPageLayout/ManagementPageLayout'
 import './DataTable.css'
 
-/** 행 클릭과 체크박스·버튼 등이 겹치지 않도록 */
+/** 행 클릭과 버튼·링크 등이 겹치지 않도록 (행 선택용 체크박스는 제외 — onRowClick과 함께 쓰임) */
 function isInteractiveRowClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
+  if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+    return false
+  }
+  if (target.closest('input[type="checkbox"]')) {
+    return false
+  }
+  const lab = target.closest('label')
+  if (lab?.querySelector('input[type="checkbox"]')) {
+    return false
+  }
   return (
     target.closest(
-      'input, button, textarea, select, a[href], [role="button"], [role="checkbox"], label',
+      'input:not([type="checkbox"]), button, textarea, select, a[href], [role="button"], [role="checkbox"], label',
     ) != null
   )
 }
@@ -44,6 +54,12 @@ interface DataTableProps<T> {
   onRowClick?: (row: T, index: number) => void
   /** 선택된 행 스타일 */
   isRowSelected?: (row: T, index: number) => boolean
+  /**
+   * 체크박스가 React state와 동기화된(controlled) 목록일 때 함께 전달.
+   * 드래그 선택 시 DOM 조작 대신 이 콜백으로만 상태를 바꿔야 첫 행·마지막 클릭 오동작을 막을 수 있음.
+   */
+  getRowCheckboxChecked?: (row: T) => boolean
+  setRowCheckboxChecked?: (row: T, checked: boolean) => void
 }
 
 /** 체크 열 (20px 컨트롤 + 여백). 이 키에는 column.width 무시 */
@@ -91,12 +107,57 @@ function DataTable<T>({
   onPageChange,
   onRowClick,
   isRowSelected,
+  getRowCheckboxChecked,
+  setRowCheckboxChecked,
 }: DataTableProps<T>) {
   const prefix = pageKey
   const [internalPage, setInternalPage] = useState(1)
+  const [isDragSelecting, setIsDragSelecting] = useState(false)
+  const dragActionRef = useRef<'check' | 'uncheck' | null>(null)
+  const suppressNextRowClickRef = useRef(false)
+  const suppressNextCheckboxNativeClickRef = useRef(false)
+  const dragVisitedRowIndicesRef = useRef<Set<number>>(new Set())
+  const dragAnchorRowIndexRef = useRef<number | null>(null)
+  const dragBaselineCheckedRef = useRef<Map<number, boolean>>(new Map())
+
+  const isControlledCheckbox =
+    typeof getRowCheckboxChecked === 'function' &&
+    typeof setRowCheckboxChecked === 'function'
 
   const isServerSide = controlledPage != null && typeof onPageChange === 'function'
   const currentPage = isServerSide ? controlledPage : internalPage
+
+  /** 목록 데이터가 바뀌면(조회·초기화·페이지 이동 등) 드래그 중 ref가 이전 행 인덱스를 물고 체크가 복구되는 것을 막음 */
+  useEffect(() => {
+    setIsDragSelecting(false)
+    dragActionRef.current = null
+    dragVisitedRowIndicesRef.current.clear()
+    dragAnchorRowIndexRef.current = null
+    dragBaselineCheckedRef.current = new Map()
+    suppressNextRowClickRef.current = false
+    suppressNextCheckboxNativeClickRef.current = false
+  }, [data])
+
+  useEffect(() => {
+    if (!isDragSelecting) return
+    const onMouseUp = () => {
+      if (dragVisitedRowIndicesRef.current.size > 1) {
+        suppressNextRowClickRef.current = true
+        suppressNextCheckboxNativeClickRef.current = true
+      }
+      dragVisitedRowIndicesRef.current.clear()
+      dragAnchorRowIndexRef.current = null
+      dragBaselineCheckedRef.current = new Map()
+      setIsDragSelecting(false)
+      dragActionRef.current = null
+    }
+    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('blur', onMouseUp)
+    return () => {
+      window.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('blur', onMouseUp)
+    }
+  }, [isDragSelecting])
 
   const { pageData, totalPages } = useMemo(() => {
     const safePageSize = pageSize > 0 ? pageSize : 10
@@ -157,8 +218,38 @@ function DataTable<T>({
   const canPrevBlock = pageBlockStart > 1
   const canNextBlock = pageBlockStart + PAGE_NUMBER_WINDOW <= totalPages
 
+  const applyControlledDragRange = (currentRowIndex: number) => {
+    if (!isControlledCheckbox) return
+    const anchor = dragAnchorRowIndexRef.current
+    if (anchor == null) return
+    const rangeStart = Math.min(anchor, currentRowIndex)
+    const rangeEnd = Math.max(anchor, currentRowIndex)
+    pageData.forEach((candidateRow, candidateIndex) => {
+      const baselineChecked = dragBaselineCheckedRef.current.get(candidateIndex) ?? false
+      const inRange = candidateIndex >= rangeStart && candidateIndex <= rangeEnd
+      const shouldBeChecked = baselineChecked || inRange
+      const currentChecked = getRowCheckboxChecked!(candidateRow)
+      if (currentChecked !== shouldBeChecked) {
+        setRowCheckboxChecked!(candidateRow, shouldBeChecked)
+      }
+    })
+  }
+
   return (
-    <section className={tableClassNames}>
+    <section
+      className={`${tableClassNames}${isDragSelecting ? ' management-table-dragging' : ''}`}
+      onClickCapture={(e) => {
+        if (!suppressNextCheckboxNativeClickRef.current) return
+        // Consume stale suppression on the very next click regardless of target.
+        // If it is not consumed here, a later intentional checkbox click can be swallowed.
+        suppressNextCheckboxNativeClickRef.current = false
+        const target = e.target
+        if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return
+        // After a drag-select ends, cancel the release click's native checkbox toggle once.
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+    >
       <div className={`${prefix}-table-top`}>
         <div className={`${prefix}-table-label`}>{title}</div>
         {renderActions && (
@@ -231,23 +322,126 @@ function DataTable<T>({
                     ]
                       .filter(Boolean)
                       .join(' ')}
+                    onMouseDown={(e) => {
+                      if (e.button !== 0) return
+                      const isCheckboxTarget =
+                        e.target instanceof HTMLInputElement && e.target.type === 'checkbox'
+                      if (!isCheckboxTarget && isInteractiveRowClickTarget(e.target)) return
+                      const tr = e.currentTarget as HTMLElement
+                      const checkbox = tr.querySelector<HTMLInputElement>('input[type="checkbox"]')
+                      if (!checkbox || checkbox.disabled) return
+
+                      // Drag selection is additive: keep existing checks and only add newly visited rows.
+                      // This prevents the first checked row from being unintentionally turned off.
+                      const nextAction: 'check' | 'uncheck' = 'check'
+                      dragActionRef.current = nextAction
+                      dragVisitedRowIndicesRef.current = new Set([rowIndex])
+                      dragAnchorRowIndexRef.current = rowIndex
+                      if (isControlledCheckbox) {
+                        const baseline = new Map<number, boolean>()
+                        pageData.forEach((candidateRow, candidateIndex) => {
+                          baseline.set(candidateIndex, getRowCheckboxChecked!(candidateRow))
+                        })
+                        dragBaselineCheckedRef.current = baseline
+                        // 체크박스 직접 클릭: 여기서 범위를 적용하면 직후 네이티브 click이 또 토글해
+                        // 체크→즉시 해제처럼 보임. 드래그는 onMouseEnter에서만 범위 적용.
+                        if (!isCheckboxTarget) {
+                          applyControlledDragRange(rowIndex)
+                        }
+                      }
+                      setIsDragSelecting(true)
+
+                      // Checkbox direct click should remain native to avoid double toggles
+                      // (native onChange + row click handler). Drag to other rows is still handled
+                      // by onMouseEnter while isDragSelecting is true.
+                      if (isCheckboxTarget) return
+
+                      const currentlyChecked = isControlledCheckbox
+                        ? getRowCheckboxChecked!(row)
+                        : checkbox.checked
+                      // If the row is already checked, let click handler perform uncheck toggle.
+                      // We still keep drag mode active so dragging to other rows can add checks.
+                      if (currentlyChecked) return
+
+                      const shouldCheck = nextAction === 'check'
+                      if (isControlledCheckbox) {
+                        setRowCheckboxChecked!(row, shouldCheck)
+                      } else {
+                        checkbox.checked = shouldCheck
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
+                      }
+                      // mousedown에서 이미 체크 상태를 바꿨으므로 이어지는 click 이중 토글 방지
+                      suppressNextRowClickRef.current = true
+                      onRowClick?.(row, rowIndex)
+                      e.preventDefault()
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isDragSelecting) return
+                      const action = dragActionRef.current
+                      if (!action) return
+                      const tr = e.currentTarget as HTMLElement
+                      const checkbox = tr.querySelector<HTMLInputElement>('input[type="checkbox"]')
+                      if (!checkbox || checkbox.disabled) return
+                      dragVisitedRowIndicesRef.current.add(rowIndex)
+                      const shouldBeChecked = action === 'check'
+                      if (isControlledCheckbox) {
+                        applyControlledDragRange(rowIndex)
+                      } else {
+                        if (checkbox.checked === shouldBeChecked) return
+                        checkbox.checked = shouldBeChecked
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
+                      }
+                    }}
                     onClick={
                       onRowClick
                         ? (e) => {
+                            if (suppressNextRowClickRef.current) {
+                              suppressNextRowClickRef.current = false
+                              return
+                            }
+                            if (
+                              e.target instanceof HTMLInputElement &&
+                              e.target.type === 'checkbox'
+                            ) {
+                              return
+                            }
                             if (isInteractiveRowClickTarget(e.target)) return
-                            // 행의 체크박스가 있으면 함께 토글
-                            const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
+                            const tr = e.currentTarget as HTMLElement
+                            const checkbox = tr.querySelector<HTMLInputElement>(
                               'input[type="checkbox"]',
                             )
-                            if (checkbox) checkbox.click()
-                            onRowClick(row, rowIndex)
+                            if (isControlledCheckbox) {
+                              const cur = getRowCheckboxChecked!(row)
+                              const nextChecked = !cur
+                              setRowCheckboxChecked!(row, nextChecked)
+                              if (nextChecked) onRowClick(row, rowIndex)
+                            } else if (checkbox) {
+                              checkbox.click()
+                              onRowClick(row, rowIndex)
+                            }
                           }
                         : (e) => {
+                            if (suppressNextRowClickRef.current) {
+                              suppressNextRowClickRef.current = false
+                              return
+                            }
+                            if (
+                              e.target instanceof HTMLInputElement &&
+                              e.target.type === 'checkbox'
+                            ) {
+                              return
+                            }
                             if (isInteractiveRowClickTarget(e.target)) return
-                            const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
+                            const tr = e.currentTarget as HTMLElement
+                            const checkbox = tr.querySelector<HTMLInputElement>(
                               'input[type="checkbox"]',
                             )
-                            if (checkbox) checkbox.click()
+                            if (isControlledCheckbox) {
+                              const cur = getRowCheckboxChecked!(row)
+                              setRowCheckboxChecked!(row, !cur)
+                            } else if (checkbox) {
+                              checkbox.click()
+                            }
                           }
                     }
                     onKeyDown={
@@ -256,11 +450,18 @@ function DataTable<T>({
                             if (e.key === 'Enter' || e.key === ' ') {
                               if (isInteractiveRowClickTarget(e.target)) return
                               e.preventDefault()
-                              const checkbox = (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>(
-                                'input[type="checkbox"]',
-                              )
-                              if (checkbox) checkbox.click()
-                              onRowClick(row, rowIndex)
+                              const checkbox = (
+                                e.currentTarget as HTMLElement
+                              ).querySelector<HTMLInputElement>('input[type="checkbox"]')
+                              if (isControlledCheckbox) {
+                                const cur = getRowCheckboxChecked!(row)
+                                const nextChecked = !cur
+                                setRowCheckboxChecked!(row, nextChecked)
+                                if (nextChecked) onRowClick(row, rowIndex)
+                              } else if (checkbox) {
+                                checkbox.click()
+                                onRowClick(row, rowIndex)
+                              }
                             }
                           }
                         : undefined

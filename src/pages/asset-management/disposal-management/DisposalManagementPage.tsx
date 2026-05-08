@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
@@ -52,6 +52,7 @@ const DisposalManagementPage = () => {
   const [registrationTotalCount, setRegistrationTotalCount] = useState(0)
   const [registrationError, setRegistrationError] = useState<string | null>(null)
   const [selectedRegistration, setSelectedRegistration] = useState<SelectedRegistration | null>(null)
+  const [checkedDispMIds, setCheckedDispMIds] = useState<Set<string>>(() => new Set())
 
   const [itemPage, setItemPage] = useState(1)
   const [itemData, setItemData] = useState<DisposalItemRow[]>([])
@@ -61,6 +62,8 @@ const DisposalManagementPage = () => {
   const [requestCanceling, setRequestCanceling] = useState(false)
   const [deletingDisposal, setDeletingDisposal] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  /** 초기화 시 DataTable 내부 상태 초기화 */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const apiDisposalFilters = useMemo(
     () => ({
@@ -88,6 +91,7 @@ const DisposalManagementPage = () => {
         setRegistrationData(res.data)
         setRegistrationTotalCount(res.totalCount)
         setSelectedRegistration(null)
+        setCheckedDispMIds(new Set())
         setItemPage(1)
         setItemData([])
         setItemTotalCount(0)
@@ -147,13 +151,8 @@ const DisposalManagementPage = () => {
         <input
           type="checkbox"
           disabled={!row.dispMId}
-          checked={selectedRegistration?.dispMId === row.dispMId}
-          onChange={() => {
-            setSelectedRegistration((prev) =>
-              prev?.dispMId === row.dispMId ? null : { dispMId: row.dispMId },
-            )
-            setItemPage(1)
-          }}
+          checked={Boolean(row.dispMId && checkedDispMIds.has(row.dispMId))}
+          onChange={(e) => setDisposalRegistrationCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -165,6 +164,27 @@ const DisposalManagementPage = () => {
     { key: 'registrantName', header: '등록자명', render: (row) => row.registrantName },
     { key: 'approvalStatus', header: '승인상태', render: (row) => row.approvalStatus },
   ]
+
+  const setDisposalRegistrationCheckboxChecked = useCallback(
+    (row: DisposalRegistrationRow, checked: boolean) => {
+      if (!row.dispMId) return
+      if (checked) {
+        setCheckedDispMIds((prev) => new Set(prev).add(row.dispMId))
+        setSelectedRegistration({ dispMId: row.dispMId })
+        setItemPage(1)
+      } else {
+        setCheckedDispMIds((prev) => {
+          const next = new Set(prev)
+          next.delete(row.dispMId)
+          return next
+        })
+        if (selectedRegistration?.dispMId === row.dispMId) {
+          setSelectedRegistration(null)
+        }
+      }
+    },
+    [selectedRegistration?.dispMId],
+  )
 
   const itemColumns: DataTableColumn<DisposalItemRow>[] = [
     { key: 'select', header: '', render: () => <input type="checkbox" /> },
@@ -187,6 +207,13 @@ const DisposalManagementPage = () => {
     setFilters(next)
     setSearchedFilters(next)
     setCurrentPage(1)
+    setSelectedRegistration(null)
+    setCheckedDispMIds(new Set())
+    setItemPage(1)
+    setItemData([])
+    setItemTotalCount(0)
+    setItemError(null)
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleSearch = () => {
@@ -265,6 +292,7 @@ const DisposalManagementPage = () => {
       await deleteItemDisposal(dispMId)
       window.alert('삭제가 완료되었습니다.')
       setSelectedRegistration(null)
+      setCheckedDispMIds(new Set())
       setItemData([])
       setItemTotalCount(0)
       refreshRegistrations()
@@ -356,6 +384,7 @@ const DisposalManagementPage = () => {
       />
 
       <DataTable<DisposalRegistrationRow>
+        key={`disposal-reg-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="처분 등록 목록"
         data={registrationData}
@@ -363,6 +392,10 @@ const DisposalManagementPage = () => {
         pageSize={10}
         columns={registrationColumns}
         getRowKey={(row) => row.id}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.dispMId && checkedDispMIds.has(row.dispMId))
+        }
+        setRowCheckboxChecked={setDisposalRegistrationCheckboxChecked}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         renderActions={() => (
@@ -416,6 +449,7 @@ const DisposalManagementPage = () => {
         </div>
       )}
       <DataTable<DisposalItemRow>
+        key={`disposal-items-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="처분 물품 목록"
         data={itemData}
