@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
@@ -47,6 +47,7 @@ const DisuseManagementPage = () => {
   const [registrationData, setRegistrationData] = useState<DisuseRegistrationRow[]>([])
   const [registrationTotalCount, setRegistrationTotalCount] = useState(0)
   const [selectedDsuMId, setSelectedDsuMId] = useState<string | null>(null)
+  const [checkedDsuMIds, setCheckedDsuMIds] = useState<Set<string>>(() => new Set())
   const [itemPage, setItemPage] = useState(1)
   const [itemData, setItemData] = useState<DisuseItemRow[]>([])
   const [itemTotalCount, setItemTotalCount] = useState(0)
@@ -54,6 +55,8 @@ const DisuseManagementPage = () => {
   const [requestCanceling, setRequestCanceling] = useState(false)
   const [deletingDisuse, setDeletingDisuse] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  /** 초기화 시 DataTable 내부 상태 초기화 */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const apiDisuseFilters = useMemo(() => {
     return {
@@ -78,6 +81,7 @@ const DisuseManagementPage = () => {
         setRegistrationData(res.data)
         setRegistrationTotalCount(res.totalCount)
         setSelectedDsuMId(null)
+        setCheckedDsuMIds(new Set())
         setItemPage(1)
         setItemData([])
         setItemTotalCount(0)
@@ -124,11 +128,8 @@ const DisuseManagementPage = () => {
         <input
           type="checkbox"
           disabled={!row.dsuMId}
-          checked={selectedDsuMId === row.dsuMId}
-          onChange={() => {
-            setSelectedDsuMId((prev) => (prev === row.dsuMId ? null : row.dsuMId))
-            setItemPage(1)
-          }}
+          checked={Boolean(row.dsuMId && checkedDsuMIds.has(row.dsuMId))}
+          onChange={(e) => setDisuseRegistrationCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -139,6 +140,27 @@ const DisuseManagementPage = () => {
     { key: 'registrantName', header: '등록자명', render: (row) => row.registrantName },
     { key: 'approvalStatus', header: '승인상태', render: (row) => row.approvalStatus },
   ]
+
+  const setDisuseRegistrationCheckboxChecked = useCallback(
+    (row: DisuseRegistrationRow, checked: boolean) => {
+      if (!row.dsuMId) return
+      if (checked) {
+        setCheckedDsuMIds((prev) => new Set(prev).add(row.dsuMId))
+        setSelectedDsuMId(row.dsuMId)
+        setItemPage(1)
+      } else {
+        setCheckedDsuMIds((prev) => {
+          const next = new Set(prev)
+          next.delete(row.dsuMId)
+          return next
+        })
+        if (selectedDsuMId === row.dsuMId) {
+          setSelectedDsuMId(null)
+        }
+      }
+    },
+    [selectedDsuMId],
+  )
 
   const itemColumns: DataTableColumn<DisuseItemRow>[] = [
     { key: 'select', header: '', render: () => <input type="checkbox" /> },
@@ -162,9 +184,11 @@ const DisuseManagementPage = () => {
     setSearchedFilters({ ...INITIAL_FILTERS })
     setRegistrationPage(1)
     setSelectedDsuMId(null)
+    setCheckedDsuMIds(new Set())
     setItemPage(1)
     setItemData([])
     setItemTotalCount(0)
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleEdit = () => {
@@ -234,6 +258,7 @@ const DisuseManagementPage = () => {
       await deleteItemDisuse(selectedDsuMId)
       window.alert('삭제가 완료되었습니다.')
       setSelectedDsuMId(null)
+      setCheckedDsuMIds(new Set())
       setItemData([])
       setItemTotalCount(0)
       refreshRegistrations()
@@ -325,6 +350,7 @@ const DisuseManagementPage = () => {
       />
 
       <DataTable<DisuseRegistrationRow>
+        key={`disuse-reg-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="불용 등록 목록"
         data={registrationData}
@@ -334,6 +360,10 @@ const DisuseManagementPage = () => {
         onPageChange={setRegistrationPage}
         columns={registrationColumns}
         getRowKey={(row) => row.id}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.dsuMId && checkedDsuMIds.has(row.dsuMId))
+        }
+        setRowCheckboxChecked={setDisuseRegistrationCheckboxChecked}
         renderActions={() => (
           <div className="return-registration-actions">
             <button
@@ -380,6 +410,7 @@ const DisuseManagementPage = () => {
       />
 
       <DataTable<DisuseItemRow>
+        key={`disuse-items-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="불용 물품 목록"
         data={itemData}

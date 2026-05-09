@@ -144,6 +144,17 @@ const PrintoutManagementPage = () => {
     })
   }, [allPageChecked, pageItmNos])
 
+  const setPrintoutRowCheckboxChecked = useCallback((row: PrintoutRow, checked: boolean) => {
+    const id = row.itemUniqueNumber.trim()
+    if (!id) return
+    setCheckedItmNos((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
   const columns: DataTableColumn<PrintoutRow>[] = useMemo(
     () => [
     {
@@ -165,7 +176,9 @@ const PrintoutManagementPage = () => {
             type="checkbox"
             checked={!disabled && checkedItmNos.has(id)}
             disabled={disabled}
-            onChange={() => toggleCheckOne(row.itemUniqueNumber)}
+            onChange={(e) =>
+              setPrintoutRowCheckboxChecked(row, e.target.checked)
+            }
             onClick={(e) => e.stopPropagation()}
             aria-label={`물품 ${id || '(번호없음)'} 선택`}
           />
@@ -450,6 +463,11 @@ const PrintoutManagementPage = () => {
         onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => `${row.id}-${row.itemUniqueNumber}-${row.g2bNumber}`}
+        getRowCheckboxChecked={(row) => {
+          const id = row.itemUniqueNumber.trim()
+          return Boolean(id && checkedItmNos.has(id))
+        }}
+        setRowCheckboxChecked={setPrintoutRowCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

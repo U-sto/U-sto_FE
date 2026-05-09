@@ -17,6 +17,7 @@ import DeleteConfirmModal from '../../../../components/common/DeleteConfirmModal
 import {
   fetchItemReturningList,
   fetchItemReturningItems,
+  resolveItemReturningG2bName,
   formatReturningDateOnly,
   requestItemReturningApproval,
   cancelItemReturningRequest,
@@ -135,7 +136,7 @@ function mapItemToRow(
   return {
     id: offset + index + 1,
     g2bNumber: item.g2bItemNo ?? '',
-    g2bName: item.g2bNm ?? '',
+    g2bName: resolveItemReturningG2bName(item as ItemReturningItem & Record<string, unknown>),
     itemUniqueNumber: item.itmNo ?? '',
     acquireDate: formatReturningDateOnly(item.acqAt),
     acquireAmount:
@@ -193,6 +194,8 @@ const ReturnManagementPage = () => {
   const [itemPage, setItemPage] = useState(1)
   const [itemRows, setItemRows] = useState<ReturnItemRow[]>([])
   const [totalItemCount, setTotalItemCount] = useState(0)
+  /** 초기화 시 DataTable 내부 상태 초기화 */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const loadRegistrations = useCallback(async () => {
     try {
@@ -263,6 +266,14 @@ const ReturnManagementPage = () => {
     setSelectedReturningIds(new Set())
   }, [searchedFilters])
 
+  /** 체크가 풀려 선택 집합에 없어지면 하단 반납 물품 목록도 비움 */
+  useEffect(() => {
+    if (selectedRtrnId != null && !selectedReturningIds.has(selectedRtrnId)) {
+      setSelectedRtrnId(null)
+      setItemPage(1)
+    }
+  }, [selectedReturningIds, selectedRtrnId])
+
   const pageRtrnIds = useMemo(
     () => registrationRows.map((r) => r.rtrnId).filter((id) => id.length > 0),
     [registrationRows],
@@ -282,15 +293,25 @@ const ReturnManagementPage = () => {
     })
   }
 
-  const toggleRowSelected = (rtrnId: string) => {
-    if (!rtrnId) return
-    setSelectedReturningIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(rtrnId)) next.delete(rtrnId)
-      else next.add(rtrnId)
-      return next
-    })
-  }
+  const setReturningRowCheckboxChecked = useCallback(
+    (row: ReturnRegistrationRow, checked: boolean) => {
+      const id = row.rtrnId
+      if (!id) return
+      setSelectedReturningIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.add(id)
+        else next.delete(id)
+        return next
+      })
+      if (checked) {
+        queueMicrotask(() => {
+          setSelectedRtrnId(id)
+          setItemPage(1)
+        })
+      }
+    },
+    [],
+  )
 
   const registrationColumns: DataTableColumn<ReturnRegistrationRow>[] = [
     {
@@ -308,7 +329,7 @@ const ReturnManagementPage = () => {
         <input
           type="checkbox"
           checked={row.rtrnId ? selectedReturningIds.has(row.rtrnId) : false}
-          onChange={() => toggleRowSelected(row.rtrnId)}
+          onChange={(e) => setReturningRowCheckboxChecked(row, e.target.checked)}
           onClick={(e) => e.stopPropagation()}
           disabled={!row.rtrnId}
           aria-label={`반납 건 선택 ${row.id}`}
@@ -339,6 +360,12 @@ const ReturnManagementPage = () => {
     setFilters({ ...INITIAL_FILTERS })
     setSearchedFilters({ ...INITIAL_FILTERS })
     setCurrentRegPage(1)
+    setSelectedReturningIds(new Set())
+    setSelectedRtrnId(null)
+    setItemPage(1)
+    setItemRows([])
+    setTotalItemCount(0)
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleSearch = () => {
@@ -521,6 +548,7 @@ const ReturnManagementPage = () => {
       />
 
       <DataTable<ReturnRegistrationRow>
+        key={`return-reg-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="반납 등록 목록"
         data={registrationRows}
@@ -530,11 +558,10 @@ const ReturnManagementPage = () => {
         onPageChange={setCurrentRegPage}
         columns={registrationColumns}
         getRowKey={(row, index) => row.rtrnId || `return-reg-${row.id}-${index}`}
-        onRowClick={(row) => {
-          if (!row.rtrnId) return
-          setSelectedRtrnId(row.rtrnId)
-          setItemPage(1)
-        }}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.rtrnId && selectedReturningIds.has(row.rtrnId))
+        }
+        setRowCheckboxChecked={setReturningRowCheckboxChecked}
         isRowSelected={(row) => row.rtrnId === selectedRtrnId}
         renderActions={() => (
           <div className="return-registration-actions">
@@ -582,6 +609,7 @@ const ReturnManagementPage = () => {
       />
 
       <DataTable<ReturnItemRow>
+        key={`return-items-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="반납 물품 목록"
         data={itemRows}

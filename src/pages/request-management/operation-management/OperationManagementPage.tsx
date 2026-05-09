@@ -126,28 +126,25 @@ const OperationManagementPage = () => {
     void loadItemList()
   }, [loadItemList])
 
-  const handleToggleRegistrationCheck = useCallback(
-    (row: OperationTransferRegistrationRow) => {
-      if (!row.operMId) {
-        window.alert('운용 등록 ID(operMId)가 없습니다.')
-        return
-      }
-      setCheckedOperMIds((prev) => {
-        const next = new Set(prev)
-        if (next.has(row.operMId)) {
+  const setOperRegistrationCheckboxChecked = useCallback(
+    (row: OperationTransferRegistrationRow, checked: boolean) => {
+      if (!row.operMId) return
+      if (checked) {
+        setCheckedOperMIds((prev) => new Set(prev).add(row.operMId))
+        setSelectedOperMId(row.operMId)
+        setItemPage(1)
+      } else {
+        setCheckedOperMIds((prev) => {
+          const next = new Set(prev)
           next.delete(row.operMId)
           setSelectedOperMId((cur) => {
             if (cur !== row.operMId) return cur
             const first = next.values().next().value as string | undefined
             return first ?? null
           })
-        } else {
-          next.add(row.operMId)
-          setSelectedOperMId(row.operMId)
-          setItemPage(1)
-        }
-        return next
-      })
+          return next
+        })
+      }
     },
     [],
   )
@@ -227,7 +224,9 @@ const OperationManagementPage = () => {
           <input
             type="checkbox"
             checked={row.operMId !== '' && checkedOperMIds.has(row.operMId)}
-            onChange={() => handleToggleRegistrationCheck(row)}
+            onChange={(e) =>
+              setOperRegistrationCheckboxChecked(row, e.target.checked)
+            }
             disabled={!row.operMId}
             onClick={(e) => e.stopPropagation()}
             aria-label="운용 등록 선택"
@@ -266,7 +265,7 @@ const OperationManagementPage = () => {
         render: (row) => row.approvalStatus,
       },
     ],
-    [checkedOperMIds, handleToggleRegistrationCheck],
+    [checkedOperMIds, setOperRegistrationCheckboxChecked],
   )
 
   const itemColumns: DataTableColumn<OperationTransferItemRow>[] = useMemo(
@@ -432,6 +431,10 @@ const OperationManagementPage = () => {
         getRowKey={(row) =>
           row.operMId ? `reg-${row.operMId}` : `reg-${row.id}`
         }
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.operMId && checkedOperMIds.has(row.operMId))
+        }
+        setRowCheckboxChecked={setOperRegistrationCheckboxChecked}
         renderActions={() => (
           <div className="operation-table-actions">
             <Button

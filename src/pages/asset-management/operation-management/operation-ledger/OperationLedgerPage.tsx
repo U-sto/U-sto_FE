@@ -85,6 +85,7 @@ const OperationLedgerPage = () => {
   const [totalCount, setTotalCount] = useState(0)
 
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null)
+  const [checkedRowIds, setCheckedRowIds] = useState<Set<number>>(() => new Set())
 
   const loadData = useCallback(async () => {
     try {
@@ -114,6 +115,7 @@ const OperationLedgerPage = () => {
   /** 조회 조건이 바뀌면 행 선택 초기화 */
   useEffect(() => {
     setSelectedRowId(null)
+    setCheckedRowIds(new Set())
   }, [searchedFilters])
 
   // 상세 화면에서 돌아올 때 수정된 값을 목록에 반영 후 state 초기화
@@ -151,32 +153,36 @@ const OperationLedgerPage = () => {
     })
   }, [tableData, getOverride])
 
-  /** 행 선택/해제 시 선택 상태와 G2B 필터 동기화 */
-  const handleSelectRow = (row: OperationLedgerRow) => {
-    setSelectedRowId((prevSelectedId) => {
-      const nextSelectedId = prevSelectedId === row.id ? null : row.id
-
-      setFilters((prev) => {
-        if (nextSelectedId == null) {
-          return {
-            ...prev,
-            g2bName: '',
-            g2bNumberPrefix: '',
-            g2bNumberSuffix: '',
-          }
-        }
-        const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-        return {
-          ...prev,
-          g2bName: row.g2bName,
-          g2bNumberPrefix: prefix,
-          g2bNumberSuffix: suffix,
-        }
+  /** DataTable 드래그 선택(controlled 체크박스) */
+  const applyLedgerCheckboxChecked = useCallback((row: OperationLedgerRow, checked: boolean) => {
+    if (checked) {
+      setCheckedRowIds((prev) => new Set(prev).add(row.id))
+      setSelectedRowId(row.id)
+      const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
+      setFilters((prev) => ({
+        ...prev,
+        g2bName: row.g2bName,
+        g2bNumberPrefix: prefix,
+        g2bNumberSuffix: suffix,
+      }))
+    } else {
+      setCheckedRowIds((prev) => {
+        const next = new Set(prev)
+        next.delete(row.id)
+        return next
       })
-
-      return nextSelectedId
-    })
-  }
+      setSelectedRowId((prevId) => {
+        if (prevId !== row.id) return prevId
+        setFilters((prev) => ({
+          ...prev,
+          g2bName: '',
+          g2bNumberPrefix: '',
+          g2bNumberSuffix: '',
+        }))
+        return null
+      })
+    }
+  }, [])
 
   const columns: DataTableColumn<OperationLedgerRow>[] = [
     {
@@ -185,8 +191,8 @@ const OperationLedgerPage = () => {
       render: (row) => (
         <input
           type="checkbox"
-          checked={selectedRowId === row.id}
-          onChange={() => handleSelectRow(row)}
+          checked={checkedRowIds.has(row.id)}
+          onChange={(e) => applyLedgerCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -456,6 +462,8 @@ const OperationLedgerPage = () => {
         onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => row.id}
+        getRowCheckboxChecked={(row) => checkedRowIds.has(row.id)}
+        setRowCheckboxChecked={applyLedgerCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

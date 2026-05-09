@@ -18,6 +18,7 @@ import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
 import {
   fetchItemReturningList,
   fetchItemReturningItems,
+  resolveItemReturningG2bName,
   formatReturningDateOnly,
   resolveItemReturningMasterId,
   adminApproveItemReturning,
@@ -134,7 +135,7 @@ function mapItemToRow(
   return {
     id: offset + index + 1,
     g2bNumber: item.g2bItemNo ?? '',
-    g2bName: item.g2bNm ?? '',
+    g2bName: resolveItemReturningG2bName(item as ItemReturningItem & Record<string, unknown>),
     itemUniqueNumber: item.itmNo ?? '',
     acquireDate: formatReturningDateOnly(item.acqAt),
     acquireAmount:
@@ -270,6 +271,14 @@ const ReturnManagementPage = () => {
     setSelectedReturningIds(new Set())
   }, [searchedFilters])
 
+  /** 체크가 풀려 선택 집합에 없어지면 하단 반납 물품 목록도 비움 */
+  useEffect(() => {
+    if (selectedRtrnId != null && !selectedReturningIds.has(selectedRtrnId)) {
+      setSelectedRtrnId(null)
+      setItemPage(1)
+    }
+  }, [selectedReturningIds, selectedRtrnId])
+
   const pageRtrnIds = useMemo(
     () => registrationRows.map((r) => r.rtrnId).filter((id) => id.length > 0),
     [registrationRows],
@@ -293,11 +302,39 @@ const ReturnManagementPage = () => {
     if (!rtrnId) return
     setSelectedReturningIds((prev) => {
       const next = new Set(prev)
-      if (next.has(rtrnId)) next.delete(rtrnId)
-      else next.add(rtrnId)
+      const wasChecked = prev.has(rtrnId)
+      if (wasChecked) {
+        next.delete(rtrnId)
+      } else {
+        next.add(rtrnId)
+        queueMicrotask(() => {
+          setSelectedRtrnId(rtrnId)
+          setItemPage(1)
+        })
+      }
       return next
     })
   }
+
+  const setReturningRowCheckboxChecked = useCallback(
+    (row: ReturnRegistrationRow, checked: boolean) => {
+      const id = row.rtrnId
+      if (!id) return
+      setSelectedReturningIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.add(id)
+        else next.delete(id)
+        return next
+      })
+      if (checked) {
+        queueMicrotask(() => {
+          setSelectedRtrnId(id)
+          setItemPage(1)
+        })
+      }
+    },
+    [],
+  )
 
   const handleAdminReject = async () => {
     const ids = [...selectedReturningIds]
@@ -489,11 +526,10 @@ const ReturnManagementPage = () => {
         variant="upper"
         columns={registrationColumns}
         getRowKey={(row, index) => row.rtrnId || `return-reg-${row.id}-${index}`}
-        onRowClick={(row) => {
-          if (!row.rtrnId) return
-          setSelectedRtrnId(row.rtrnId)
-          setItemPage(1)
-        }}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.rtrnId && selectedReturningIds.has(row.rtrnId))
+        }
+        setRowCheckboxChecked={setReturningRowCheckboxChecked}
         isRowSelected={(row) => row.rtrnId === selectedRtrnId}
         renderActions={() => (
           <div className="return-table-actions">

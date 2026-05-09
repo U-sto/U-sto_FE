@@ -182,6 +182,17 @@ const AcqConfirmationPage = () => {
     })
   }
 
+  const setAcqTableRowCheckboxChecked = useCallback((row: AcqTableRow, checked: boolean) => {
+    const id = row.acqId
+    if (!id) return
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
   const handleBulkApprove = async () => {
     const ids = [...selectedAcqIds]
     if (ids.length === 0) {
@@ -263,7 +274,7 @@ const AcqConfirmationPage = () => {
         <input
           type="checkbox"
           checked={row.acqId ? selectedAcqIds.has(row.acqId) : false}
-          onChange={() => toggleRowSelected(row.acqId)}
+          onChange={(e) => setAcqTableRowCheckboxChecked(row, e.target.checked)}
           disabled={!row.acqId}
           aria-label={`취득 건 선택 ${row.g2bNumber}`}
         />
@@ -492,6 +503,8 @@ const AcqConfirmationPage = () => {
         onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))}
         columns={columns}
         getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
+        getRowCheckboxChecked={(row) => Boolean(row.acqId && selectedAcqIds.has(row.acqId))}
+        setRowCheckboxChecked={setAcqTableRowCheckboxChecked}
         renderActions={() => (
           <>
             <Button

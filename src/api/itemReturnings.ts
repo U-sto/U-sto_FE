@@ -84,13 +84,30 @@ export type ItemReturningsListData = {
 /** GET /api/item/returnings/{rtrnId}/items — content 한 건 */
 export type ItemReturningItem = {
   g2bItemNo: string
-  g2bNm: string
+  /** G2B 목록명 — 일부 API는 g2bDNm 등으로 반환 */
+  g2bNm?: string
+  g2bDNm?: string
+  g2bItemNm?: string
+  g2bOnm?: string
   itmNo: string
   acqAt: string
   acqUpr: number
   deptNm: string
   itemSts: string
   rtrnRsn: string
+}
+
+const G2B_NAME_KEYS = ['g2bNm', 'g2bDNm', 'g2bItemNm', 'g2bOnm'] as const
+
+/** 반납 물품 행에서 G2B 목록명 필드 정규화 (백엔드 필드명 차이 흡수) */
+export function resolveItemReturningG2bName(
+  item: ItemReturningItem & Record<string, unknown>,
+): string {
+  for (const key of G2B_NAME_KEYS) {
+    const v = item[key]
+    if (v != null && String(v).trim() !== '') return String(v)
+  }
+  return ''
 }
 
 export type ItemReturningItemsData = {

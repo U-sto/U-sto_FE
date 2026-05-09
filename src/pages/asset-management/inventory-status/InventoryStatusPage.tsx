@@ -67,6 +67,7 @@ const InventoryStatusPage = () => {
     sortDateTo: '',
   })
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null)
+  const [checkedRowIds, setCheckedRowIds] = useState<Set<number>>(() => new Set())
 
   const [searchedFilters, setSearchedFilters] = useState<InventoryStatusFilters>(() => ({
     g2bName: '',
@@ -96,10 +97,12 @@ const InventoryStatusPage = () => {
       setTableData(res.data)
       setTotalCount(res.totalCount)
       setSelectedRowId(null)
+      setCheckedRowIds(new Set())
     } catch (e) {
       setTableData([])
       setTotalCount(0)
       setSelectedRowId(null)
+      setCheckedRowIds(new Set())
       setLoadError(e instanceof Error ? e.message : '보유 현황 목록을 불러오지 못했습니다.')
     }
   }, [currentPage, searchedFilters])
@@ -108,6 +111,36 @@ const InventoryStatusPage = () => {
     void loadData()
   }, [loadData])
 
+  const applyInventoryCheckboxChecked = useCallback((row: InventoryStatusRow, checked: boolean) => {
+    if (checked) {
+      setCheckedRowIds((prev) => new Set(prev).add(row.id))
+      setSelectedRowId(row.id)
+      const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
+      setFilters((prev) => ({
+        ...prev,
+        g2bName: row.g2bName,
+        g2bNumberPrefix: prefix,
+        g2bNumberSuffix: suffix,
+      }))
+    } else {
+      setCheckedRowIds((prev) => {
+        const next = new Set(prev)
+        next.delete(row.id)
+        return next
+      })
+      setSelectedRowId((prev) => {
+        if (prev !== row.id) return prev
+        setFilters((p) => ({
+          ...p,
+          g2bName: '',
+          g2bNumberPrefix: '',
+          g2bNumberSuffix: '',
+        }))
+        return null
+      })
+    }
+  }, [])
+
   const columns: DataTableColumn<InventoryStatusRow>[] = [
     {
       key: 'select',
@@ -115,29 +148,8 @@ const InventoryStatusPage = () => {
       render: (row) => (
         <input
           type="checkbox"
-          checked={selectedRowId === row.id}
-          onChange={() => {
-            setSelectedRowId((prev) => {
-              const next = prev === row.id ? null : row.id
-              if (next == null) {
-                setFilters((prev) => ({
-                  ...prev,
-                  g2bName: '',
-                  g2bNumberPrefix: '',
-                  g2bNumberSuffix: '',
-                }))
-              } else {
-                const [prefix = '', suffix = ''] = row.g2bNumber.split('-')
-                setFilters((prev) => ({
-                  ...prev,
-                  g2bName: row.g2bName,
-                  g2bNumberPrefix: prefix,
-                  g2bNumberSuffix: suffix,
-                }))
-              }
-              return next
-            })
-          }}
+          checked={checkedRowIds.has(row.id)}
+          onChange={(e) => applyInventoryCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -181,6 +193,7 @@ const InventoryStatusPage = () => {
     })
     setCurrentPage(1)
     setSelectedRowId(null)
+    setCheckedRowIds(new Set())
   }
 
   const handleG2BSelect = (item: G2BItem) => {
@@ -365,6 +378,8 @@ const InventoryStatusPage = () => {
         onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => row.id}
+        getRowCheckboxChecked={(row) => checkedRowIds.has(row.id)}
+        setRowCheckboxChecked={applyInventoryCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

@@ -33,6 +33,7 @@ import {
   fetchItemReturningByRtrnMid,
   fetchItemReturningAllItems,
   formatReturningDateOnly,
+  resolveItemReturningG2bName,
   type ItemReturningItem,
 } from '../../../../api/itemReturnings'
 import { useCommonCodeGroup } from '../../../../hooks/useCommonCodeGroup'
@@ -93,7 +94,7 @@ function mapReturningItemToLedgerRow(item: ItemReturningItem, index: number): As
   return {
     id: index + 1,
     g2bNumber: String(item.g2bItemNo ?? ''),
-    g2bName: String(item.g2bNm ?? ''),
+    g2bName: resolveItemReturningG2bName(item as ItemReturningItem & Record<string, unknown>),
     itmNo: String(item.itmNo ?? ''),
     itemUniqueNumber: String(item.itmNo ?? ''),
     acquireDate: formatReturningDateOnly(item.acqAt),
@@ -173,6 +174,8 @@ const ReturnRegistrationPage = () => {
   const [tableData, setTableData] = useState<AssetLedgerRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
+  /** 초기화 시 DataTable 내부 드래그/ref와 동기화 — 테이블 remount */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   /** 대장 목록 체크 — 물품고유번호(itmNo) 기준 (페이지 바뀌어도 유지) */
   const [ledgerCheckedItmNos, setLedgerCheckedItmNos] = useState<Set<string>>(() => new Set())
@@ -290,6 +293,33 @@ const ReturnRegistrationPage = () => {
     setLedgerCheckedItmNos(new Set())
   }, [searchedFilters])
 
+  const setReturnLedgerRowCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    const key = row.itmNo
+    if (!key) return
+    setLedgerCheckedItmNos((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+    if (checked) {
+      setSelectedRows((prev) => (prev.some((r) => r.itmNo === key) ? prev : [...prev, row]))
+    } else {
+      setSelectedRows((prev) => prev.filter((r) => r.itmNo !== key))
+    }
+  }, [])
+
+  const setReturnSelectedTableCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    const key = row.itmNo
+    if (!key) return
+    setSelectedTableCheckedItmNos((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }, [])
+
   const ledgerColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
@@ -298,21 +328,7 @@ const ReturnRegistrationPage = () => {
         <input
           type="checkbox"
           checked={ledgerCheckedItmNos.has(row.itmNo)}
-          onChange={(e) => {
-            const key = row.itmNo
-            if (!key) return
-            if (e.target.checked) {
-              setLedgerCheckedItmNos((prev) => new Set(prev).add(key))
-              setSelectedRows((prev) => (prev.some((r) => r.itmNo === key) ? prev : [...prev, row]))
-            } else {
-              setLedgerCheckedItmNos((prev) => {
-                const next = new Set(prev)
-                next.delete(key)
-                return next
-              })
-              setSelectedRows((prev) => prev.filter((r) => r.itmNo !== key))
-            }
-          }}
+          onChange={(e) => setReturnLedgerRowCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -383,6 +399,10 @@ const ReturnRegistrationPage = () => {
     setFilters(next)
     setSearchedFilters(next)
     setCurrentPage(1)
+    setLedgerCheckedItmNos(new Set())
+    setSelectedTableCheckedItmNos(new Set())
+    setSelectedRows([])
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleDeleteSelected = useCallback(() => {
@@ -609,6 +629,7 @@ const ReturnRegistrationPage = () => {
 
       <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
         <DataTable<AssetLedgerRow>
+          key={`return-ledger-${dataTableEpoch}`}
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
           data={tableData}
@@ -618,11 +639,14 @@ const ReturnRegistrationPage = () => {
           onPageChange={setCurrentPage}
           columns={ledgerColumns}
           getRowKey={(row) => row.itmNo || String(row.id)}
+          getRowCheckboxChecked={(row) => Boolean(row.itmNo && ledgerCheckedItmNos.has(row.itmNo))}
+          setRowCheckboxChecked={setReturnLedgerRowCheckboxChecked}
         />
       </div>
 
       <div hidden={isEditMode && loadingDetail}>
       <DataTable<AssetLedgerRow>
+        key={`return-selected-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="선택 물품 목록"
         data={selectedRows}
@@ -630,6 +654,8 @@ const ReturnRegistrationPage = () => {
         pageSize={10}
         columns={selectedColumns}
         getRowKey={(row) => row.itmNo || String(row.id)}
+        getRowCheckboxChecked={(row) => Boolean(row.itmNo && selectedTableCheckedItmNos.has(row.itmNo))}
+        setRowCheckboxChecked={setReturnSelectedTableCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

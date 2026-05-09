@@ -313,6 +313,30 @@ const DisposalRegistrationPage = () => {
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
   ]
 
+  const setDisposalLedgerRowCheckboxChecked = useCallback((row: LedgerRow, checked: boolean) => {
+    if (row.operatingStatus !== '불용') return
+    setLedgerCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(row.id)
+      else next.delete(row.id)
+      return next
+    })
+    if (checked) {
+      setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
+    } else {
+      setSelectedRows((prev) => prev.filter((r) => r.id !== row.id))
+    }
+  }, [])
+
+  const setDisposalSelectedTableCheckboxChecked = useCallback((row: LedgerRow, checked: boolean) => {
+    setSelectedTableCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(row.id)
+      else next.delete(row.id)
+      return next
+    })
+  }, [])
+
   const handleReset = () => {
     setFilters({
       g2bName: '',
@@ -602,6 +626,10 @@ const DisposalRegistrationPage = () => {
           pageSize={10}
           columns={ledgerColumns}
           getRowKey={(row) => row.id}
+          getRowCheckboxChecked={(row) =>
+            row.operatingStatus === '불용' && ledgerCheckedIds.has(row.id)
+          }
+          setRowCheckboxChecked={setDisposalLedgerRowCheckboxChecked}
           currentPage={ledgerPage}
           onPageChange={setLedgerPage}
         />
@@ -616,6 +644,8 @@ const DisposalRegistrationPage = () => {
           pageSize={10}
           columns={selectedColumns}
           getRowKey={(row) => row.id}
+          getRowCheckboxChecked={(row) => selectedTableCheckedIds.has(row.id)}
+          setRowCheckboxChecked={setDisposalSelectedTableCheckboxChecked}
           renderActions={() => (
             <div className="operation-ledger-table-actions">
               <Button

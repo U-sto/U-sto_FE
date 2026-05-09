@@ -184,6 +184,8 @@ const DisuseRegistrationPage = () => {
   })
   const [saving, setSaving] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  /** 초기화 시 DataTable 내부 드래그/ref와 동기화 — 테이블 remount */
+  const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
   const loadLedger = useCallback(async () => {
     try {
@@ -262,15 +264,25 @@ const DisuseRegistrationPage = () => {
   const isInSelectedList = (row: AssetLedgerRow) =>
     selectedRows.some((r) => assetRowKey(r) === assetRowKey(row))
 
-  const toggleLedgerRow = (row: AssetLedgerRow) => {
+  const setDisuseLedgerRowCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
     const k = assetRowKey(row)
     setSelectedRows((prev) => {
-      if (prev.some((r) => assetRowKey(r) === k)) {
-        return prev.filter((r) => assetRowKey(r) !== k)
-      }
-      return [...prev, row]
+      const has = prev.some((r) => assetRowKey(r) === k)
+      if (checked && !has) return [...prev, row]
+      if (!checked && has) return prev.filter((r) => assetRowKey(r) !== k)
+      return prev
     })
-  }
+  }, [])
+
+  const setDisuseSelectedTableCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    const k = assetRowKey(row)
+    setSelectedTableCheckedKeys((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(k)
+      else next.delete(k)
+      return next
+    })
+  }, [])
 
   const ledgerColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
@@ -280,7 +292,7 @@ const DisuseRegistrationPage = () => {
         <input
           type="checkbox"
           checked={isInSelectedList(row)}
-          onChange={() => toggleLedgerRow(row)}
+          onChange={(e) => setDisuseLedgerRowCheckboxChecked(row, e.target.checked)}
         />
       ),
     },
@@ -333,8 +345,11 @@ const DisuseRegistrationPage = () => {
     setFilters({ ...INITIAL_FILTERS })
     setSearchedFilters({ ...INITIAL_FILTERS })
     setLedgerPage(1)
+    setLedgerData([])
+    setLedgerTotalCount(0)
     setSelectedRows([])
     setSelectedTableCheckedKeys(new Set())
+    setDataTableEpoch((n) => n + 1)
   }
 
   const handleSearch = () => {
@@ -556,6 +571,7 @@ const DisuseRegistrationPage = () => {
 
       <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
         <DataTable<AssetLedgerRow>
+          key={`disuse-ledger-${dataTableEpoch}`}
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
           data={ledgerData}
@@ -565,11 +581,14 @@ const DisuseRegistrationPage = () => {
           onPageChange={setLedgerPage}
           columns={ledgerColumns}
           getRowKey={(row) => assetRowKey(row)}
+          getRowCheckboxChecked={(row) => isInSelectedList(row)}
+          setRowCheckboxChecked={setDisuseLedgerRowCheckboxChecked}
         />
       </div>
 
       <div hidden={isEditMode && loadingDetail}>
       <DataTable<AssetLedgerRow>
+        key={`disuse-selected-${dataTableEpoch}`}
         pageKey="operation-ledger"
         title="선택 물품 목록"
         data={selectedRows}
@@ -577,6 +596,8 @@ const DisuseRegistrationPage = () => {
         pageSize={10}
         columns={selectedColumns}
         getRowKey={(row) => assetRowKey(row)}
+        getRowCheckboxChecked={(row) => selectedTableCheckedKeys.has(assetRowKey(row))}
+        setRowCheckboxChecked={setDisuseSelectedTableCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

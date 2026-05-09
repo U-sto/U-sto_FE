@@ -395,6 +395,33 @@ const OperationTransferRegistrationPage = () => {
     void loadLedger()
   }, [loadLedger])
 
+  const setTransferLedgerRowCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    const key = rowUniqueKey(row)
+    setLedgerCheckedKeys((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+    if (checked) {
+      setSelectedRows((prev) =>
+        prev.some((r) => rowUniqueKey(r) === key) ? prev : [...prev, row],
+      )
+    } else {
+      setSelectedRows((prev) => prev.filter((r) => rowUniqueKey(r) !== key))
+    }
+  }, [])
+
+  const setTransferSelectedTableCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    const key = rowUniqueKey(row)
+    setSelectedTableCheckedKeys((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }, [])
+
   const ledgerColumns: DataTableColumn<AssetLedgerRow>[] = [
     {
       key: 'select',
@@ -741,6 +768,8 @@ const OperationTransferRegistrationPage = () => {
           onPageChange={setLedgerPage}
           columns={ledgerColumns}
           getRowKey={(row) => rowUniqueKey(row)}
+          getRowCheckboxChecked={(row) => ledgerCheckedKeys.has(rowUniqueKey(row))}
+          setRowCheckboxChecked={setTransferLedgerRowCheckboxChecked}
         />
       </div>
 
@@ -752,6 +781,8 @@ const OperationTransferRegistrationPage = () => {
         pageSize={10}
         columns={selectedColumns}
         getRowKey={(row) => rowUniqueKey(row)}
+        getRowCheckboxChecked={(row) => selectedTableCheckedKeys.has(rowUniqueKey(row))}
+        setRowCheckboxChecked={setTransferSelectedTableCheckboxChecked}
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

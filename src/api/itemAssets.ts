@@ -374,7 +374,10 @@ export type ItemAssetPrintSearchRequest = {
   deptCd?: string
   deptNm?: string
   operSts?: string
+  /** 물품고유번호 (백엔드 구현체별 키 차이 대응) */
   itemNo?: string
+  itmNo?: string
+  itemUnqNo?: string
   printYn?: string
   [key: string]: unknown
 }
@@ -418,7 +421,12 @@ function printFiltersToSearchRequest(filters: ItemAssetsPrintFilters): ItemAsset
     filters.g2bNumberSuffix,
   )
   if (g2bNo) req.g2bNo = g2bNo
-  if (filters.itemUniqueNumber?.trim()) req.itemNo = filters.itemUniqueNumber.trim()
+  if (filters.itemUniqueNumber?.trim()) {
+    const itm = filters.itemUniqueNumber.trim()
+    req.itemNo = itm
+    req.itmNo = itm
+    req.itemUnqNo = itm
+  }
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
   if (filters.sortDateFrom) req.startArrAt = filters.sortDateFrom

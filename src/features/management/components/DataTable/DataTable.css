@@ -167,6 +167,11 @@
   background-color: var(--usto-primary-200);
 }
 
+.management-table-dragging,
+.management-table-dragging * {
+  user-select: none;
+}
+
 /* 커스텀 체크박스 (브라우저 기본 원형/액센트 UI로 덮이지 않도록 appearance 고정) */
 .management-table-el input[type='checkbox'] {
   appearance: none;
