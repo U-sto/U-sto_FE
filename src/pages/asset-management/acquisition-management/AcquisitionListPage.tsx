@@ -181,6 +181,17 @@ const AcquisitionListPage = () => {
     })
   }
 
+  const setAcqRowCheckboxChecked = useCallback((row: AcqConfirmationRow, checked: boolean) => {
+    const id = row.acqId
+    if (!id) return
+    setSelectedAcqIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
   const handleApprovalRequest = async () => {
     const ids = [...selectedAcqIds]
     if (ids.length === 0) {
@@ -276,7 +287,7 @@ const AcquisitionListPage = () => {
         <input
           type="checkbox"
           checked={row.acqId ? selectedAcqIds.has(row.acqId) : false}
-          onChange={() => toggleRowSelected(row.acqId)}
+          onChange={(e) => setAcqRowCheckboxChecked(row, e.target.checked)}
           disabled={!row.acqId}
           aria-label={`취득 건 선택 ${row.g2bNumber}`}
         />
@@ -485,6 +496,8 @@ const AcquisitionListPage = () => {
         onPageChange={setCurrentPage}
         columns={columns}
         getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
+        getRowCheckboxChecked={(row) => Boolean(row.acqId && selectedAcqIds.has(row.acqId))}
+        setRowCheckboxChecked={setAcqRowCheckboxChecked}
         renderActions={() => (
           <div className="return-registration-actions">
             <button
@@ -498,7 +511,7 @@ const AcquisitionListPage = () => {
             <button
               type="button"
               className="return-btn-delete"
-              disabled={actionInProgress || selectedAcqIds.size === 0}
+              disabled={actionInProgress}
               onClick={handleOpenDeleteModal}
             >
               {deletingItemAcquisitions ? '삭제 중…' : '삭제'}
