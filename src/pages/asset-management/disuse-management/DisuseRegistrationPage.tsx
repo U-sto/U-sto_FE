@@ -640,11 +640,9 @@ const DisuseRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">등록자ID</label>
                 <TextField
                   value={disuseInfo.registrantId}
-                  onChange={(e) =>
-                    setDisuseInfo((prev) => ({ ...prev, registrantId: e.target.value }))
-                  }
+                  readOnly
                   placeholder="등록자ID"
-                  className="operation-ledger-detail-input"
+                  className="operation-ledger-detail-input operation-ledger-readonly"
                 />
               </div>
               <div className="operation-ledger-detail-field">

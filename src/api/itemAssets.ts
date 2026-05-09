@@ -392,6 +392,9 @@ export type ItemAssetPrintContent = {
   g2bItemNm?: string
   acqAt?: string
   acqUpr?: number
+  /** 정리일자 — 운용대장 등과 동일하게 arrgAt 우선 */
+  arrgAt?: string
+  /** 일부 스펙/구버전 키 */
   arrAt?: string
   drgAt?: string
   deptNm?: string
@@ -468,7 +471,7 @@ function mapItemPrintToRow(
     g2bName: String(item.g2bItemNm ?? ''),
     itemUniqueNumber: String(item.itmNo ?? ''),
     acquireDate: String(item.acqAt ?? ''),
-    sortDate: String(item.arrAt ?? item.drgAt ?? ''),
+    sortDate: String(item.arrgAt ?? item.arrAt ?? item.drgAt ?? ''),
     operatingDept: String(item.deptNm ?? ''),
     printStatus,
     outputTarget,
