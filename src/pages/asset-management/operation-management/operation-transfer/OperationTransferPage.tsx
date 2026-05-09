@@ -144,6 +144,29 @@ const OperationTransferPage = () => {
     })
   }
 
+  const setOperRegistrationCheckboxChecked = useCallback(
+    (row: OperationTransferRegistrationRow, checked: boolean) => {
+      if (!row.operMId) return
+      if (checked) {
+        setCheckedOperMIds((prev) => new Set(prev).add(row.operMId))
+        setSelectedOperMId(row.operMId)
+        setItemPage(1)
+      } else {
+        setCheckedOperMIds((prev) => {
+          const next = new Set(prev)
+          next.delete(row.operMId)
+          setSelectedOperMId((cur) => {
+            if (cur !== row.operMId) return cur
+            const first = next.values().next().value as string | undefined
+            return first ?? null
+          })
+          return next
+        })
+      }
+    },
+    [],
+  )
+
   const handleApprovalRequest = async () => {
     if (checkedOperMIds.size === 0) {
       window.alert('승인 요청할 항목을 체크해 주세요.')
@@ -320,7 +343,6 @@ const OperationTransferPage = () => {
     { key: 'acquireAmount', header: '취득금액', render: (row) => row.acquireAmount },
     { key: 'operatingDept', header: '운용부서', render: (row) => row.operatingDept },
     { key: 'itemStatus', header: '물품상태', render: (row) => row.itemStatus },
-    { key: 'reason', header: '사유', render: (row) => row.reason },
   ]
 
   const handleReset = () => {
@@ -433,6 +455,10 @@ const OperationTransferPage = () => {
         onPageChange={setCurrentPage}
         columns={registrationColumns}
         getRowKey={(row) => (row.operMId ? `reg-${row.operMId}` : `reg-${row.id}`)}
+        getRowCheckboxChecked={(row) =>
+          Boolean(row.operMId && checkedOperMIds.has(row.operMId))
+        }
+        setRowCheckboxChecked={setOperRegistrationCheckboxChecked}
         renderActions={() => (
           <div className="return-registration-actions">
             <button
