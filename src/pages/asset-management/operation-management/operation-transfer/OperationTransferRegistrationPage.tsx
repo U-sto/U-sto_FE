@@ -41,6 +41,10 @@ import {
   resolveDeptCdForOperation,
 } from '../../../../constants/departments'
 import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
+import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../../utils/assetRegistrationApprovalLock'
 
 /** 공통코드 없을 때 resolveAssetStatusForForm 초기값 */
 const FALLBACK_ASSET_STATUS_LABELS = ['운용중', '반납', '불용', '처분']
@@ -291,6 +295,15 @@ const OperationTransferRegistrationPage = () => {
           fetchAllOperationTransferItems(operMId),
         ])
         if (cancelled) return
+
+        if (masterRaw) {
+          const apprSts = pickMasterString(masterRaw, ['apprSts', 'approvalStatus', 'appr_sts'])
+          if (isAssetRegistrationEditLockedByAppr('', apprSts)) {
+            window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
+            navigate('/asset-management/operation-management/operation-transfer', { replace: true })
+            return
+          }
+        }
 
         let listSnapshot: OperationTransferEditLocationState | null = null
         try {

@@ -24,6 +24,10 @@ import {
   useApprovalStatusFilterOptions,
   resolveApprovalFilterDisuseStyle,
 } from '../../../hooks/useCommonCodeOptions'
+import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../utils/assetRegistrationApprovalLock'
 
 type DisuseFilters = {
   disuseDateFrom: string
@@ -194,6 +198,11 @@ const DisuseManagementPage = () => {
   const handleEdit = () => {
     if (!selectedDsuMId) {
       window.alert('수정할 건을 선택해 주세요.')
+      return
+    }
+    const row = registrationData.find((r) => r.dsuMId === selectedDsuMId)
+    if (row && isAssetRegistrationEditLockedByAppr(row.approvalStatus)) {
+      window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
       return
     }
     navigate(`/asset-management/disuse-management/edit/${encodeURIComponent(selectedDsuMId)}`)

@@ -17,6 +17,7 @@ import DeleteConfirmModal from '../../../../components/common/DeleteConfirmModal
 import {
   fetchItemReturningList,
   fetchItemReturningItems,
+  fetchItemReturningByRtrnMid,
   resolveItemReturningG2bName,
   formatReturningDateOnly,
   requestItemReturningApproval,
@@ -27,6 +28,10 @@ import {
   type ItemReturningMaster,
   type ItemReturningSearchRequest,
 } from '../../../../api/itemReturnings'
+import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../../utils/assetRegistrationApprovalLock'
 import '../operation-ledger/OperationLedgerPage.css'
 import './ReturnManagementPage.css'
 
@@ -373,13 +378,23 @@ const ReturnManagementPage = () => {
     setCurrentRegPage(1)
   }
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (selectedReturningIds.size !== 1) {
       window.alert('수정할 건을 1건만 선택해 주세요.')
       return
     }
     const only = [...selectedReturningIds][0]
     if (!only) return
+    const row = registrationRows.find((r) => r.rtrnId === only)
+    let locked = row ? isAssetRegistrationEditLockedByAppr(row.approvalStatus) : false
+    if (!locked && !row) {
+      const master = await fetchItemReturningByRtrnMid(only)
+      locked = master ? isAssetRegistrationEditLockedByAppr('', master.apprSts) : false
+    }
+    if (locked) {
+      window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
+      return
+    }
     navigate(
       `/asset-management/operation-management/return-management/edit/${encodeURIComponent(only)}`,
     )

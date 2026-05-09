@@ -26,6 +26,10 @@ import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
 import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../utils/assetRegistrationApprovalLock'
+import {
   useOperatingStatusFilterOptions,
   resolveOperatingStatusFilterValue,
 } from '../../../hooks/useCommonCodeOptions'
@@ -218,6 +222,11 @@ const DisposalRegistrationPage = () => {
         if (cancelled) return
         if (!master && items.length === 0) {
           window.alert('처분 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/disposal-management')
+          return
+        }
+        if (master && isAssetRegistrationEditLockedByAppr('', master.apprSts)) {
+          window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
           navigate('/asset-management/disposal-management')
           return
         }

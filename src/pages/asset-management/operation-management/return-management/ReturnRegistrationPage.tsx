@@ -17,6 +17,10 @@ import G2BSearchModal, {
 } from '../../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
 import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../../utils/assetRegistrationApprovalLock'
+import {
   useOperatingStatusFilterOptions,
   useItemStatusSelectOptions,
   resolveOperatingStatusFilterValue,
@@ -218,6 +222,11 @@ const ReturnRegistrationPage = () => {
         if (cancelled) return
         if (!master && items.length === 0) {
           window.alert('반납 정보를 불러오지 못했습니다.')
+          navigate('/asset-management/operation-management/return-management')
+          return
+        }
+        if (master && isAssetRegistrationEditLockedByAppr('', master.apprSts)) {
+          window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
           navigate('/asset-management/operation-management/return-management')
           return
         }

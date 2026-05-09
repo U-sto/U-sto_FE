@@ -24,6 +24,10 @@ import {
   resolveApprovalFilterTransferStyle,
 } from '../../../hooks/useCommonCodeOptions'
 import DeleteConfirmModal from '../../../components/common/DeleteConfirmModal/DeleteConfirmModal'
+import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../utils/assetRegistrationApprovalLock'
 
 type DisposalFilters = {
   disposalDateFrom: string
@@ -225,6 +229,11 @@ const DisposalManagementPage = () => {
     const dispMId = selectedRegistration?.dispMId
     if (!dispMId) {
       window.alert('수정할 건을 선택해 주세요.')
+      return
+    }
+    const row = registrationData.find((r) => r.dispMId === dispMId)
+    if (row && isAssetRegistrationEditLockedByAppr(row.approvalStatus)) {
+      window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
       return
     }
     navigate(`/asset-management/disposal-management/edit/${encodeURIComponent(dispMId)}`)

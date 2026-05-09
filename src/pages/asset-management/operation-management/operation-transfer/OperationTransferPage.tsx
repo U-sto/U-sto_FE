@@ -24,6 +24,10 @@ import {
   useApprovalStatusFilterOptions,
   resolveApprovalFilterTransferStyle,
 } from '../../../../hooks/useCommonCodeOptions'
+import {
+  ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
+  isAssetRegistrationEditLockedByAppr,
+} from '../../../../utils/assetRegistrationApprovalLock'
 
 const INITIAL_FILTERS: OperationTransferListFilters = {
   transferDateFrom: '',
@@ -363,6 +367,10 @@ const OperationTransferPage = () => {
     }
     const id = [...checkedOperMIds][0]
     const row = registrationData.find((r) => r.operMId === id)
+    if (row && isAssetRegistrationEditLockedByAppr(row.approvalStatus)) {
+      window.alert(ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE)
+      return
+    }
     const state: OperationTransferEditLocationState | undefined = row
       ? {
           transferDate: row.transferDate,
