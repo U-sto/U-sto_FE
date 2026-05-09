@@ -257,13 +257,17 @@ export async function fetchItemDisposalByDispMId(dispMId: string): Promise<Dispo
 export type ItemDisposalItemContent = {
   id?: number | string
   g2bItemNo?: string
+  g2bDNm?: string
   g2bItemNm?: string
   itmNo?: string
   itemUnqNo?: string
   acqAt?: string
   acqUpr?: number
   deptNm?: string
+  itemSts?: string
   operSts?: string
+  chgRsn?: string
+  dsuRsn?: string
   disdRsn?: string
   reason?: string
   [key: string]: unknown
@@ -290,11 +294,15 @@ export type DisposalItem = {
   itmNo?: string
   itemUnqNo?: string
   g2bItemNo?: string
+  g2bDNm?: string
   g2bItemNm?: string
   acqAt?: string
   acqUpr?: number
   deptNm?: string
+  itemSts?: string
   operSts?: string
+  chgRsn?: string
+  dsuRsn?: string
   disdRsn?: string
 }
 
@@ -315,14 +323,20 @@ function mapItemDisposalItemToRow(
   offset: number,
 ): DisposalItemRow {
   const g2bNumber = String((item.g2bItemNo as string | undefined) ?? '')
-  const g2bName = String((item.g2bItemNm as string | undefined) ?? '')
-  const itemUniqueNumber = String((item.itemUnqNo as string | undefined) ?? '')
+  const g2bName = String((item.g2bDNm as string | undefined) ?? (item.g2bItemNm as string | undefined) ?? '')
+  const itemUniqueNumber = String((item.itmNo as string | undefined) ?? (item.itemUnqNo as string | undefined) ?? '')
   const acquireDate = String((item.acqAt as string | undefined) ?? '')
   const acquireAmountValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
   const acquireAmount = acquireAmountValue ? `${acquireAmountValue.toLocaleString()}원` : ''
   const operatingDept = String((item.deptNm as string | undefined) ?? '')
-  const itemStatus = String((item.operSts as string | undefined) ?? '')
-  const reason = String((item.disdRsn as string | undefined) ?? (item.reason as string | undefined) ?? '')
+  const itemStatus = String((item.itemSts as string | undefined) ?? (item.operSts as string | undefined) ?? '')
+  const reason = String(
+    (item.chgRsn as string | undefined) ??
+      (item.dsuRsn as string | undefined) ??
+      (item.disdRsn as string | undefined) ??
+      (item.reason as string | undefined) ??
+      '',
+  )
 
   return {
     id: offset + index + 1,
@@ -377,10 +391,14 @@ export async function fetchItemDisposalAllItems(dispMId: string): Promise<Dispos
       itemUnqNo: row.itemUniqueNumber,
       g2bItemNo: row.g2bNumber,
       g2bItemNm: row.g2bName,
+      g2bDNm: row.g2bName,
       acqAt: row.acquireDate,
       acqUpr: Number(String(row.acquireAmount).replace(/[^\d]/g, '')) || 0,
       deptNm: row.operatingDept,
+      itemSts: row.itemStatus,
       operSts: row.itemStatus,
+      chgRsn: row.reason,
+      dsuRsn: row.reason,
       disdRsn: row.reason,
     }))
     all.push(...chunk)

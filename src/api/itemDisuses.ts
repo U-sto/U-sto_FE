@@ -74,6 +74,7 @@ export type FetchDisuseListParams = {
 type DisuseItemContent = {
   id?: number | string
   g2bItemNo?: string
+  g2bDNm?: string
   g2bItemNm?: string
   itemUnqNo?: string
   itmNo?: string
@@ -81,6 +82,7 @@ type DisuseItemContent = {
   acqUpr?: number
   deptNm?: string
   oprDeptNm?: string
+  itemSts?: string
   itmSts?: string
   operSts?: string
   dsuRsn?: string
@@ -97,11 +99,13 @@ export type DisuseItem = {
   itmNo?: string
   itemUnqNo?: string
   g2bItemNo?: string
+  g2bDNm?: string
   g2bItemNm?: string
   acqAt?: string
   acqUpr?: number
   deptNm?: string
   oprDeptNm?: string
+  itemSts?: string
   itmSts?: string
   operSts?: string
   dsuRsn?: string
@@ -253,12 +257,12 @@ export async function fetchDisuseItems(params: {
       return {
         id: offset + i + 1,
         g2bNumber: String(item.g2bItemNo ?? ''),
-        g2bName: String(item.g2bItemNm ?? ''),
+        g2bName: String(item.g2bDNm ?? item.g2bItemNm ?? ''),
         itemUniqueNumber: String(item.itemUnqNo ?? item.itmNo ?? ''),
         acquireDate: String(item.acqAt ?? ''),
         acquireAmount: acqUpr ? `${acqUpr.toLocaleString()}원` : '',
         operatingDept: String(item.deptNm ?? item.oprDeptNm ?? ''),
-        itemStatus: String(item.itmSts ?? item.operSts ?? ''),
+        itemStatus: String(item.itemSts ?? item.itmSts ?? item.operSts ?? ''),
         reason: String(item.dsuRsn ?? item.reason ?? ''),
       }
     }),
@@ -280,9 +284,11 @@ export async function fetchItemDisuseAllItems(dsuMId: string): Promise<DisuseIte
       itemUnqNo: row.itemUniqueNumber,
       g2bItemNo: row.g2bNumber,
       g2bItemNm: row.g2bName,
+      g2bDNm: row.g2bName,
       acqAt: row.acquireDate,
       acqUpr: Number(String(row.acquireAmount).replace(/[^\d]/g, '')) || 0,
       deptNm: row.operatingDept,
+      itemSts: row.itemStatus,
       itmSts: row.itemStatus,
       dsuRsn: row.reason,
     }))
