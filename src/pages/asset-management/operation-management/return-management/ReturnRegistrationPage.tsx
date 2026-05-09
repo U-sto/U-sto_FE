@@ -707,6 +707,7 @@ const ReturnRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">물품상태</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={returnInfo.assetStatus}
                   onChange={(value: string) =>
@@ -719,6 +720,7 @@ const ReturnRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">사유</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={returnInfo.reason}
                   onChange={(value: string) =>
