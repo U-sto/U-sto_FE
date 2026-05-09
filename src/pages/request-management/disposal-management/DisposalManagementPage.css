@@ -323,10 +323,16 @@
   justify-content: center;
 }
 
-.disposal-btn-outline {
+.disposal-filter-actions .disposal-btn-outline {
   background: var(--usto-alt-white);
-  border: 1px solid var(--usto-primary-300);
-  color: var(--usto-primary-300);
+  border: 1px solid var(--usto-gray-200);
+  color: var(--usto-gray-200);
+}
+
+.disposal-filter-actions .disposal-btn-outline:hover:not(:disabled) {
+  background: var(--usto-primary-100);
+  border-color: var(--usto-gray-200);
+  color: var(--usto-gray-200);
 }
 
 .disposal-btn-primary {

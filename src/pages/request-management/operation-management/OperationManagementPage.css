@@ -323,10 +323,16 @@
   justify-content: center;
 }
 
-.operation-btn-outline {
+.operation-filter-actions .operation-btn-outline {
   background: var(--usto-alt-white);
-  border: 1px solid var(--usto-primary-300);
-  color: var(--usto-primary-300);
+  border: 1px solid var(--usto-gray-200);
+  color: var(--usto-gray-200);
+}
+
+.operation-filter-actions .operation-btn-outline:hover:not(:disabled) {
+  background: var(--usto-primary-100);
+  border-color: var(--usto-gray-200);
+  color: var(--usto-gray-200);
 }
 
 .operation-btn-primary {

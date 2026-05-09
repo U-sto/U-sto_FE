@@ -216,15 +216,16 @@
   justify-content: center;
 }
 
-.operation-ledger-btn-outline {
+.operation-ledger-filter-actions .operation-ledger-btn-outline {
   background: var(--usto-alt-white);
-  border: 1px solid var(--usto-primary-300);
-  color: var(--usto-primary-300);
+  border: 1px solid var(--usto-gray-200);
+  color: var(--usto-gray-200);
 }
 
-/* 공통 .button:hover 배경이 primary-300일 때 글자도 초록이면 안 보임 → 흰색 */
-.operation-ledger-btn-outline:hover:not(:disabled) {
-  color: var(--usto-alt-white);
+.operation-ledger-filter-actions .operation-ledger-btn-outline:hover:not(:disabled) {
+  background: var(--usto-primary-100);
+  border-color: var(--usto-gray-200);
+  color: var(--usto-gray-200);
 }
 
 .operation-ledger-btn-primary {
