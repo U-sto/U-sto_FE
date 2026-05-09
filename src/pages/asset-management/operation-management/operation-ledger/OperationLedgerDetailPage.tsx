@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import TextField from '../../../../components/common/TextField/TextField'
 import DatePickerField from '../../../../components/common/DatePickerField/DatePickerField'
 import Button from '../../../../components/common/Button/Button'
-import TitlePill from '../../../../components/common/TitlePill/TitlePill'
 import AssetManagementPageLayout from '../../../../components/layout/management/AssetManagementPageLayout/AssetManagementPageLayout'
 import DataTable, {
   type DataTableColumn,
@@ -74,19 +73,27 @@ function mapStatusHistoriesToRows(
   })
 }
 
+/** 상세 API acqArrgTy/arrgTy 코드 → 화면 라벨 (미정의 코드는 그대로 표시) */
+const ACQ_ARRG_TY_LABEL: Record<string, string> = {
+  BUY: '취득',
+  ARRG: '정리',
+  ETC: '기타',
+  DONATE: '기증',
+}
+
 function mergeDetailApiToItem(
   api: ItemAssetDetailData,
   listRow: OperationLedgerDetailItem,
 ): OperationLedgerDetailItem {
   const acqUpr = typeof api.acqUpr === 'number' ? api.acqUpr : Number(api.acqUpr ?? NaN)
-  const g2bName = String(api.g2bOnm ?? api.g2bItemNm ?? listRow.g2bName)
-  const g2bNo = String(api.g2bItmNo ?? listRow.g2bNumber)
+  const g2bName = String(
+    api.g2bDNm ?? api.g2bOnm ?? api.g2bItemNm ?? listRow.g2bName,
+  )
+  const g2bNo = String(api.g2bItemNo ?? api.g2bItmNo ?? listRow.g2bNumber)
   const drbYr = api.drbYr
   const usefulLife =
     drbYr != null && drbYr !== ''
-      ? String(drbYr).endsWith('년')
-        ? String(drbYr)
-        : `${drbYr}년`
+      ? String(drbYr).replace(/년\s*$/, '').trim()
       : listRow.usefulLife
 
   const qty = api.qty ?? api.acqQty
@@ -111,7 +118,11 @@ function mergeDetailApiToItem(
       listRow.operatingStatus,
     usefulLife,
     quantity: qty != null ? String(qty) : listRow.quantity,
-    acquireSortType: String(api.arrgTy ?? listRow.acquireSortType ?? ''),
+    acquireSortType: (() => {
+      const code = String(api.acqArrgTy ?? api.arrgTy ?? '').trim()
+      if (!code) return String(listRow.acquireSortType ?? '')
+      return ACQ_ARRG_TY_LABEL[code] ?? code
+    })(),
     remarks: String(api.rmk ?? listRow.remarks ?? ''),
   }
 }
@@ -340,7 +351,7 @@ const OperationLedgerDetailPage = () => {
           </p>
         )}
         <div className="operation-ledger-detail-header-row">
-          <TitlePill>물품 기본 정보</TitlePill>
+          <div className="operation-ledger-table-label">물품 기본 정보</div>
           <div className="operation-ledger-detail-actions">
             <Button
               className="operation-ledger-btn operation-ledger-btn-outline operation-ledger-btn-table"
@@ -410,9 +421,12 @@ const OperationLedgerDetailPage = () => {
               <label className="operation-ledger-detail-label">내용연수</label>
               <TextField
                 value={form.usefulLife}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, usefulLife: e.target.value }))
-                }
+                inputMode="numeric"
+                autoComplete="off"
+                onChange={(e) => {
+                  const digitsOnly = e.target.value.replace(/\D/g, '')
+                  setForm((prev) => ({ ...prev, usefulLife: digitsOnly }))
+                }}
                 className="operation-ledger-detail-input"
               />
             </div>

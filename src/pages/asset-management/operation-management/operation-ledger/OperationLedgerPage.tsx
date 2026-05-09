@@ -144,11 +144,7 @@ const OperationLedgerPage = () => {
           : row.acquireAmount
       const u = String(o.usefulLife ?? '').trim()
       const usefulLife =
-        u === ''
-          ? row.usefulLife
-          : u.endsWith('년')
-            ? u
-            : `${u.replace(/[^\d]/g, '') || u}년`
+        u === '' ? row.usefulLife : u.replace(/년\s*$/, '').trim()
       return { ...row, acquireAmount, usefulLife }
     })
   }, [tableData, getOverride])

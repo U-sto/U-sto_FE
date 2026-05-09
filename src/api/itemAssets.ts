@@ -161,9 +161,13 @@ export type ItemAssetStatusHistoryItem = {
 
 export type ItemAssetDetailData = {
   itmNo?: string
+  /** G2B 목록명 — 일부 응답은 g2bDNm */
+  g2bDNm?: string
   /** G2B 목록명 (스웨거 필드명 예: g2bOnm) */
   g2bOnm?: string
   g2bItemNm?: string
+  /** G2B 목록번호 — 일부 응답은 g2bItemNo, 스웨거 예: g2bItmNo */
+  g2bItemNo?: string
   g2bItmNo?: string
   acqAt?: string
   acqUpr?: number
@@ -175,6 +179,8 @@ export type ItemAssetDetailData = {
   drbYr?: string | number
   qty?: number
   acqQty?: number
+  /** 취득정리구분 — 일부 응답은 acqArrgTy */
+  acqArrgTy?: string
   arrgTy?: string
   rmk?: string
   statusHistories?: ItemAssetStatusHistoryItem[]
@@ -276,10 +282,8 @@ function filtersToSearchRequest(filters: AssetLedgerFilters): ItemAssetSearchReq
 function mapItemAssetToRow(item: ItemAssetContent, index: number, offset: number): AssetLedgerRow {
   const acqUprValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
   const usefulLife =
-    typeof item.drbYr === 'string'
-      ? item.drbYr.endsWith('년')
-        ? item.drbYr
-        : `${item.drbYr}년`
+    item.drbYr != null && String(item.drbYr).trim() !== ''
+      ? String(item.drbYr).replace(/년\s*$/, '').trim()
       : ''
 
   return {
