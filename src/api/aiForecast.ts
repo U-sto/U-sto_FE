@@ -464,6 +464,10 @@ export async function fetchAiForecastHistoryDetail(
   const id = forecastId.trim()
   const res = await http.get<ApiResponse<AiForecastApiData>>(
     `/api/ai/forecast/contents/${encodeURIComponent(id)}`,
+    {
+      // 백엔드가 path variable + query forecastId를 동시에 요구하는 스펙 대응
+      params: { forecastId: id },
+    },
   )
   const body = res.data
   if (!body?.data) {
