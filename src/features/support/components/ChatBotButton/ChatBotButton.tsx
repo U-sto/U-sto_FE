@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import ChatBotLanding from './ChatBotLanding'
 import './ChatBotButton.css'
 import {
   sendAiChat,
-  getChatThreads,
   deleteChatThread,
   getChatMessages,
   fetchAiItemAssets,
-  createChatThread,
   patchChatThreadTitle,
+  createChatThreadWithQuery,
+  type AiChatActionButton,
 } from '../../../../api/supportChat'
 
 interface ChatBotButtonProps {
@@ -20,6 +21,7 @@ interface ChatMessage {
   id: number
   role: ChatMessageRole
   text: string
+  actionButtons?: AiChatActionButton[]
 }
 
 interface ChatSession {
@@ -34,6 +36,77 @@ type ChatBotPersistedState = {
 }
 
 const CHATBOT_STORAGE_KEY = 'usto.chatbot.sessions.v1'
+
+function makeLocalSessionId(): string {
+  return `local-${
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}`
+  }`
+}
+
+function isLocalSessionId(id: string): boolean {
+  return id.startsWith('local-')
+}
+
+function truncateSessionTitle(text: string, max = 28): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max)}…`
+}
+
+function parseChatbotStorage(): ChatBotPersistedState | null {
+  try {
+    const raw = window.localStorage.getItem(CHATBOT_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<ChatBotPersistedState>
+    if (!Array.isArray(parsed.sessions)) return null
+    const sessions = parsed.sessions
+      .filter((s): s is ChatSession => {
+        if (!s || typeof s !== 'object') return false
+        if (typeof s.id !== 'string' || typeof s.title !== 'string') return false
+        return Array.isArray(s.messages)
+      })
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        messages: s.messages.filter(
+          (m): m is ChatMessage =>
+            !!m &&
+            typeof m === 'object' &&
+            typeof m.id === 'number' &&
+            (m.role === 'user' || m.role === 'assistant') &&
+            typeof m.text === 'string',
+        ),
+      }))
+    if (sessions.length === 0) return null
+    const parsedCurrentSessionId =
+      typeof parsed.currentSessionId === 'string' ? parsed.currentSessionId : null
+    const safeCurrentSessionId =
+      parsedCurrentSessionId && sessions.some((s) => s.id === parsedCurrentSessionId)
+        ? parsedCurrentSessionId
+        : sessions[0].id
+    return {
+      sessions,
+      currentSessionId: safeCurrentSessionId,
+    }
+  } catch {
+    return null
+  }
+}
+
+/** localStorage에서만 초기화. 세션 없으면 빈 목록(챗봇만 켠 상태에서는 POST /threads 호출 안 함) */
+function readInitialChatState(): ChatBotPersistedState {
+  const persisted = parseChatbotStorage()
+  if (persisted?.sessions?.length) {
+    return {
+      sessions: persisted.sessions,
+      currentSessionId: persisted.currentSessionId,
+    }
+  }
+  return {
+    sessions: [],
+    currentSessionId: null,
+  }
+}
 
 function extractAiItemAssetSearchParams(query: string): { itmNo?: string; g2bDn?: string } {
   const q = query.trim()
@@ -58,15 +131,28 @@ function formatAssetRowsForChat(rows: Awaited<ReturnType<typeof fetchAiItemAsset
   return `관련 물품 조회 결과:\n${lines.join('\n')}`
 }
 
+/** 사이드바 토글 — Sidebar.svg (데스크톱 제공) */
 const LayoutToggleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect x="3.5" y="4" width="7" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.75" />
-    <rect x="13.5" y="4" width="7" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.75" />
+  <svg
+    width="26"
+    height="26"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M20 12.6667V35.3333M12 20.5333C12 17.5467 12 16.0533 12.5813 14.912C13.0927 13.9085 13.9085 13.0927 14.912 12.5813C16.0533 12 17.5467 12 20.5333 12H27.4667C30.4533 12 31.9467 12 33.088 12.5813C34.0915 13.0927 34.9073 13.9085 35.4187 14.912C36 16.0533 36 17.5467 36 20.5333V27.4667C36 30.4533 36 31.9467 35.4187 33.088C34.9073 34.0915 34.0915 34.9073 33.088 35.4187C31.9467 36 30.4533 36 27.4667 36H20.5333C17.5467 36 16.0533 36 14.912 35.4187C13.9085 34.9073 13.0927 34.0915 12.5813 33.088C12 31.9467 12 30.4533 12 27.4667V20.5333Z"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 )
 
 const SendArrowIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
       d="M12 19V5M12 5l-5 5M12 5l5 5"
       stroke="currentColor"
@@ -89,78 +175,36 @@ const PencilIcon = () => (
   </svg>
 )
 
-const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
-  const loadPersistedState = useCallback((): ChatBotPersistedState | null => {
-    try {
-      const raw = window.localStorage.getItem(CHATBOT_STORAGE_KEY)
-      if (!raw) return null
-      const parsed = JSON.parse(raw) as Partial<ChatBotPersistedState>
-      if (!Array.isArray(parsed.sessions)) return null
-      const sessions = parsed.sessions
-        .filter((s): s is ChatSession => {
-          if (!s || typeof s !== 'object') return false
-          if (typeof s.id !== 'string' || typeof s.title !== 'string') return false
-          return Array.isArray(s.messages)
-        })
-        .map((s) => ({
-          id: s.id,
-          title: s.title,
-          messages: s.messages.filter(
-            (m): m is ChatMessage =>
-              !!m &&
-              typeof m === 'object' &&
-              typeof m.id === 'number' &&
-              (m.role === 'user' || m.role === 'assistant') &&
-              typeof m.text === 'string',
-          ),
-        }))
-      if (sessions.length === 0) return null
-      const parsedCurrentSessionId =
-        typeof parsed.currentSessionId === 'string' ? parsed.currentSessionId : null
-      const safeCurrentSessionId =
-        parsedCurrentSessionId && sessions.some((s) => s.id === parsedCurrentSessionId)
-          ? parsedCurrentSessionId
-          : sessions[0].id
-      return {
-        sessions,
-        currentSessionId: safeCurrentSessionId,
-      }
-    } catch {
-      return null
-    }
-  }, [])
+type ChatPanelSurface = 'landing' | 'chat'
 
+const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sessionMenuOpenId, setSessionMenuOpenId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   const [input, setInput] = useState('')
-  const newSessionId = useCallback(() => {
-    return typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `session-${Date.now()}`
-  }, [])
 
-  const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    const persisted = loadPersistedState()
-    if (persisted?.sessions?.length) return persisted.sessions
-    const id = newSessionId()
-    return [{ id, title: '새 채팅 1', messages: [] }]
-  })
-  const [currentSessionId, setCurrentSessionId] = useState<string>(() => {
-    const persisted = loadPersistedState()
-    if (persisted?.currentSessionId) return persisted.currentSessionId
-    return persisted?.sessions?.[0]?.id ?? newSessionId()
-  })
+  const [sessions, setSessions] = useState<ChatSession[]>(() => readInitialChatState().sessions)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(
+    () => readInitialChatState().currentSessionId,
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [panelSurface, setPanelSurface] = useState<ChatPanelSurface>('landing')
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
-  const currentSession =
-    sessions.find((s) => s.id === currentSessionId) ?? sessions[0]
+  const currentSession = currentSessionId
+    ? sessions.find((s) => s.id === currentSessionId)
+    : undefined
   const activeSessionId = currentSession?.id ?? ''
   const messages = currentSession?.messages ?? []
+
+  useEffect(() => {
+    if (panelSurface === 'chat' && isOpen) {
+      setSidebarOpen(true)
+    }
+  }, [panelSurface, isOpen])
 
   useEffect(() => {
     if (!sessionMenuOpenId) return
@@ -175,8 +219,11 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   }, [sessionMenuOpenId])
 
   useEffect(() => {
-    if (!sessions.length) return
-    if (!sessions.some((s) => s.id === currentSessionId)) {
+    if (sessions.length === 0) {
+      if (currentSessionId != null) setCurrentSessionId(null)
+      return
+    }
+    if (!currentSessionId || !sessions.some((s) => s.id === currentSessionId)) {
       setCurrentSessionId(sessions[0].id)
     }
   }, [sessions, currentSessionId])
@@ -207,12 +254,19 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   )
 
   const handleToggle = () => {
-    setIsOpen((prev) => !prev)
+    setIsOpen((prev) => {
+      const opening = !prev
+      if (opening) {
+        setPanelSurface('landing')
+      }
+      return opening
+    })
     if (onClick) onClick()
   }
 
   const handleSessionChange = (sessionId: string) => {
     setCurrentSessionId(sessionId)
+    setPanelSurface('chat')
     setSessionMenuOpenId(null)
     setError(null)
     setLoading(false)
@@ -222,20 +276,15 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
     setError(null)
     setLoading(false)
     setSessionMenuOpenId(null)
-    void createChatThread()
-      .then((newId) => {
-        const index = sessions.length + 1
-        const newSession: ChatSession = {
-          id: newId,
-          title: `새 채팅 ${index}`,
-          messages: [],
-        }
-        setSessions((prev) => [...prev, newSession])
-        setCurrentSessionId(newId)
-      })
-      .catch(() => {
-        setError('새 채팅방을 만들 수 없습니다.')
-      })
+    const id = makeLocalSessionId()
+    const index = sessions.length + 1
+    const newSession: ChatSession = {
+      id,
+      title: `새 대화 ${index}`,
+      messages: [],
+    }
+    setSessions((prev) => [...prev, newSession])
+    setCurrentSessionId(id)
   }
 
   const handleRenameSessionById = (sessionId: string) => {
@@ -248,23 +297,30 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       prev.map((s) => (s.id === sessionId ? { ...s, title: trimmed } : s)),
     )
     setSessionMenuOpenId(null)
-    void patchChatThreadTitle(sessionId, trimmed).catch(() => {
-      // 서버 반영 실패 시에도 로컬 이름은 유지
-    })
+    if (!isLocalSessionId(sessionId)) {
+      void patchChatThreadTitle(sessionId, trimmed).catch(() => {
+        // 서버 반영 실패 시에도 로컬 이름은 유지
+      })
+    }
   }
 
   const handleDeleteSessionById = (sessionId: string) => {
     setSessionMenuOpenId(null)
 
-    // 세션이 1개뿐이면 메시지만 초기화 (빈 채팅방 유지)
+    /** 마지막 한 개여도 목록·서버에서 완전히 제거 (이전: 메시지만 비워서 제목만 남고 GET으로 복구되던 문제 방지) */
     if (sessions.length <= 1) {
-      setSessions((prev) =>
-        prev.map((s) => (s.id === sessionId ? { ...s, messages: [] } : s)),
-      )
+      if (!isLocalSessionId(sessionId)) {
+        void deleteChatThread(sessionId).catch(() => {
+          // 서버 동기화 실패 무시
+        })
+      }
+      setSessions([])
+      setCurrentSessionId(null)
+      setPanelSurface('landing')
+      setError(null)
       return
     }
 
-    // UI에서 먼저 제거 (낙관적 업데이트)
     setSessions((prev) => {
       const filtered = prev.filter((s) => s.id !== sessionId)
       const next = filtered[0]
@@ -272,10 +328,11 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       return filtered
     })
 
-    // 서버 동기화 (실패해도 UI는 이미 반영됨)
-    deleteChatThread(sessionId).catch(() => {
-      // 서버 동기화 실패 무시
-    })
+    if (!isLocalSessionId(sessionId)) {
+      void deleteChatThread(sessionId).catch(() => {
+        // 서버 동기화 실패 무시
+      })
+    }
   }
 
   const scrollToBottom = useCallback(() => {
@@ -297,45 +354,14 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   }, [isOpen, messages.length, scrollToBottom])
 
   useEffect(() => {
-    if (!isOpen) return
-    let cancelled = false
-    getChatThreads()
-      .then(async (threadIds) => {
-        if (cancelled) return
-        if (threadIds.length > 0) {
-          setSessions((prev) => {
-            const prevById = new Map(prev.map((s) => [s.id, s] as const))
-            const newSessions: ChatSession[] = threadIds.map((id, i) => ({
-              id,
-              title: prevById.get(id)?.title ?? `채팅방 ${i + 1}`,
-              messages: prevById.get(id)?.messages ?? [],
-            }))
-            setCurrentSessionId((current) =>
-              current && newSessions.some((s) => s.id === current) ? current : newSessions[0].id,
-            )
-            return newSessions
-          })
-          return
-        }
-        try {
-          const id = await createChatThread()
-          if (cancelled) return
-          setSessions([{ id, title: '새 채팅 1', messages: [] }])
-          setCurrentSessionId(id)
-        } catch {
-          if (!cancelled) setError(null)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setError(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen || !activeSessionId || !currentSession || messages.length > 0) {
+    if (
+      !isOpen ||
+      panelSurface === 'landing' ||
+      !activeSessionId ||
+      isLocalSessionId(activeSessionId) ||
+      !currentSession ||
+      messages.length > 0
+    ) {
       return
     }
     let cancelled = false
@@ -362,37 +388,107 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
     return () => {
       cancelled = true
     }
-  }, [isOpen, activeSessionId, currentSession?.messages.length])
+  }, [
+    isOpen,
+    panelSurface,
+    activeSessionId,
+    messages.length,
+    updateCurrentSessionMessages,
+    currentSession,
+  ])
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     const trimmed = input.trim()
     if (!trimmed || loading) return
 
+    if (panelSurface === 'landing') {
+      setPanelSurface('chat')
+    }
+
     const userMessage: ChatMessage = {
       id: Date.now(),
       role: 'user',
       text: trimmed,
     }
-    updateCurrentSessionMessages((prev) => [...prev, userMessage])
+    const sessionIdBeforeSend = activeSessionId
+    /** 서버 쓰레드 없음(또는 아직 발급 전 local-*)일 때만 POST /api/ai/chat/threads + query */
+    const useCreateThreadFlow =
+      !sessionIdBeforeSend || isLocalSessionId(sessionIdBeforeSend)
+
+    if (!useCreateThreadFlow) {
+      updateCurrentSessionMessages((prev) => [...prev, userMessage])
+    }
     setInput('')
     setError(null)
     setLoading(true)
 
     try {
       const searchParams = extractAiItemAssetSearchParams(trimmed)
-      const [answer, assetRows] = await Promise.all([
-        sendAiChat(activeSessionId, trimmed),
-        fetchAiItemAssets(searchParams).catch(() => []),
-      ])
-      const text = answer && answer.trim().length > 0 ? answer : '응답을 가져오지 못했습니다.'
-      const assetContext = formatAssetRowsForChat(assetRows)
-      const assistantMessage: ChatMessage = {
-        id: Date.now() + 1,
-        role: 'assistant',
-        text: assetContext ? `${assetContext}\n\n${text}` : text,
+
+      if (useCreateThreadFlow) {
+        const { threadId, aiChatResponse } = await createChatThreadWithQuery(trimmed)
+        const assetRows = await fetchAiItemAssets(searchParams).catch(() => [])
+        const assetContext = formatAssetRowsForChat(assetRows)
+        let replyText =
+          typeof aiChatResponse.reply === 'string' && aiChatResponse.reply.trim().length > 0
+            ? aiChatResponse.reply.trim()
+            : '응답을 가져오지 못했습니다.'
+        if (assetContext) {
+          replyText = `${assetContext}\n\n${replyText}`
+        }
+        const buttons =
+          Array.isArray(aiChatResponse.action_buttons) && aiChatResponse.action_buttons.length > 0
+            ? aiChatResponse.action_buttons
+            : undefined
+        const assistantMessage: ChatMessage = {
+          id: Date.now() + 1,
+          role: 'assistant',
+          text: replyText,
+          actionButtons: buttons,
+        }
+
+        if (sessionIdBeforeSend) {
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === sessionIdBeforeSend
+                ? {
+                    ...s,
+                    id: threadId,
+                    title:
+                      s.title === '새 대화' || /^새 대화( \d+)?$/.test(s.title)
+                        ? truncateSessionTitle(trimmed)
+                        : s.title,
+                    messages: [...s.messages, userMessage, assistantMessage],
+                  }
+                : s,
+            ),
+          )
+        } else {
+          setSessions((prev) => [
+            ...prev,
+            {
+              id: threadId,
+              title: truncateSessionTitle(trimmed),
+              messages: [userMessage, assistantMessage],
+            },
+          ])
+        }
+        setCurrentSessionId(threadId)
+      } else {
+        const [answer, assetRows] = await Promise.all([
+          sendAiChat(sessionIdBeforeSend, trimmed),
+          fetchAiItemAssets(searchParams).catch(() => []),
+        ])
+        const text = answer && answer.trim().length > 0 ? answer : '응답을 가져오지 못했습니다.'
+        const assetContext = formatAssetRowsForChat(assetRows)
+        const assistantMessage: ChatMessage = {
+          id: Date.now() + 1,
+          role: 'assistant',
+          text: assetContext ? `${assetContext}\n\n${text}` : text,
+        }
+        updateCurrentSessionMessages((prev) => [...prev, assistantMessage])
       }
-      updateCurrentSessionMessages((prev) => [...prev, assistantMessage])
     } catch (err) {
       const message =
         err instanceof Error ? err.message : '챗봇 응답 호출에 실패했습니다.'
@@ -405,7 +501,121 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   return (
     <>
       {isOpen && (
-        <section className="chatbot-panel" aria-label="AI 챗봇 대화창">
+        <section
+          className={`chatbot-panel${panelSurface === 'landing' ? ' chatbot-panel--landing' : ''}`}
+          aria-label="AI 챗봇 대화창"
+        >
+          <div
+            className={`chatbot-main${panelSurface === 'landing' ? ' chatbot-main--landing' : ''}`}
+          >
+            <header
+              className={`chatbot-main-header${
+                panelSurface === 'landing' ? ' chatbot-main-header--landing' : ''
+              }`}
+            >
+              <div className="chatbot-main-header-left">
+                <button
+                  type="button"
+                  className="chatbot-icon-btn chatbot-icon-btn--sidebar-toggle"
+                  aria-label={sidebarOpen ? '세션 목록 접기' : '세션 목록 펼치기'}
+                  aria-pressed={sidebarOpen}
+                  onClick={() => setSidebarOpen((v) => !v)}
+                >
+                  <LayoutToggleIcon />
+                </button>
+                {panelSurface === 'chat' && !sidebarOpen && (
+                  <button
+                    type="button"
+                    className="chatbot-icon-btn chatbot-icon-btn--round"
+                    aria-label="새 채팅"
+                    onClick={handleNewSession}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                className="chatbot-panel-close"
+                aria-label="챗봇 닫기"
+                onClick={() => setIsOpen(false)}
+              >
+                ×
+              </button>
+            </header>
+
+            {panelSurface === 'landing' ? (
+              <ChatBotLanding
+                loading={loading}
+                error={error}
+                input={input}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
+                sendIcon={<SendArrowIcon />}
+              />
+            ) : (
+            <div className="chatbot-panel-body">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`chatbot-message chatbot-message-${msg.role}`}
+                >
+                  <div className="chatbot-message-stack">
+                    {msg.text.trim().length > 0 && (
+                      <div className="chatbot-message-bubble">{msg.text}</div>
+                    )}
+                    {msg.role === 'assistant' &&
+                      msg.actionButtons &&
+                      msg.actionButtons.length > 0 && (
+                        <div className="chatbot-message-actions" role="group" aria-label="바로가기">
+                          {msg.actionButtons.map((btn) => (
+                            <a
+                              key={`${btn.url}-${btn.label}`}
+                              href={btn.url}
+                              className="chatbot-action-link"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {btn.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div className="chatbot-message chatbot-message-assistant chatbot-message-loading">
+                  <div className="chatbot-message-bubble">답변을 생성하고 있습니다...</div>
+                </div>
+              )}
+              {error && <div className="chatbot-error">{error}</div>}
+              <div ref={messagesEndRef} />
+            </div>
+            )}
+
+            {panelSurface === 'chat' && (
+              <form className="chatbot-panel-footer" onSubmit={handleSubmit}>
+                <input
+                  className="chatbot-input"
+                  type="text"
+                  placeholder="내용을 입력하세요."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  className="chatbot-send-btn"
+                  disabled={loading || !input.trim()}
+                  aria-label="메시지 전송"
+                >
+                  <SendArrowIcon />
+                </button>
+              </form>
+            )}
+          </div>
+
           <aside
             className={`chatbot-sidebar${sidebarOpen ? ' chatbot-sidebar--open' : ''}`}
             aria-hidden={!sidebarOpen}
@@ -430,7 +640,10 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
                       >
                         <span className="chatbot-session-item-title">{session.title}</span>
                       </button>
-                      <div className="chatbot-session-item-actions" ref={sessionMenuOpenId === session.id ? menuRef : undefined}>
+                      <div
+                        className="chatbot-session-item-actions"
+                        ref={sessionMenuOpenId === session.id ? menuRef : undefined}
+                      >
                         <button
                           type="button"
                           className="chatbot-session-more"
@@ -482,77 +695,6 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
               </button>
             </div>
           </aside>
-
-          <div className="chatbot-main">
-            <header className="chatbot-main-header">
-              <div className="chatbot-main-header-left">
-                <button
-                  type="button"
-                  className="chatbot-icon-btn"
-                  aria-label={sidebarOpen ? '세션 목록 접기' : '세션 목록 펼치기'}
-                  aria-pressed={sidebarOpen}
-                  onClick={() => setSidebarOpen((v) => !v)}
-                >
-                  <LayoutToggleIcon />
-                </button>
-                {!sidebarOpen && (
-                  <button
-                    type="button"
-                    className="chatbot-icon-btn chatbot-icon-btn--round"
-                    aria-label="새 채팅"
-                    onClick={handleNewSession}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                className="chatbot-panel-close"
-                aria-label="챗봇 닫기"
-                onClick={() => setIsOpen(false)}
-              >
-                ×
-              </button>
-            </header>
-
-            <div className="chatbot-panel-body">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`chatbot-message chatbot-message-${msg.role}`}
-                >
-                  <div className="chatbot-message-bubble">{msg.text}</div>
-                </div>
-              ))}
-              {loading && (
-                <div className="chatbot-message chatbot-message-assistant chatbot-message-loading">
-                  <div className="chatbot-message-bubble">답변을 생성하고 있습니다...</div>
-                </div>
-              )}
-              {error && <div className="chatbot-error">{error}</div>}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <form className="chatbot-panel-footer" onSubmit={handleSubmit}>
-              <input
-                className="chatbot-input"
-                type="text"
-                placeholder="내용을 입력하세요."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={loading}
-              />
-              <button
-                type="submit"
-                className="chatbot-send-btn"
-                disabled={loading || !input.trim()}
-                aria-label="메시지 전송"
-              >
-                <SendArrowIcon />
-              </button>
-            </form>
-          </div>
         </section>
       )}
 

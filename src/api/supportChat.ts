@@ -6,10 +6,22 @@ export interface AiChatMessageRequest {
   query: string
 }
 
+export interface AiChatActionButton {
+  label: string
+  url: string
+}
+
 export interface AiChatResponseData {
   reply: string
+  action_buttons?: AiChatActionButton[]
   references?: string[]
   created_at?: string
+}
+
+/** POST /api/ai/chat/threads 응답 data (첫 질문으로 쓰레드 생성) */
+export interface CreateChatThreadWithQueryData {
+  threadId: string
+  aiChatResponse: AiChatResponseData
 }
 
 export interface AiItemAssetsSearchParams {
@@ -63,27 +75,32 @@ export async function getChatMessages(
   return Array.isArray(data) ? data : []
 }
 
-function parseThreadIdFromCreateResponse(
-  raw: unknown,
-): string | null {
-  if (typeof raw === 'string' && raw.trim()) return raw.trim()
-  if (raw && typeof raw === 'object') {
-    const o = raw as Record<string, unknown>
-    if (typeof o.threadId === 'string' && o.threadId.trim()) return o.threadId.trim()
-    if (typeof o.id === 'string' && o.id.trim()) return o.id.trim()
-  }
-  return null
-}
-
 /**
- * 쓰레드 생성(첫 대화)
- * POST /api/ai/chat/threads
+ * 첫 질문으로 채팅방 생성 + AI 첫 응답
+ * POST /api/ai/chat/threads — body: { query }
  */
-export async function createChatThread(): Promise<string> {
-  const res = await http.post<ApiResponse<unknown>>('/api/ai/chat/threads')
-  const id = parseThreadIdFromCreateResponse(res.data?.data)
-  if (id) return id
-  throw new Error('쓰레드 생성 응답에 threadId가 없습니다.')
+export async function createChatThreadWithQuery(
+  query: string,
+): Promise<CreateChatThreadWithQueryData> {
+  const res = await http.post<ApiResponse<CreateChatThreadWithQueryData>>(
+    '/api/ai/chat/threads',
+    { query: query.trim() },
+  )
+  const body = res.data
+  const data = body?.data
+  if (
+    data &&
+    typeof data.threadId === 'string' &&
+    data.threadId.trim() &&
+    data.aiChatResponse &&
+    typeof data.aiChatResponse.reply === 'string'
+  ) {
+    return {
+      threadId: data.threadId.trim(),
+      aiChatResponse: data.aiChatResponse,
+    }
+  }
+  throw new Error(body?.message ?? '채팅방을 만들지 못했습니다.')
 }
 
 /**
@@ -139,8 +156,9 @@ export async function sendAiChat(
     payload,
   )
   const body = res.data
-  if (!body?.data?.reply) return ''
-  return body.data.reply
+  const reply = body?.data?.reply
+  if (typeof reply !== 'string') return ''
+  return reply
 }
 
 /**
