@@ -147,7 +147,7 @@ export async function patchChatThreadTitle(
 export async function sendAiChat(
   threadId: string,
   query: string,
-): Promise<string> {
+): Promise<AiChatResponseData> {
   const payload: AiChatMessageRequest = {
     query: query.trim(),
   }
@@ -156,9 +156,17 @@ export async function sendAiChat(
     payload,
   )
   const body = res.data
-  const reply = body?.data?.reply
-  if (typeof reply !== 'string') return ''
-  return reply
+  const data = body?.data
+  const reply = data?.reply
+  if (typeof reply !== 'string') {
+    return { reply: '', action_buttons: data?.action_buttons, references: data?.references }
+  }
+  return {
+    reply,
+    action_buttons: data?.action_buttons,
+    references: data?.references,
+    created_at: data?.created_at,
+  }
 }
 
 /**

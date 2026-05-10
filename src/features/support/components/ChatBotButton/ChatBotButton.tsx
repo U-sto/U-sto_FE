@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import ChatBotLanding from './ChatBotLanding'
 import './ChatBotButton.css'
+import { inferMenuActionButtons, mergeActionButtons } from '../../../../constants/chatMenuInference'
 import {
   sendAiChat,
   deleteChatThread,
@@ -36,12 +38,6 @@ type ChatBotPersistedState = {
 }
 
 const CHATBOT_STORAGE_KEY = 'usto.chatbot.sessions.v1'
-
-function makeLocalSessionId(): string {
-  return `local-${
-    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}`
-  }`
-}
 
 function isLocalSessionId(id: string): boolean {
   return id.startsWith('local-')
@@ -175,6 +171,18 @@ const PencilIcon = () => (
   </svg>
 )
 
+/** 사이드바 닫힘 시 헤더 새 채팅 */
+const NewChatPlusIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12 5v14M5 12h14"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
 type ChatPanelSurface = 'landing' | 'chat'
 
 const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
@@ -223,10 +231,18 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       if (currentSessionId != null) setCurrentSessionId(null)
       return
     }
+    if (currentSessionId != null && !sessions.some((s) => s.id === currentSessionId)) {
+      setCurrentSessionId(null)
+      return
+    }
+    /** 새 채팅 → 랜딩에서는 선택 세션 없음(null) 유지, 첫 전송 시에만 쓰레드 생성 */
+    if (panelSurface === 'landing') {
+      return
+    }
     if (!currentSessionId || !sessions.some((s) => s.id === currentSessionId)) {
       setCurrentSessionId(sessions[0].id)
     }
-  }, [sessions, currentSessionId])
+  }, [sessions, currentSessionId, panelSurface])
 
   useEffect(() => {
     const payload: ChatBotPersistedState = {
@@ -272,19 +288,14 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
     setLoading(false)
   }
 
+  /** 새 채팅: 쓰레드/로컬방 생성 없이 랜딩으로만 이동 — 첫 전송 시 POST /threads */
   const handleNewSession = () => {
     setError(null)
     setLoading(false)
     setSessionMenuOpenId(null)
-    const id = makeLocalSessionId()
-    const index = sessions.length + 1
-    const newSession: ChatSession = {
-      id,
-      title: `새 대화 ${index}`,
-      messages: [],
-    }
-    setSessions((prev) => [...prev, newSession])
-    setCurrentSessionId(id)
+    setInput('')
+    setCurrentSessionId(null)
+    setPanelSurface('landing')
   }
 
   const handleRenameSessionById = (sessionId: string) => {
@@ -437,10 +448,11 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
         if (assetContext) {
           replyText = `${assetContext}\n\n${replyText}`
         }
-        const buttons =
-          Array.isArray(aiChatResponse.action_buttons) && aiChatResponse.action_buttons.length > 0
-            ? aiChatResponse.action_buttons
-            : undefined
+        const inferred = inferMenuActionButtons(trimmed, replyText)
+        const buttons = mergeActionButtons(
+          Array.isArray(aiChatResponse.action_buttons) ? aiChatResponse.action_buttons : undefined,
+          inferred,
+        )
         const assistantMessage: ChatMessage = {
           id: Date.now() + 1,
           role: 'assistant',
@@ -476,16 +488,23 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
         }
         setCurrentSessionId(threadId)
       } else {
-        const [answer, assetRows] = await Promise.all([
+        const [aiData, assetRows] = await Promise.all([
           sendAiChat(sessionIdBeforeSend, trimmed),
           fetchAiItemAssets(searchParams).catch(() => []),
         ])
-        const text = answer && answer.trim().length > 0 ? answer : '응답을 가져오지 못했습니다.'
+        const rawReply = typeof aiData.reply === 'string' ? aiData.reply : ''
+        const text = rawReply.trim().length > 0 ? rawReply.trim() : '응답을 가져오지 못했습니다.'
         const assetContext = formatAssetRowsForChat(assetRows)
+        const inferred = inferMenuActionButtons(trimmed, text)
+        const buttons = mergeActionButtons(
+          Array.isArray(aiData.action_buttons) ? aiData.action_buttons : undefined,
+          inferred,
+        )
         const assistantMessage: ChatMessage = {
           id: Date.now() + 1,
           role: 'assistant',
           text: assetContext ? `${assetContext}\n\n${text}` : text,
+          actionButtons: buttons,
         }
         updateCurrentSessionMessages((prev) => [...prev, assistantMessage])
       }
@@ -523,14 +542,14 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
                 >
                   <LayoutToggleIcon />
                 </button>
-                {panelSurface === 'chat' && !sidebarOpen && (
+                {!sidebarOpen && (
                   <button
                     type="button"
-                    className="chatbot-icon-btn chatbot-icon-btn--round"
+                    className="chatbot-icon-btn chatbot-icon-btn--round chatbot-icon-btn--new-chat"
                     aria-label="새 채팅"
                     onClick={handleNewSession}
                   >
-                    +
+                    <NewChatPlusIcon />
                   </button>
                 )}
               </div>
@@ -568,17 +587,33 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
                       msg.actionButtons &&
                       msg.actionButtons.length > 0 && (
                         <div className="chatbot-message-actions" role="group" aria-label="바로가기">
-                          {msg.actionButtons.map((btn) => (
-                            <a
-                              key={`${btn.url}-${btn.label}`}
-                              href={btn.url}
-                              className="chatbot-action-link"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {btn.label}
-                            </a>
-                          ))}
+                          {msg.actionButtons.map((btn) => {
+                            const url = btn.url?.trim() ?? ''
+                            const isInternal =
+                              url.startsWith('/') && !url.startsWith('//') && !url.includes('://')
+                            if (isInternal) {
+                              return (
+                                <Link
+                                  key={`${url}-${btn.label}`}
+                                  to={url}
+                                  className="chatbot-action-link"
+                                >
+                                  {btn.label}
+                                </Link>
+                              )
+                            }
+                            return (
+                              <a
+                                key={`${url}-${btn.label}`}
+                                href={url || '#'}
+                                className="chatbot-action-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {btn.label}
+                              </a>
+                            )
+                          })}
                         </div>
                       )}
                   </div>

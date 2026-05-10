@@ -559,7 +559,7 @@ const AiForecastPage = () => {
                   <div className="ai-forecast-analysis-condition-body">
                     <p className="ai-forecast-analysis-condition-required-note" role="note">
                       분석조건은 필수입니다. 년도·학기·캠퍼스·운용부서·리스크성향을 모두 지정해야 하며, 상단
-                      검색창에 분석 요청 문장을 확인인한 뒤 검색해 주세요.
+                      검색창에 분석 요청 문장을 확인한 뒤 검색해 주세요.
                     </p>
                     <div className="ai-forecast-analysis-condition-row">
                       <div className="ai-forecast-analysis-condition-field">

@@ -50,6 +50,10 @@
   /** 목록 서랍: 본문 padding과 동일 트랜지션으로 동기화 */
   --chatbot-drawer-duration: 0.34s;
   --chatbot-drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /** 사이드바 푸터·채팅 입력 푸터 구분선을 한 높이에 맞춤 */
+  --chatbot-footer-border-top: 1px solid rgba(197, 205, 208, 0.55);
+  --chatbot-footer-padding-y: 12px;
+  --chatbot-footer-min-height: 92px;
 }
 
 /* 챗봇 패널: 둥근 모서리 + 얇은 테두리 — 사이드바 translate용 컨테이너 쿼리 */
@@ -197,11 +201,15 @@
   border-radius: 10px;
 }
 
-/* 랜딩: 입력창 안 오른쪽 원형 전송 (피그마) */
+/* 랜딩: 입력창 안 오른쪽 원형 전송 (피그마) — 구분선은 사이드바 푸터와 동일 토큰 */
 .chatbot-panel-footer--landing {
-  padding: 8px 22px 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: var(--chatbot-footer-min-height);
+  padding: var(--chatbot-footer-padding-y) 22px;
   background: transparent;
-  border-top: none;
+  border-top: var(--chatbot-footer-border-top);
   gap: 0;
 }
 
@@ -397,8 +405,12 @@
 
 .chatbot-sidebar-footer {
   flex-shrink: 0;
-  padding: 10px 12px 14px;
-  border-top: 1px solid rgba(92, 124, 138, 0.12);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: var(--chatbot-footer-min-height);
+  padding: var(--chatbot-footer-padding-y) 12px;
+  border-top: var(--chatbot-footer-border-top);
 }
 
 .chatbot-sidebar-new {
@@ -508,10 +520,12 @@
 
 .chatbot-icon-btn--round {
   border-radius: 50%;
-  font-size: 22px;
-  line-height: 1;
   color: var(--chatbot-teal);
-  font-weight: 400;
+}
+
+.chatbot-icon-btn--new-chat:hover {
+  background: rgba(92, 124, 138, 0.12);
+  color: #4a6570;
 }
 
 .chatbot-panel-close {
@@ -635,11 +649,13 @@
 
 .chatbot-panel-footer {
   flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px 16px;
-  border-top: 1px solid rgba(197, 205, 208, 0.5);
+  height: var(--chatbot-footer-min-height);
+  padding: var(--chatbot-footer-padding-y) 14px;
+  border-top: var(--chatbot-footer-border-top);
   background: #fff;
 }
 
