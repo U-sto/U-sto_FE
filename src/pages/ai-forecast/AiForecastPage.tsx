@@ -89,7 +89,14 @@ const SearchIcon = () => (
   </svg>
 )
 
-const YEAR_OPTIONS = Array.from({ length: 2050 - 2024 + 1 }, (_, i) => String(2024 + i))
+function buildYearOptions(): string[] {
+  const y = new Date().getFullYear()
+  const start = y - 50
+  const end = y + 50
+  return Array.from({ length: end - start + 1 }, (_, i) => String(start + i))
+}
+
+const YEAR_OPTIONS = buildYearOptions()
 const SEMESTER_OPTIONS = ['1학기', '여름학기', '2학기', '겨울학기']
 const RISK_OPTIONS = ['리스크 선호', '리스크 중립', '리스크 회피']
 
@@ -105,7 +112,7 @@ type AnalysisCondition = {
 }
 
 const DEFAULT_ANALYSIS_CONDITION: AnalysisCondition = {
-  year: '2026',
+  year: String(new Date().getFullYear()),
   semester: '1학기',
   campus: CAMPUS_FIXED,
   operatingDept: '선택',
