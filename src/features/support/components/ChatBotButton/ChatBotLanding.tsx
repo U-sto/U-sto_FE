@@ -43,7 +43,7 @@ const ChatBotLanding = ({
         <input
           className="chatbot-input chatbot-input--landing"
           type="text"
-          placeholder="물품을 반납하고 싶어."
+          placeholder="챗봇에게 물어보기"
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
           disabled={loading}
