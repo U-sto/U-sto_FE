@@ -38,6 +38,47 @@ type ChatBotPersistedState = {
 }
 
 const CHATBOT_STORAGE_KEY = 'usto.chatbot.sessions.v1'
+const CHATBOT_FAB_POS_KEY = 'usto.chatbot.fabPos.v1'
+
+function fabButtonSizePx(): number {
+  if (typeof window === 'undefined') return 80
+  return window.innerWidth <= 768 ? 60 : 80
+}
+
+function clampFabPos(right: number, bottom: number): { right: number; bottom: number } {
+  if (typeof window === 'undefined') return { right: 30, bottom: 30 }
+  const btn = fabButtonSizePx()
+  const margin = 8
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const maxR = Math.max(margin, vw - btn - margin)
+  const maxB = Math.max(margin, vh - btn - margin)
+  return {
+    right: Math.min(maxR, Math.max(margin, right)),
+    bottom: Math.min(maxB, Math.max(margin, bottom)),
+  }
+}
+
+function readSavedFabPos(): { right: number; bottom: number } | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(CHATBOT_FAB_POS_KEY)
+    if (!raw) return null
+    const j = JSON.parse(raw) as { right?: unknown; bottom?: unknown }
+    if (typeof j.right === 'number' && typeof j.bottom === 'number') {
+      return { right: j.right, bottom: j.bottom }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+function defaultFabPos(): { right: number; bottom: number } {
+  if (typeof window === 'undefined') return { right: 30, bottom: 30 }
+  const m = window.innerWidth <= 768 ? 20 : 30
+  return { right: m, bottom: m }
+}
 
 function isLocalSessionId(id: string): boolean {
   return id.startsWith('local-')
@@ -190,6 +231,23 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sessionMenuOpenId, setSessionMenuOpenId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const [fabPos, setFabPos] = useState<{ right: number; bottom: number }>(() => {
+    const saved = readSavedFabPos()
+    if (saved) return clampFabPos(saved.right, saved.bottom)
+    const d = defaultFabPos()
+    return clampFabPos(d.right, d.bottom)
+  })
+  const fabDragRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    startR: number
+    startB: number
+    moved: boolean
+  } | null>(null)
+  const skipFabClickRef = useRef(false)
+  const fabPosRef = useRef(fabPos)
+  fabPosRef.current = fabPos
 
   const [input, setInput] = useState('')
 
@@ -213,6 +271,12 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       setSidebarOpen(true)
     }
   }, [panelSurface, isOpen])
+
+  useEffect(() => {
+    const onResize = () => setFabPos((p) => clampFabPos(p.right, p.bottom))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     if (!sessionMenuOpenId) return
@@ -278,6 +342,52 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
       return opening
     })
     if (onClick) onClick()
+  }
+
+  const onFabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    fabDragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startR: fabPosRef.current.right,
+      startB: fabPosRef.current.bottom,
+      moved: false,
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onFabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = fabDragRef.current
+    if (!d || d.pointerId !== e.pointerId) return
+    const dx = e.clientX - d.startX
+    const dy = e.clientY - d.startY
+    if (Math.hypot(dx, dy) < 6) return
+    d.moved = true
+    setFabPos(clampFabPos(d.startR - dx, d.startB - dy))
+  }
+
+  const endFabDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = fabDragRef.current
+    if (!d || d.pointerId !== e.pointerId) return
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    fabDragRef.current = null
+    if (d.moved) {
+      skipFabClickRef.current = true
+      setFabPos((p) => {
+        const c = clampFabPos(p.right, p.bottom)
+        try {
+          window.localStorage.setItem(CHATBOT_FAB_POS_KEY, JSON.stringify(c))
+        } catch {
+          /* ignore */
+        }
+        return c
+      })
+    }
   }
 
   const handleSessionChange = (sessionId: string) => {
@@ -737,7 +847,18 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
         type="button"
         className="chatbot-button"
         aria-label="챗봇 열기"
-        onClick={handleToggle}
+        style={{ right: fabPos.right, bottom: fabPos.bottom }}
+        onPointerDown={onFabPointerDown}
+        onPointerMove={onFabPointerMove}
+        onPointerUp={endFabDrag}
+        onPointerCancel={endFabDrag}
+        onClick={() => {
+          if (skipFabClickRef.current) {
+            skipFabClickRef.current = false
+            return
+          }
+          handleToggle()
+        }}
       >
         <svg
           width="50"

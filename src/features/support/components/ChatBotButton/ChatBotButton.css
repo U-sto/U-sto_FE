@@ -1,14 +1,15 @@
-/* 플로팅 열기 버튼 */
+/* 플로팅 열기 버튼 — 위치는 inline style + localStorage(드래그) */
 .chatbot-button {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
   width: 80px;
   height: 80px;
   background-color: var(--usto-primary-300);
   border: none;
   border-radius: 50%;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,6 +32,7 @@
 }
 
 .chatbot-button:active {
+  cursor: grabbing;
   transform: scale(0.95);
 }
 
@@ -771,8 +773,6 @@
   .chatbot-button {
     width: 60px;
     height: 60px;
-    bottom: 20px;
-    right: 20px;
   }
 
   .chatbot-button svg {
