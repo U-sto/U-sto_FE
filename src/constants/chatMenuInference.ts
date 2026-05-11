@@ -1,5 +1,6 @@
 import { menuData, type MenuItem } from './menu'
 import type { AiChatActionButton } from '../api/supportChat'
+import { filterChatbotActionButtons } from './chatbotAllowedRoutes'
 
 function flattenMenuItemsWithPaths(items: MenuItem[]): { label: string; path: string }[] {
   const out: { label: string; path: string }[] = []
@@ -85,5 +86,6 @@ export function mergeActionButtons(
     seen.add(u)
     out.push(b)
   }
-  return out.length > 0 ? out : undefined
+  const allowed = filterChatbotActionButtons(out)
+  return allowed.length > 0 ? allowed : undefined
 }

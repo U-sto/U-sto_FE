@@ -1,0 +1,96 @@
+import { menuData, type MenuItem } from './menu'
+import type { AiChatActionButton } from '../api/supportChat'
+
+function flattenMenuPaths(items: MenuItem[]): string[] {
+  const out: string[] = []
+  for (const item of items) {
+    if (item.path) out.push(item.path)
+    if (item.children?.length) {
+      for (const c of item.children) {
+        if (c.path) out.push(c.path)
+      }
+    }
+  }
+  return out
+}
+
+/** GNB 메뉴에 정의된 path */
+const PATHS_FROM_MENU = new Set(menuData.flatMap((s) => flattenMenuPaths(s.items)))
+
+/**
+ * 메뉴에 없지만 실제 라우트인 path (App.tsx / AssetManagementRoutes / UserInfoRoutes)
+ */
+const EXTRA_EXACT_PATHS: string[] = [
+  '/home',
+  '/ai-forecast',
+  '/acq-confirmation',
+  '/operation-management',
+  '/return-management',
+  '/disuse-management',
+  '/disposal-management',
+  '/user-info',
+  '/user-info/change-password',
+  '/user-info/change-password/complete',
+  '/user-info/change-phone',
+  '/user-info/change-phone/complete',
+  '/user-info/withdraw',
+  '/user-info/withdraw/complete',
+  '/asset-management/acquisition-management/register',
+  '/asset-management/operation-management/operation-ledger/detail',
+  '/asset-management/operation-management/operation-transfer/register',
+  '/asset-management/operation-management/return-management/register',
+  '/asset-management/disuse-management/register',
+  '/asset-management/disposal-management/register',
+]
+
+const EXACT_PATHS = new Set<string>([...PATHS_FROM_MENU, ...EXTRA_EXACT_PATHS])
+
+/** :id 한 단만 허용 (백엔드가 준 동적 상세 URL) */
+const EDIT_ID_PREFIXES = [
+  '/asset-management/acquisition-management/edit/',
+  '/asset-management/operation-management/operation-transfer/edit/',
+  '/asset-management/operation-management/return-management/edit/',
+  '/asset-management/disuse-management/edit/',
+  '/asset-management/disposal-management/edit/',
+] as const
+
+export function normalizeChatbotPathname(url: string): string | null {
+  const t = url.trim()
+  if (!t) return null
+  let path: string
+  if (t.startsWith('/')) {
+    path = t.split('?')[0].split('#')[0]
+  } else {
+    try {
+      path = new URL(t).pathname
+    } catch {
+      return null
+    }
+  }
+  if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)
+  return path || '/'
+}
+
+export function isAllowedChatbotPathname(pathname: string): boolean {
+  if (EXACT_PATHS.has(pathname)) return true
+  for (const prefix of EDIT_ID_PREFIXES) {
+    if (!pathname.startsWith(prefix)) continue
+    const rest = pathname.slice(prefix.length)
+    if (rest.length > 0 && !rest.includes('/')) return true
+  }
+  return false
+}
+
+/** API·추론 버튼 중 화이트리스트 path만 남기고, url은 상대 경로로 통일 */
+export function filterChatbotActionButtons(buttons: AiChatActionButton[]): AiChatActionButton[] {
+  const seen = new Set<string>()
+  const out: AiChatActionButton[] = []
+  for (const b of buttons) {
+    const path = normalizeChatbotPathname(b.url)
+    if (!path || !isAllowedChatbotPathname(path)) continue
+    if (seen.has(path)) continue
+    seen.add(path)
+    out.push({ label: b.label, url: path })
+  }
+  return out
+}

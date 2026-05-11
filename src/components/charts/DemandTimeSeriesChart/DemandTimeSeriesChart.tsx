@@ -24,6 +24,28 @@ type DemandTimeSeriesChartProps = {
   hideLabel?: boolean
 }
 
+type ChartRow = DemandTimeSeriesPoint & {
+  totalOrderQty: number
+  xValue: number
+}
+
+function parseRopDay(ropDate?: string): number | null {
+  if (!ropDate) return null
+  const trimmed = ropDate.trim()
+  if (!trimmed) return null
+
+  const ymdMatch = trimmed.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/)
+  if (ymdMatch) {
+    const day = Number(ymdMatch[3])
+    return Number.isFinite(day) && day > 0 ? day : null
+  }
+
+  const date = new Date(trimmed)
+  if (Number.isNaN(date.getTime())) return null
+  const day = date.getDate()
+  return Number.isFinite(day) && day > 0 ? day : null
+}
+
 const DemandTimeSeriesChart = ({
   chart,
   height = 400,
@@ -32,13 +54,31 @@ const DemandTimeSeriesChart = ({
   hideLabel = false,
 }: DemandTimeSeriesChartProps) => {
   const { data, reorderPointPeriod } = chart
-  const normalizedData: (DemandTimeSeriesPoint & { totalOrderQty: number })[] = data.map((d) => ({
+  const normalizedData: ChartRow[] = data.map((d) => ({
     ...d,
     totalOrderQty: d.totalOrderQty ?? 0,
+    xValue: d.period,
   }))
   const reorderPoint = reorderPointPeriod != null
     ? normalizedData.find((d) => d.period === reorderPointPeriod)
     : undefined
+  const reorderPointX = (() => {
+    if (!reorderPoint) return undefined
+    const day = parseRopDay(reorderPoint.rop_date)
+    if (!day) return reorderPoint.period
+    const safeDay = Math.max(1, Math.min(31, day))
+    // 월(정수) 내부에 일자 위치를 0~1 구간으로 정규화해 표시
+    return reorderPoint.period + (safeDay - 1) / 31
+  })()
+  const xTicks = normalizedData.map((d) => d.period)
+  const xDomain = normalizedData.length
+    ? [Math.min(...xTicks) - 0.5, Math.max(...xTicks) + 0.5]
+    : [0, 12]
+  const legendPayload: Array<{ value: string; type: 'rect' | 'line' | 'circle'; color: string }> = [
+    { value: '예상 고장 수량', type: 'rect', color: barColor },
+    { value: '총 발주수량', type: 'line', color: lineColor },
+    { value: '발주 최종 기간', type: 'circle', color: lineColor },
+  ]
 
   return (
     <div className="demand-time-series-chart" style={{ width: '100%', height }}>
@@ -47,7 +87,11 @@ const DemandTimeSeriesChart = ({
         <ComposedChart data={normalizedData} margin={{ top: 36, right: 16, left: 0, bottom: 24 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--usto-primary-200)" />
           <XAxis
-            dataKey="period"
+            type="number"
+            dataKey="xValue"
+            domain={xDomain}
+            ticks={xTicks}
+            tickFormatter={(value) => `${value}`}
             tick={{ fontSize: 14, fill: 'var(--usto-alt-black)' }}
             tickLine={false}
             label={{ value: '(월)', position: 'insideBottomRight', offset: -4, fontSize: 12, fill: 'var(--usto-gray-200)' }}
@@ -67,7 +111,7 @@ const DemandTimeSeriesChart = ({
             }}
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null
-              // Recharts payload[].payload는 시리즈별로 잘린 객체일 수 있어, X축 period로 원본 행을 찾는다.
+              // Recharts payload[].payload는 시리즈별로 잘린 객체일 수 있어, X축 값으로 원본 행을 찾는다.
               const labelPeriod =
                 label !== undefined && label !== null && label !== ''
                   ? typeof label === 'number'
@@ -76,10 +120,10 @@ const DemandTimeSeriesChart = ({
                   : NaN
               const rawFromData =
                 Number.isFinite(labelPeriod) && labelPeriod > 0
-                  ? normalizedData.find((d) => d.period === labelPeriod)
+                  ? normalizedData.find((d) => d.period === Math.round(labelPeriod))
                   : undefined
               const raw =
-                rawFromData ?? (payload[0]?.payload as DemandTimeSeriesPoint | undefined)
+                rawFromData ?? (payload[0]?.payload as ChartRow | undefined)
               const periodNum = raw?.period ?? (label != null ? Number(label) : NaN)
               const monthHeading =
                 Number.isFinite(periodNum) && periodNum > 0 ? `${periodNum}월` : String(label ?? '')
@@ -92,7 +136,7 @@ const DemandTimeSeriesChart = ({
                 extraRows.push({ label: '안전재고', value: raw.safetyStock })
               }
               if (raw?.rop_date) {
-                extraRows.push({ label: '발주 마감 기한', value: raw.rop_date })
+                extraRows.push({ label: '발주 최종 기한', value: raw.rop_date })
               }
               return (
                 <div
@@ -174,8 +218,33 @@ const DemandTimeSeriesChart = ({
                             color: 'var(--usto-alt-black)',
                           }}
                         >
-                          <span style={{ color: 'var(--usto-gray-200)' }}>{row.label}</span>
-                          <span style={{ fontWeight: 600, color: barColor }}>{row.value}</span>
+                          <span style={{ color: 'var(--usto-gray-200)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {row.label === '발주 최종 기한' && (
+                              <span
+                                aria-hidden
+                                style={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: '50%',
+                                  background: lineColor,
+                                  border: '2px solid #fff',
+                                  outline: '1px solid rgba(0, 0, 0, 0.7)',
+                                  boxSizing: 'border-box',
+                                  display: 'inline-block',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            {row.label}
+                          </span>
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              color: row.label === '발주 최종 기한' ? lineColor : barColor,
+                            }}
+                          >
+                            {row.value}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -184,7 +253,17 @@ const DemandTimeSeriesChart = ({
               )
             }}
           />
-          <Legend />
+          <Legend
+            payload={legendPayload}
+            verticalAlign="top"
+            align="right"
+            wrapperStyle={{
+              paddingBottom: 8,
+              fontFamily: 'var(--font-family)',
+              fontSize: 12,
+              color: 'var(--usto-alt-black)',
+            }}
+          />
           <Bar
             dataKey="quantity"
             name="예상 고장 수량"
@@ -201,9 +280,9 @@ const DemandTimeSeriesChart = ({
             strokeDasharray="4 4"
             dot={false}
           />
-          {reorderPoint && (
+          {reorderPoint && reorderPointX != null && (
             <ReferenceDot
-              x={reorderPoint.period}
+              x={reorderPointX}
               y={reorderPoint.totalOrderQty}
               r={8}
               fill={lineColor}

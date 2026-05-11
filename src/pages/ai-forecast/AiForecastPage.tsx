@@ -453,17 +453,17 @@ const AiForecastPage = () => {
         return
       }
       const riskDisplayMap: Record<string, string> = {
-        '리스크 선호': 'High',
-        '리스크 중립': 'Medium',
-        '리스크 회피': 'Low (95% Service Level)',
-        필수: 'High',
-        권장: 'Medium',
-        선택: 'Low (95% Service Level)',
+        '리스크 선호': '리스크 선호',
+        '리스크 중립': '리스크 중립',
+        '리스크 회피': '리스크 회피',
+        필수: '리스크 선호',
+        권장: '리스크 중립',
+        선택: '리스크 회피',
       }
       const displaySummary: AiForecastDisplaySummary = {
         target: analysisCondition.operatingDept === '선택' ? '' : analysisCondition.operatingDept,
         risk: riskDisplayMap[analysisCondition.riskPropensity] ?? analysisCondition.riskPropensity,
-        period: `${analysisCondition.year} - ${analysisCondition.semester}`,
+        period: `${analysisCondition.year}년 ${analysisCondition.semester}`,
       }
       const data = await fetchAiForecast(query.trim(), conditions, displaySummary)
       setResult(data)
