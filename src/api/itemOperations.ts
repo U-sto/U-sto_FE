@@ -10,6 +10,7 @@ import { applyDeptLabelToSearchRequest } from '../constants/departments'
 import { buildCombinedG2bListNoForFilter, filterByG2bItemNmIncludes } from './g2bFilterNormalize'
 import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 import { pickFirstStringFromRecord as pickFromRecord } from './pickFromRecord'
+import { mapOperStsToLabel } from './itemAssets'
 
 export type ItemOperationSearchRequest = {
   /** 시작 신청일자 (스웨거 예: startAplyAt) */
@@ -419,8 +420,8 @@ function mapOperationItemToRow(
         ? `${acqUpr.toLocaleString('ko-KR')}원`
         : '',
     operatingDept: String(item.deptNm ?? ''),
-    itemStatus: String(
-      item.itemSts ?? item.itmSts ?? item.operSts ?? item.oprSts ?? item.itm_sts ?? '',
+    itemStatus: mapItemStsToDisplayLabel(
+      String(item.itemSts ?? item.itmSts ?? item.operSts ?? item.oprSts ?? item.itm_sts ?? ''),
     ),
     reason: String(item.chgRsn ?? item.rmk ?? ''),
   }
@@ -501,10 +502,23 @@ export const ITEM_OPERATION_ITEM_STS_TO_LABEL: Record<string, string> = {
   DSP: '처분',
 }
 
+/** API itemSts/operSts 등 코드 → 테이블·목록용 한글 (빈 값은 빈 문자열) */
+export function mapItemStsToDisplayLabel(raw: string | undefined | null): string {
+  const c = String(raw ?? '').trim()
+  if (!c) return ''
+  const u = c.toUpperCase()
+  const fromItem =
+    ITEM_OPERATION_ITEM_STS_TO_LABEL[u] ?? ITEM_OPERATION_ITEM_STS_TO_LABEL[c]
+  if (fromItem) return fromItem
+  const fromOper = mapOperStsToLabel(u)
+  if (fromOper && fromOper !== u) return fromOper
+  return c
+}
+
 export function itemStsCodeToRegistrationLabel(code: string): string {
   const c = String(code ?? '').trim()
   if (!c) return '선택'
-  return ITEM_OPERATION_ITEM_STS_TO_LABEL[c] ?? c
+  return mapItemStsToDisplayLabel(c) || '선택'
 }
 
 /**

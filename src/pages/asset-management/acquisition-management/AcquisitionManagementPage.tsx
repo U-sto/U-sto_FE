@@ -27,6 +27,7 @@ import {
   OPERATING_DEPARTMENT_SELECT_OPTIONS,
   resolveDeptCdForOperation,
 } from '../../../constants/departments'
+import { ACQ_ARRG_TY_LABEL } from '../../../constants/acqArrangementType'
 
 type FormState = {
   g2bName: string
@@ -56,19 +57,17 @@ const INITIAL_FORM: FormState = {
   remarks: '',
 }
 
-const ACQUIRE_SORT_OPTIONS = ['선택', '취득', '정리', '기타']
-/** 취득정리구분 → API arrgTy (TODO: 정확한 코드 알려주시면 수정) */
+const ACQUIRE_SORT_OPTIONS = ['선택', '자체구입', '자체제작', '기증', '정리', '기타']
+/** 취득정리구분(화면 라벨) → API arrgTy */
 const ARRG_TY_MAP: Record<string, string> = {
-  취득: 'BUY',
+  자체구입: 'BUY',
+  자체제작: 'MAKE',
+  기증: 'DONATE',
   정리: 'ARRG',
   기타: 'ETC',
 }
 /** 공통코드 미로딩 시 arrgTy 코드 → 라벨 */
-const ARRG_CODE_TO_LABEL: Record<string, string> = {
-  BUY: '취득',
-  ARRG: '정리',
-  ETC: '기타',
-}
+const ARRG_CODE_TO_LABEL: Record<string, string> = { ...ACQ_ARRG_TY_LABEL }
 
 /** date input용 YYYY-MM-DD */
 function toDateInputValue(s: string): string {

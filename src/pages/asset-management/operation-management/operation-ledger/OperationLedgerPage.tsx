@@ -283,7 +283,7 @@ const OperationLedgerPage = () => {
         item: {
           ...selected,
           quantity: '1',
-          acquireSortType: '취득',
+          acquireSortType: '',
           operatingDeptCode: 'DEPT001',
           remarks: '',
         },

@@ -16,6 +16,7 @@ import {
   type ItemAssetStatusHistoryItem,
 } from '../../../../api/itemAssets'
 import type { OperationLedgerRow } from './OperationLedgerPage'
+import { labelForAcqArrangementCode } from '../../../../constants/acqArrangementType'
 import './OperationLedgerPage.css'
 
 type OperationLedgerDetailItem = OperationLedgerRow & {
@@ -73,14 +74,6 @@ function mapStatusHistoriesToRows(
   })
 }
 
-/** 상세 API acqArrgTy/arrgTy 코드 → 화면 라벨 (미정의 코드는 그대로 표시) */
-const ACQ_ARRG_TY_LABEL: Record<string, string> = {
-  BUY: '취득',
-  ARRG: '정리',
-  ETC: '기타',
-  DONATE: '기증',
-}
-
 function mergeDetailApiToItem(
   api: ItemAssetDetailData,
   listRow: OperationLedgerDetailItem,
@@ -121,7 +114,7 @@ function mergeDetailApiToItem(
     acquireSortType: (() => {
       const code = String(api.acqArrgTy ?? api.arrgTy ?? '').trim()
       if (!code) return String(listRow.acquireSortType ?? '')
-      return ACQ_ARRG_TY_LABEL[code] ?? code
+      return labelForAcqArrangementCode(code)
     })(),
     remarks: String(api.rmk ?? listRow.remarks ?? ''),
   }
