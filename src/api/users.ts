@@ -92,6 +92,30 @@ export async function getUserInfo() {
   return res.data
 }
 
+/** GET /api/users/info 응답 body에서 usrId 추출 */
+export function parseUsrIdFromUserInfoResponse(
+  body: { data?: unknown } | null | undefined,
+): string {
+  if (!body || typeof body !== 'object') return ''
+  const data = (body as { data?: unknown }).data
+  if (data != null && typeof data === 'object' && !Array.isArray(data)) {
+    const rec = data as Record<string, unknown>
+    for (const key of ['usrId', 'userId', 'user_id', 'id']) {
+      const v = rec[key]
+      if (v != null && String(v).trim() !== '') return String(v).trim()
+    }
+  }
+  const top = (body as Record<string, unknown>).usrId
+  if (top != null && String(top).trim() !== '') return String(top).trim()
+  return ''
+}
+
+/** 로그인 사용자 usrId (등록자ID 표시·저장용) */
+export async function fetchCurrentUsrId(): Promise<string> {
+  const res = await getUserInfo()
+  return parseUsrIdFromUserInfoResponse(res)
+}
+
 /**
  * 휴대폰 번호 변경
  * PATCH /api/users/update/sms

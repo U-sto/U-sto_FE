@@ -60,16 +60,16 @@ function mapStatusHistoriesToRows(
     const o = h as Record<string, unknown>
     return {
       id: idx + 1,
-      changeDate: pickStr(o, 'chgAt', 'chgDt', 'regAt', 'changeDate'),
+      changeDate: pickStr(o, 'apprAt', 'chgAt', 'chgDt', 'regAt', 'changeDate'),
       itemUniqueNumber: itmNo,
       prevStatus:
         mapOperStsToLabel(String(h.prevSts ?? '')) || String(h.prevSts ?? ''),
       newStatus: mapOperStsToLabel(String(h.newSts ?? '')) || String(h.newSts ?? ''),
       reason: String(h.chgRsn ?? ''),
-      managerName: pickStr(o, 'mngrNm', 'chgMngrNm', 'managerNm', 'managerName'),
-      managerId: pickStr(o, 'mngrId', 'chgMngrId', 'managerId'),
-      registrantName: pickStr(o, 'regNm', 'registrantNm', 'registrantName'),
-      registrantId: pickStr(o, 'regId', 'regUserId', 'chgUserId', 'registrantId'),
+      managerName: pickStr(o, 'apprUsrNm', 'mngrNm', 'chgMngrNm', 'managerNm', 'managerName'),
+      managerId: pickStr(o, 'apprUsrId', 'mngrId', 'chgMngrId', 'managerId'),
+      registrantName: pickStr(o, 'reqUsrNm', 'regNm', 'registrantNm', 'registrantName'),
+      registrantId: pickStr(o, 'reqUsrId', 'regId', 'regUserId', 'chgUserId', 'registrantId'),
     }
   })
 }

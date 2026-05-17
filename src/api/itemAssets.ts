@@ -147,11 +147,21 @@ export type ItemAssetStatusHistoryItem = {
   prevSts?: string
   newSts?: string
   chgRsn?: string
+  /** 변경일자(스웨거) */
+  apprAt?: string
   chgAt?: string
   regAt?: string
   chgDt?: string
   chgUserId?: string
   regUserId?: string
+  /** 등록자ID */
+  reqUsrId?: string
+  /** 등록자명 */
+  reqUsrNm?: string
+  /** 관리자ID */
+  apprUsrId?: string
+  /** 관리자명 */
+  apprUsrNm?: string
   mngrNm?: string
   mngrId?: string
   regNm?: string

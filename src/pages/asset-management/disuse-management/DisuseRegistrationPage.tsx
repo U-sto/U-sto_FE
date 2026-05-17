@@ -32,6 +32,8 @@ import {
   fetchItemDisuseAllItems,
 } from '../../../api/itemDisuses'
 import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
+import { useRegistrantIdFromSession } from '../../../hooks/useRegistrantIdFromSession'
+import RegistrantIdReadOnlyField from '../../../components/common/RegistrantIdReadOnlyField/RegistrantIdReadOnlyField'
 import {
   CODE_GROUP,
   buildDescriptionToCodeMap,
@@ -188,6 +190,15 @@ const DisuseRegistrationPage = () => {
   })
   const [saving, setSaving] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const sessionRegistrantId = useRegistrantIdFromSession()
+
+  useEffect(() => {
+    if (isEditMode) return
+    if (!sessionRegistrantId) return
+    setDisuseInfo((prev) =>
+      prev.registrantId === sessionRegistrantId ? prev : { ...prev, registrantId: sessionRegistrantId },
+    )
+  }, [isEditMode, sessionRegistrantId])
   /** 초기화 시 DataTable 내부 드래그/ref와 동기화 — 테이블 remount */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
@@ -647,11 +658,15 @@ const DisuseRegistrationPage = () => {
               </div>
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">등록자ID</label>
-                <TextField
-                  value={disuseInfo.registrantId}
-                  readOnly
-                  placeholder="등록자ID"
+                <RegistrantIdReadOnlyField
+                  storedValue={disuseInfo.registrantId}
+                  isEditMode={isEditMode}
                   className="operation-ledger-detail-input operation-ledger-readonly"
+                  onUsrIdResolved={(id) =>
+                    setDisuseInfo((prev) =>
+                      prev.registrantId === id ? prev : { ...prev, registrantId: id },
+                    )
+                  }
                 />
               </div>
               <div className="operation-ledger-detail-field">

@@ -464,6 +464,7 @@
 
 .text-field.operation-ledger-readonly {
   background: var(--usto-primary-100);
+  color: var(--usto-alt-black);
   cursor: default;
 }
 

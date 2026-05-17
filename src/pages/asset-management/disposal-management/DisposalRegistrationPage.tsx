@@ -33,6 +33,11 @@ import {
   useOperatingStatusFilterOptions,
   resolveOperatingStatusFilterValue,
 } from '../../../hooks/useCommonCodeOptions'
+import {
+  registrantIdForDisplay,
+  useRegistrantIdFromSession,
+} from '../../../hooks/useRegistrantIdFromSession'
+import RegistrantIdReadOnlyField from '../../../components/common/RegistrantIdReadOnlyField/RegistrantIdReadOnlyField'
 
 type RegistrationFilters = {
   g2bName: string
@@ -174,6 +179,15 @@ const DisposalRegistrationPage = () => {
 
   const [saving, setSaving] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const sessionRegistrantId = useRegistrantIdFromSession()
+
+  useEffect(() => {
+    if (isEditMode) return
+    if (!sessionRegistrantId) return
+    setDisposalInfo((prev) =>
+      prev.registrantId === sessionRegistrantId ? prev : { ...prev, registrantId: sessionRegistrantId },
+    )
+  }, [isEditMode, sessionRegistrantId])
 
   const apiLedgerFilters = useMemo(
     () => ({
@@ -431,7 +445,12 @@ const DisposalRegistrationPage = () => {
       window.alert('처분일자는 오늘 이후 날짜로 입력할 수 없습니다.')
       return
     }
-    if (!disposalInfo.registrantId?.trim()) {
+    const effectiveRegistrantId = registrantIdForDisplay(
+      disposalInfo.registrantId,
+      sessionRegistrantId,
+      isEditMode,
+    )
+    if (!effectiveRegistrantId.trim()) {
       window.alert('등록자ID를 입력해주세요.')
       return
     }
@@ -693,11 +712,15 @@ const DisposalRegistrationPage = () => {
               </div>
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">등록자ID</label>
-                <TextField
-                  value={disposalInfo.registrantId}
-                  readOnly
-                  placeholder="등록자ID"
+                <RegistrantIdReadOnlyField
+                  storedValue={disposalInfo.registrantId}
+                  isEditMode={isEditMode}
                   className="operation-ledger-detail-input operation-ledger-readonly"
+                  onUsrIdResolved={(id) =>
+                    setDisposalInfo((prev) =>
+                      prev.registrantId === id ? prev : { ...prev, registrantId: id },
+                    )
+                  }
                 />
               </div>
               <div className="operation-ledger-detail-field">

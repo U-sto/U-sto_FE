@@ -25,6 +25,8 @@ import {
   useItemStatusSelectOptions,
   resolveOperatingStatusFilterValue,
 } from '../../../../hooks/useCommonCodeOptions'
+import { useRegistrantIdFromSession } from '../../../../hooks/useRegistrantIdFromSession'
+import RegistrantIdReadOnlyField from '../../../../components/common/RegistrantIdReadOnlyField/RegistrantIdReadOnlyField'
 import {
   fetchItemAssets,
   mapOperStsToLabel,
@@ -196,20 +198,15 @@ const ReturnRegistrationPage = () => {
   })
   const [saving, setSaving] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const sessionRegistrantId = useRegistrantIdFromSession()
 
   useEffect(() => {
-    if (!isEditMode) {
-      setSelectedRows([])
-      setLedgerCheckedItmNos(new Set())
-      setSelectedTableCheckedItmNos(new Set())
-      setReturnInfo({
-        returnDate: '',
-        registrantId: '',
-        assetStatus: '선택',
-        reason: '선택',
-      })
-    }
-  }, [isEditMode])
+    if (isEditMode) return
+    if (!sessionRegistrantId) return
+    setReturnInfo((prev) =>
+      prev.registrantId === sessionRegistrantId ? prev : { ...prev, registrantId: sessionRegistrantId },
+    )
+  }, [isEditMode, sessionRegistrantId])
 
   useEffect(() => {
     if (!isEditMode || !rtrnMid) return
@@ -703,11 +700,15 @@ const ReturnRegistrationPage = () => {
               </div>
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">등록자ID</label>
-                <TextField
-                  value={returnInfo.registrantId}
-                  readOnly
-                  placeholder="등록자ID"
+                <RegistrantIdReadOnlyField
+                  storedValue={returnInfo.registrantId}
+                  isEditMode={isEditMode}
                   className="operation-ledger-detail-input operation-ledger-readonly"
+                  onUsrIdResolved={(id) =>
+                    setReturnInfo((prev) =>
+                      prev.registrantId === id ? prev : { ...prev, registrantId: id },
+                    )
+                  }
                 />
               </div>
               <div className="operation-ledger-detail-field">

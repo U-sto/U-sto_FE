@@ -26,9 +26,13 @@ export async function login(payload: LoginPayload) {
 
 /** 로그인 성공 시 토큰 저장 (data.accessToken 있으면 저장) */
 export function saveLoginToken(data: LoginResponseData | null): void {
-  const token = data?.accessToken
-  if (typeof token === 'string' && token) {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token)
+  if (!data) return
+  const candidates = [data.accessToken, data.access_token, data.token]
+  for (const t of candidates) {
+    if (typeof t === 'string' && t.trim()) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, t.trim())
+      return
+    }
   }
 }
 

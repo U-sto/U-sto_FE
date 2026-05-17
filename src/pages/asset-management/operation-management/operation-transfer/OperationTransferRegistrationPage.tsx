@@ -41,6 +41,8 @@ import {
   resolveDeptCdForOperation,
 } from '../../../../constants/departments'
 import { useOperatingDepartmentFilterOptions } from '../../../../hooks/useOperatingDepartmentOptions'
+import { useRegistrantIdFromSession } from '../../../../hooks/useRegistrantIdFromSession'
+import RegistrantIdReadOnlyField from '../../../../components/common/RegistrantIdReadOnlyField/RegistrantIdReadOnlyField'
 import {
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
   isAssetRegistrationEditLockedByAppr,
@@ -224,6 +226,17 @@ const OperationTransferRegistrationPage = () => {
   })
   const [saveLoading, setSaveLoading] = useState(false)
   const [editInitialLoading, setEditInitialLoading] = useState(false)
+  const sessionRegistrantId = useRegistrantIdFromSession()
+
+  useEffect(() => {
+    if (isEditMode) return
+    if (!sessionRegistrantId) return
+    setTransferInfo((prev) =>
+      prev.registrantId === sessionRegistrantId
+        ? prev
+        : { ...prev, registrantId: sessionRegistrantId },
+    )
+  }, [isEditMode, sessionRegistrantId])
   /** 운용부서(전환 대상): GET /api/organization/departments — 취득관리와 동일 */
   const [transferDeptOptions, setTransferDeptOptions] = useState<string[]>(() => [
     ...OPERATING_DEPARTMENT_SELECT_OPTIONS,
@@ -833,17 +846,22 @@ const OperationTransferRegistrationPage = () => {
               </div>
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">등록자ID</label>
-                <TextField
-                  value={transferInfo.registrantId}
-                  readOnly
-                  placeholder="등록자ID"
+                <RegistrantIdReadOnlyField
+                  storedValue={transferInfo.registrantId}
+                  isEditMode={isEditMode}
                   className="operation-ledger-detail-input operation-ledger-readonly"
+                  onUsrIdResolved={(id) =>
+                    setTransferInfo((prev) =>
+                      prev.registrantId === id ? prev : { ...prev, registrantId: id },
+                    )
+                  }
                 />
               </div>
               <div className="operation-ledger-detail-field">
                 <label className="operation-ledger-detail-label">물품상태</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={transferInfo.assetStatus}
                   onChange={(value: string) =>
@@ -856,6 +874,7 @@ const OperationTransferRegistrationPage = () => {
                 <label className="operation-ledger-detail-label">운용부서</label>
                 <Dropdown
                   size="small"
+                  menuPlacement="top"
                   placeholder="선택"
                   value={transferInfo.transferOperatingDept}
                   onChange={(value: string) =>
