@@ -1,1 +1,6 @@
 /* 물품 처분 관리 전용 스타일 (공통은 operation-ledger, return-management CSS 사용) */
+
+/* 처분 등록: 물품 운용 대장 목록 테이블 높이 (기본 180px → 2배) */
+.disposal-registration-ledger-list-wrap .operation-ledger-table-wrap-inner {
+  max-height: 360px;
+}

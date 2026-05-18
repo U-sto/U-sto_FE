@@ -10,6 +10,7 @@ import DataTable, {
 } from '../../../features/management/components/DataTable/DataTable'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import './DisuseManagementPage.css'
 import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import {
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
@@ -41,6 +42,10 @@ import {
   buildDescriptionToCodeMap,
   buildSelectOptionsWithPlaceholder,
 } from '../../../api/codes'
+import G2BSearchModal, {
+  getG2BListNumberParts,
+  type G2BItem,
+} from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 
 const REASON_OPTIONS_FALLBACK = ['선택', '교체', '폐기', '기타']
 
@@ -194,6 +199,7 @@ const DisuseRegistrationPage = () => {
   })
   const [saving, setSaving] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const sessionRegistrantId = useRegistrantIdFromSession()
 
   useEffect(() => {
@@ -393,6 +399,17 @@ const DisuseRegistrationPage = () => {
     setSelectedTableCheckedKeys(new Set())
   }, [])
 
+  const handleG2BSelect = (item: G2BItem) => {
+    const { prefix, suffix } = getG2BListNumberParts(item)
+    setFilters((prev) => ({
+      ...prev,
+      g2bName: item.name,
+      g2bNumberPrefix: prefix,
+      g2bNumberSuffix: suffix,
+    }))
+    setIsG2BModalOpen(false)
+  }
+
   const handleSave = async () => {
     const aplyAt = disuseInfo.disuseDate.trim()
     if (!aplyAt) {
@@ -481,11 +498,14 @@ const DisuseRegistrationPage = () => {
                   }
                   placeholder="G2B목록명 입력"
                   className="operation-ledger-g2b-input"
+                  readOnly={isEditMode}
                 />
                 <button
                   type="button"
                   className="operation-ledger-search-btn"
                   aria-label="G2B목록명 검색"
+                  onClick={() => setIsG2BModalOpen(true)}
+                  disabled={isEditMode}
                 >
                   <SearchIcon />
                 </button>
@@ -600,7 +620,10 @@ const DisuseRegistrationPage = () => {
         </div>
       </section>
 
-      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
+      <div
+        className="return-registration-ledger-table-wrap disuse-registration-ledger-list-wrap"
+        hidden={isEditMode && loadingDetail}
+      >
         <DataTable<AssetLedgerRow>
           key={`disuse-ledger-${dataTableEpoch}`}
           pageKey="operation-ledger"
@@ -717,6 +740,12 @@ const DisuseRegistrationPage = () => {
           </div>
         </section>
       </div>
+
+      <G2BSearchModal
+        isOpen={isG2BModalOpen}
+        onClose={() => setIsG2BModalOpen(false)}
+        onSelect={handleG2BSelect}
+      />
     </AssetManagementPageLayout>
   )
 }

@@ -39,6 +39,8 @@ export interface DataTableColumn<T> {
 interface DataTableProps<T> {
   pageKey: ManagementPageKey | string
   title: string
+  /** 섹션 제목(테이블 라벨) 오른쪽 안내 문구 */
+  titleHint?: ReactNode
   data: T[]
   columns: DataTableColumn<T>[]
   getRowKey: (row: T, index: number) => Key
@@ -96,6 +98,7 @@ function resolveColumnWidth<T>(
 function DataTable<T>({
   pageKey,
   title,
+  titleHint,
   data,
   columns,
   getRowKey,
@@ -251,7 +254,12 @@ function DataTable<T>({
       }}
     >
       <div className={`${prefix}-table-top`}>
-        <div className={`${prefix}-table-label`}>{title}</div>
+        <div className="management-table-title-row">
+          <div className={`${prefix}-table-label`}>{title}</div>
+          {titleHint != null && titleHint !== '' ? (
+            <p className="management-table-title-hint">{titleHint}</p>
+          ) : null}
+        </div>
         {renderActions && (
           <div className={`${prefix}-table-actions`}>{renderActions()}</div>
         )}

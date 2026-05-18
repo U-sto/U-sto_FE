@@ -152,3 +152,27 @@ export function useDisuseApprovalStatusFilterOptions() {
   const options = useMemo(() => [...DISUSE_APPROVAL_FILTER_OPTIONS], [])
   return { options, descToCode }
 }
+
+const DISUSE_REGISTRATION_OPER_FILTER_LABELS = ['전체', '운용중', '반납'] as const
+
+/**
+ * 물품 불용 등록 페이지 — 운용상태 필터(전체·운용중·반납만)
+ */
+export function useDisuseRegistrationOperatingStatusFilterOptions() {
+  const base = useOperatingStatusFilterOptions()
+  const options = useMemo(() => {
+    const allowed = new Set<string>(DISUSE_REGISTRATION_OPER_FILTER_LABELS)
+    const fromApi = base.options.filter((label) => allowed.has(label))
+    return fromApi.length > 0 ? fromApi : [...DISUSE_REGISTRATION_OPER_FILTER_LABELS]
+  }, [base.options])
+  const descToCode = useMemo(() => {
+    const m: Record<string, string> = { 전체: '' }
+    for (const label of ['운용중', '반납'] as const) {
+      const code =
+        base.descToCode[label] ?? OPER_STS_LABEL_TO_CODE_FALLBACK[label]
+      if (code) m[label] = code
+    }
+    return m
+  }, [base.descToCode])
+  return { options, descToCode }
+}

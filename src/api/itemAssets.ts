@@ -18,6 +18,7 @@ import {
   buildItemAssetListSearchRequest,
   type ItemAssetListFilters,
 } from './itemAssetListSearch'
+import { isDisuseEligibleOperatingStatus } from '../utils/disuseRegistrationEligibility'
 
 export type ItemAssetSearchRequest = {
   /** G2B 목록번호(코드) */
@@ -268,6 +269,15 @@ function mapItemAssetToRow(item: ItemAssetContent, index: number, offset: number
     operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')) || String(item.operSts ?? ''),
     usefulLife,
   }
+}
+
+/** 물품 불용 등록 — 운용대장 조회(운용중·반납 물품만 목록에 표시) */
+export async function fetchItemAssetsForDisuseRegistration(
+  params: FetchItemAssetsParams,
+): Promise<FetchItemAssetsResponse> {
+  const res = await fetchItemAssets(params)
+  const data = res.data.filter((row) => isDisuseEligibleOperatingStatus(row.operatingStatus))
+  return { data, totalCount: res.totalCount }
 }
 
 export async function fetchItemAssets(params: FetchItemAssetsParams): Promise<FetchItemAssetsResponse> {

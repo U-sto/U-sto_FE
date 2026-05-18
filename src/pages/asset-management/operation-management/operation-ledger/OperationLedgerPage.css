@@ -275,6 +275,11 @@
   flex-shrink: 0;
 }
 
+.operation-ledger-table-top .management-table-title-row {
+  flex: 1;
+  min-width: 0;
+}
+
 .operation-ledger-table-top .operation-ledger-table-label {
   flex: 0 0 auto;
 }

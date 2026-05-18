@@ -24,6 +24,7 @@ import {
 } from '../../../api/itemDisposals'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import '../operation-management/return-management/ReturnManagementPage.css'
+import './DisposalManagementPage.css'
 import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
 import {
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
@@ -645,10 +646,14 @@ const DisposalRegistrationPage = () => {
         </div>
       </section>
 
-      <div className="return-registration-ledger-table-wrap" hidden={isEditMode && loadingDetail}>
+      <div
+        className="return-registration-ledger-table-wrap disposal-registration-ledger-list-wrap"
+        hidden={isEditMode && loadingDetail}
+      >
         <DataTable<LedgerRow>
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
+          titleHint="처분 등록은 불용 상태인 물품만 등록 가능합니다."
           data={ledgerData}
           totalCount={ledgerTotalCount}
           pageSize={10}
