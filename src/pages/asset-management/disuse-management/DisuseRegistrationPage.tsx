@@ -16,15 +16,17 @@ import {
   isAssetRegistrationEditLockedByAppr,
 } from '../../../utils/assetRegistrationApprovalLock'
 import {
-  useOperatingStatusFilterOptions,
+  useDisuseRegistrationOperatingStatusFilterOptions,
   useItemStatusSelectOptions,
   resolveOperatingStatusFilterValue,
 } from '../../../hooks/useCommonCodeOptions'
 import {
-  fetchItemAssets,
+  fetchItemAssetsForDisuseRegistration,
+  mapOperStsToLabel,
   type AssetLedgerFilters,
   type AssetLedgerRow,
 } from '../../../api/itemAssets'
+import { isDisuseEligibleOperatingStatus } from '../../../utils/disuseRegistrationEligibility'
 import {
   createItemDisuse,
   updateItemDisuse,
@@ -103,7 +105,9 @@ function mapDisuseItemToLedgerRow(item: Awaited<ReturnType<typeof fetchItemDisus
     sortDate: '',
     acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
     operatingDept: String(item.deptNm ?? item.oprDeptNm ?? ''),
-    operatingStatus: String(item.itmSts ?? item.operSts ?? ''),
+    operatingStatus:
+      mapOperStsToLabel(String(item.operSts ?? item.itmSts ?? '')) ||
+      String(item.operSts ?? item.itmSts ?? ''),
     usefulLife: '',
   }
 }
@@ -141,7 +145,7 @@ const DisuseRegistrationPage = () => {
   const dsuMId = dsuMIdParam?.trim() ?? ''
   const isEditMode = dsuMId.length > 0
   const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
-    useOperatingStatusFilterOptions()
+    useDisuseRegistrationOperatingStatusFilterOptions()
   const {
     options: assetStatusOptions,
     descToCode: itemStatusDescToCode,
@@ -204,7 +208,7 @@ const DisuseRegistrationPage = () => {
 
   const loadLedger = useCallback(async () => {
     try {
-      const res = await fetchItemAssets({
+      const res = await fetchItemAssetsForDisuseRegistration({
         page: ledgerPage,
         pageSize: 10,
         filters: {
@@ -285,6 +289,7 @@ const DisuseRegistrationPage = () => {
     selectedRows.some((r) => assetRowKey(r) === assetRowKey(row))
 
   const setDisuseLedgerRowCheckboxChecked = useCallback((row: AssetLedgerRow, checked: boolean) => {
+    if (checked && !isDisuseEligibleOperatingStatus(row.operatingStatus)) return
     const k = assetRowKey(row)
     setSelectedRows((prev) => {
       const has = prev.some((r) => assetRowKey(r) === k)
@@ -312,6 +317,7 @@ const DisuseRegistrationPage = () => {
         <input
           type="checkbox"
           checked={isInSelectedList(row)}
+          disabled={!isDisuseEligibleOperatingStatus(row.operatingStatus)}
           onChange={(e) => setDisuseLedgerRowCheckboxChecked(row, e.target.checked)}
         />
       ),
@@ -399,6 +405,11 @@ const DisuseRegistrationPage = () => {
       .filter(Boolean)
     if (itmNos.length === 0) {
       window.alert('불용할 물품을 선택 물품 목록에 담아 주세요.')
+      return
+    }
+
+    if (selectedRows.some((row) => !isDisuseEligibleOperatingStatus(row.operatingStatus))) {
+      window.alert('불용 등록은 운용중 또는 반납 상태의 물품만 선택할 수 있습니다.')
       return
     }
 

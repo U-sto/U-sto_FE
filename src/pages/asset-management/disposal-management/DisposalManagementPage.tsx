@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
@@ -69,6 +71,22 @@ const DisposalManagementPage = () => {
   /** 초기화 시 DataTable 내부 상태 초기화 */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
+  const { group: itemStsGroup } = useCommonCodeGroup(CODE_GROUP.ITEM_STATUS)
+  const itemStsCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(itemStsGroup ?? undefined),
+    [itemStsGroup],
+  )
+  const { group: disuseReasonGroup } = useCommonCodeGroup(CODE_GROUP.DISUSE_REASON)
+  const { group: disposalArrangementGroup } = useCommonCodeGroup(
+    CODE_GROUP.DISPOSAL_ARRANGEMENT_TYPE,
+  )
+  const reasonCodeToDesc = useMemo(() => {
+    return {
+      ...buildCodeToDescriptionMap(disuseReasonGroup ?? undefined),
+      ...buildCodeToDescriptionMap(disposalArrangementGroup ?? undefined),
+    }
+  }, [disuseReasonGroup, disposalArrangementGroup])
+
   const apiDisposalFilters = useMemo(
     () => ({
       disposalDateFrom: searchedFilters.disposalDateFrom,
@@ -130,6 +148,8 @@ const DisposalManagementPage = () => {
           dispMId,
           page: itemPage,
           pageSize: 10,
+          itemStsCodeToDesc,
+          reasonCodeToDesc,
         })
         if (ignore) return
         setItemData(res.data)
@@ -145,7 +165,7 @@ const DisposalManagementPage = () => {
     return () => {
       ignore = true
     }
-  }, [itemPage, selectedRegistration?.dispMId])
+  }, [itemPage, selectedRegistration?.dispMId, itemStsCodeToDesc, reasonCodeToDesc])
 
   const registrationColumns: DataTableColumn<DisposalRegistrationRow>[] = [
     {

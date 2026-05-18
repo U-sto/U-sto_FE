@@ -6,6 +6,7 @@ import {
   buildFilterOptionsWithAll,
   buildSelectOptionsWithPlaceholder,
 } from '../api/codes'
+import { resolveOperStsSearchCode } from '../utils/operStsSearch'
 import { useCommonCodeGroup } from './useCommonCodeGroup'
 
 const FALLBACK_OPER_FILTER = ['전체', '운용중', '반납', '불용', '처분']
@@ -111,13 +112,20 @@ export function useItemStatusSelectOptions() {
   return { options, descToCode, codeToDesc }
 }
 
-/** 대장·목록 조회: 화면 라벨 → operSts API 코드 */
+/** 대장·목록 조회: 화면 라벨 → operSts API 코드 (OPER/RTN/DSU/DSP) */
 export function resolveOperatingStatusFilterValue(
   label: string,
   descToCode: Record<string, string>,
 ): string {
   if (!label || label === '전체') return '전체'
-  return descToCode[label] ?? OPER_STS_LABEL_TO_CODE_FALLBACK[label] ?? label
+  const fromLabel = resolveOperStsSearchCode(label)
+  if (fromLabel) return fromLabel
+  const fromApi = descToCode[label]
+  if (fromApi) {
+    const fromCode = resolveOperStsSearchCode(fromApi)
+    if (fromCode) return fromCode
+  }
+  return OPER_STS_LABEL_TO_CODE_FALLBACK[label] ?? '전체'
 }
 
 /** 운용 전환·처분·요청관리 운용 등록 등 */

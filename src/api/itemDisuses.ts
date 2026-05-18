@@ -1,5 +1,9 @@
 import http from './http'
 import type { ApiResponse } from './types'
+import {
+  resolveDisuseReasonLabel,
+  resolveItemStatusLabel,
+} from '../utils/codeDisplayLabels'
 import { pickFirstStringFromRecord } from './pickFromRecord'
 
 /* ─── 승인상태 매핑 ─── */
@@ -230,12 +234,17 @@ export async function fetchItemDisuseByDsuMId(dsuMId: string): Promise<DisuseMas
 
 /* ─── GET /api/item/disuses/{dsuMId}/items (불용물품목록 조회) ─── */
 
+export type FetchDisuseItemsLabelMaps = {
+  itemStsCodeToDesc?: Record<string, string>
+  disuseReasonCodeToDesc?: Record<string, string>
+}
+
 export async function fetchDisuseItems(params: {
   dsuMId: string
   page: number
   pageSize: number
-}): Promise<{ data: DisuseItemRow[]; totalCount: number }> {
-  const { dsuMId, page, pageSize } = params
+} & FetchDisuseItemsLabelMaps): Promise<{ data: DisuseItemRow[]; totalCount: number }> {
+  const { dsuMId, page, pageSize, itemStsCodeToDesc, disuseReasonCodeToDesc } = params
   const pageable = { page: page - 1, size: pageSize }
 
   const res = await http.get<ApiResponse<DisuseItemsData>>(
@@ -265,8 +274,14 @@ export async function fetchDisuseItems(params: {
         acquireDate: String(item.acqAt ?? ''),
         acquireAmount: acqUpr ? `${acqUpr.toLocaleString()}원` : '',
         operatingDept: String(item.deptNm ?? item.oprDeptNm ?? ''),
-        itemStatus: String(item.itemSts ?? item.itmSts ?? item.operSts ?? ''),
-        reason: String(item.dsuRsn ?? item.reason ?? ''),
+        itemStatus: resolveItemStatusLabel(
+          String(item.itemSts ?? item.itmSts ?? item.operSts ?? ''),
+          itemStsCodeToDesc,
+        ),
+        reason: resolveDisuseReasonLabel(
+          String(item.dsuRsn ?? item.reason ?? ''),
+          disuseReasonCodeToDesc,
+        ),
       }
     }),
     totalCount: payload.totalElements ?? 0,

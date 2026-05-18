@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import { useNavigate } from 'react-router-dom'
 import TextField from '../../../components/common/TextField/TextField'
 import DatePickerField from '../../../components/common/DatePickerField/DatePickerField'
@@ -62,6 +64,17 @@ const DisuseManagementPage = () => {
   /** 초기화 시 DataTable 내부 상태 초기화 */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
+  const { group: itemStsGroup } = useCommonCodeGroup(CODE_GROUP.ITEM_STATUS)
+  const itemStsCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(itemStsGroup ?? undefined),
+    [itemStsGroup],
+  )
+  const { group: disuseReasonGroup } = useCommonCodeGroup(CODE_GROUP.DISUSE_REASON)
+  const disuseReasonCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(disuseReasonGroup ?? undefined),
+    [disuseReasonGroup],
+  )
+
   const apiDisuseFilters = useMemo(() => {
     return {
       ...searchedFilters,
@@ -111,6 +124,8 @@ const DisuseManagementPage = () => {
           dsuMId: selectedDsuMId,
           page: itemPage,
           pageSize: 10,
+          itemStsCodeToDesc,
+          disuseReasonCodeToDesc,
         })
         if (ignore) return
         setItemData(res.data)
@@ -122,7 +137,7 @@ const DisuseManagementPage = () => {
       }
     })()
     return () => { ignore = true }
-  }, [itemPage, selectedDsuMId])
+  }, [itemPage, selectedDsuMId, itemStsCodeToDesc, disuseReasonCodeToDesc])
 
   const registrationColumns: DataTableColumn<DisuseRegistrationRow>[] = [
     {

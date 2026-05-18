@@ -21,6 +21,8 @@ import {
   useDisuseApprovalStatusFilterOptions,
   resolveApprovalFilterDisuseStyle,
 } from '../../../hooks/useCommonCodeOptions'
+import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 import './DisuseManagementPage.css'
 
 type Filters = {
@@ -72,6 +74,17 @@ const DisuseManagementPage = () => {
   const [itemTotalCount, setItemTotalCount] = useState(0)
   /** 초기화 시 DataTable 내부 선택/드래그 상태까지 초기화 */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
+
+  const { group: itemStsGroup } = useCommonCodeGroup(CODE_GROUP.ITEM_STATUS)
+  const itemStsCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(itemStsGroup ?? undefined),
+    [itemStsGroup],
+  )
+  const { group: disuseReasonGroup } = useCommonCodeGroup(CODE_GROUP.DISUSE_REASON)
+  const disuseReasonCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(disuseReasonGroup ?? undefined),
+    [disuseReasonGroup],
+  )
 
   const apiFilters = useMemo(
     () => ({
@@ -129,6 +142,8 @@ const DisuseManagementPage = () => {
           dsuMId: selectedDsuMId,
           page: itemPage,
           pageSize: 10,
+          itemStsCodeToDesc,
+          disuseReasonCodeToDesc,
         })
         if (ignore) return
         setItemData(Array.isArray(res.data) ? res.data : [])
@@ -142,7 +157,7 @@ const DisuseManagementPage = () => {
     return () => {
       ignore = true
     }
-  }, [itemPage, selectedDsuMId])
+  }, [itemPage, selectedDsuMId, itemStsCodeToDesc, disuseReasonCodeToDesc])
 
   /** 체크가 풀려 선택 집합에 없어지면 하단 불용 물품 목록도 비움 */
   useEffect(() => {

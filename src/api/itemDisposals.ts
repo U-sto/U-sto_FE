@@ -5,6 +5,10 @@
  */
 import http from './http'
 import type { ApiResponse } from './types'
+import {
+  resolveDisposalItemReasonLabel,
+  resolveItemStatusLabel,
+} from '../utils/codeDisplayLabels'
 import { pickFirstStringFromRecord } from './pickFromRecord'
 
 export type ItemDisposalSearchRequest = {
@@ -306,11 +310,16 @@ export type DisposalItem = {
   disdRsn?: string
 }
 
+export type FetchItemDisposalItemsLabelMaps = {
+  itemStsCodeToDesc?: Record<string, string>
+  reasonCodeToDesc?: Record<string, string>
+}
+
 export type FetchItemDisposalItemsParams = {
   dispMId: string
   page: number
   pageSize: number
-}
+} & FetchItemDisposalItemsLabelMaps
 
 export type FetchItemDisposalItemsResponse = {
   data: DisposalItemRow[]
@@ -329,13 +338,19 @@ function mapItemDisposalItemToRow(
   const acquireAmountValue = typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
   const acquireAmount = acquireAmountValue ? `${acquireAmountValue.toLocaleString()}원` : ''
   const operatingDept = String((item.deptNm as string | undefined) ?? '')
-  const itemStatus = String((item.itemSts as string | undefined) ?? (item.operSts as string | undefined) ?? '')
-  const reason = String(
-    (item.chgRsn as string | undefined) ??
-      (item.dsuRsn as string | undefined) ??
-      (item.disdRsn as string | undefined) ??
-      (item.reason as string | undefined) ??
-      '',
+  const itemStatus = resolveItemStatusLabel(
+    String((item.itemSts as string | undefined) ?? (item.operSts as string | undefined) ?? ''),
+    labelMaps?.itemStsCodeToDesc,
+  )
+  const reason = resolveDisposalItemReasonLabel(
+    String(
+      (item.chgRsn as string | undefined) ??
+        (item.dsuRsn as string | undefined) ??
+        (item.disdRsn as string | undefined) ??
+        (item.reason as string | undefined) ??
+        '',
+    ),
+    labelMaps?.reasonCodeToDesc,
   )
 
   return {
@@ -354,7 +369,11 @@ function mapItemDisposalItemToRow(
 export async function fetchItemDisposalItems(
   params: FetchItemDisposalItemsParams,
 ): Promise<FetchItemDisposalItemsResponse> {
-  const { dispMId, page, pageSize } = params
+  const { dispMId, page, pageSize, itemStsCodeToDesc, reasonCodeToDesc } = params
+  const labelMaps: FetchItemDisposalItemsLabelMaps = {
+    itemStsCodeToDesc,
+    reasonCodeToDesc,
+  }
   const pageable: ItemDisposalPageable = { page: page - 1, size: pageSize }
 
   const res = await http.get<ApiResponse<ItemDisposalItemsData>>(
@@ -372,7 +391,9 @@ export async function fetchItemDisposalItems(
   const content = Array.isArray(payload.content) ? payload.content : []
   const offset = (page - 1) * pageSize
   return {
-    data: content.map((item, index) => mapItemDisposalItemToRow(item, index, offset)),
+    data: content.map((item, index) =>
+      mapItemDisposalItemToRow(item, index, offset, labelMaps),
+    ),
     totalCount: payload.totalElements ?? 0,
   }
 }

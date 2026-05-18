@@ -22,6 +22,8 @@ import {
   useApprovalStatusFilterOptions,
   resolveApprovalFilterTransferStyle,
 } from '../../../hooks/useCommonCodeOptions'
+import { CODE_GROUP, buildCodeToDescriptionMap } from '../../../api/codes'
+import { useCommonCodeGroup } from '../../../hooks/useCommonCodeGroup'
 
 type Filters = {
   disposalDateFrom: string
@@ -69,6 +71,22 @@ const DisposalManagementPage = () => {
   const [checkedDispMIds, setCheckedDispMIds] = useState<Set<string>>(new Set())
   /** 초기화 시 DataTable 내부 선택/드래그 상태까지 재생성 */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
+
+  const { group: itemStsGroup } = useCommonCodeGroup(CODE_GROUP.ITEM_STATUS)
+  const itemStsCodeToDesc = useMemo(
+    () => buildCodeToDescriptionMap(itemStsGroup ?? undefined),
+    [itemStsGroup],
+  )
+  const { group: disuseReasonGroup } = useCommonCodeGroup(CODE_GROUP.DISUSE_REASON)
+  const { group: disposalArrangementGroup } = useCommonCodeGroup(
+    CODE_GROUP.DISPOSAL_ARRANGEMENT_TYPE,
+  )
+  const reasonCodeToDesc = useMemo(() => {
+    return {
+      ...buildCodeToDescriptionMap(disuseReasonGroup ?? undefined),
+      ...buildCodeToDescriptionMap(disposalArrangementGroup ?? undefined),
+    }
+  }, [disuseReasonGroup, disposalArrangementGroup])
 
   const effectiveFilters = searchedFilters ?? INITIAL_FILTERS
 
@@ -133,6 +151,8 @@ const DisposalManagementPage = () => {
           dispMId,
           page: itemPage,
           pageSize: 10,
+          itemStsCodeToDesc,
+          reasonCodeToDesc,
         })
         if (ignore) return
         setItemData(res.data)
@@ -148,7 +168,7 @@ const DisposalManagementPage = () => {
     return () => {
       ignore = true
     }
-  }, [itemPage, selectedRegistration?.dispMId])
+  }, [itemPage, selectedRegistration?.dispMId, itemStsCodeToDesc, reasonCodeToDesc])
 
   /** 체크가 풀려 선택 집합에 없어지면 하단 처분 물품 목록도 비움 */
   useEffect(() => {

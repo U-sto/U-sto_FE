@@ -35,8 +35,12 @@ const InventoryStatusDetailPage = () => {
 
   useEffect(() => {
     if (!item) return
-    if (!item.acqId || !item.deptCd || !item.operStsCode) {
-      setLoadError('상세 조회에 필요한 키 값(acqId/deptCd/operSts)이 없습니다.')
+    if (!item.acqId?.trim() || !item.operStsCode?.trim()) {
+      setLoadError('상세 조회에 필요한 키 값(acqId/operSts)이 없습니다.')
+      return
+    }
+    if (!item.deptCd?.trim()) {
+      setLoadError('운용부서코드(deptCd)가 없어 상세 조회를 할 수 없습니다.')
       return
     }
 

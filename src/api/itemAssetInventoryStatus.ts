@@ -1,39 +1,16 @@
 import http from './http'
 import type { ApiResponse } from './types'
-import { applyDeptLabelToSearchRequest } from '../constants/departments'
-import { buildCombinedG2bListNoForFilter, filterByG2bItemNmIncludes } from './g2bFilterNormalize'
-import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
+import { filterByG2bItemNmIncludes } from './g2bFilterNormalize'
+import { mapOperStsToLabel } from './itemAssets'
+import { G2B_NAME_CLIENT_FETCH_SIZE } from './g2bNameClientSearch'
+import {
+  buildItemAssetListSearchRequest,
+  type ItemAssetListFilters,
+} from './itemAssetListSearch'
+import { resolveOperStsSearchCode } from '../utils/operStsSearch'
 
-export type AssetInventoryStatusFilters = {
+export type AssetInventoryStatusFilters = ItemAssetListFilters & {
   g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
-}
-
-type AssetInventoryStatusSearchRequest = {
-  g2bDcd?: string
-  g2bCd?: string
-  g2bItemNo?: string
-  g2bItemNm?: string
-  itmNo?: string
-  itemUnqNo?: string
-  startAcqAt?: string
-  endAcqAt?: string
-  startArrgAt?: string
-  endArrgAt?: string
-  startDrgAt?: string
-  endDrgAt?: string
-  deptCd?: string
-  deptNm?: string
-  operSts?: string
-  [key: string]: unknown
 }
 
 type Pageable = {
@@ -88,61 +65,47 @@ export type AssetInventoryStatusRow = {
   qty: number
 }
 
-const OPER_STS_MAP: Record<string, string> = {
-  운용중: 'OPER',
-  반납: 'RTN',
-  불용: 'DSU',
-  처분: 'DSP',
+function filtersToSearchRequest(filters: AssetInventoryStatusFilters) {
+  return buildItemAssetListSearchRequest(filters)
 }
 
-const OPER_STS_LABEL_MAP: Record<string, string> = {
-  OPER: '운용중',
-  OPE: '운용중',
-  RET: '반납',
-  RTN: '반납',
-  DIS: '불용',
-  DSU: '불용',
-  DSP: '처분',
+/** 보유현황 API — searchRequest/pageable JSON만 전달 (평탄 operSts·page 중복 제거) */
+function buildInventoryStatusQueryParams(
+  searchRequest: Record<string, unknown>,
+  pageable: Pageable,
+): Record<string, string> {
+  return {
+    searchRequest: JSON.stringify(searchRequest),
+    pageable: JSON.stringify(pageable),
+  }
 }
 
-function mapOperStsToLabel(code: string | undefined): string {
-  const raw = String(code ?? '').trim()
-  if (!raw) return ''
-  return OPER_STS_LABEL_MAP[raw] ?? raw
-}
-
-function filtersToSearchRequest(filters: AssetInventoryStatusFilters): AssetInventoryStatusSearchRequest {
-  const req: AssetInventoryStatusSearchRequest = {}
-  const g2bDcd = buildCombinedG2bListNoForFilter(
-    filters.g2bNumberPrefix,
-    filters.g2bNumberSuffix,
+async function fetchInventoryStatusContentBatch(
+  searchRequest: Record<string, unknown>,
+): Promise<AssetInventoryStatusContent[]> {
+  const pageable = { page: 0, size: G2B_NAME_CLIENT_FETCH_SIZE }
+  const res = await http.get<ApiResponse<AssetInventoryStatusData>>(
+    '/api/item/asset-inventory-status',
+    { params: buildInventoryStatusQueryParams(searchRequest, pageable) },
   )
-  if (g2bDcd) {
-    req.g2bDcd = g2bDcd
-    req.g2bCd = g2bDcd
-    req.g2bItemNo = g2bDcd
-  }
-  if (filters.itemUniqueNumber?.trim()) {
-    req.itmNo = filters.itemUniqueNumber.trim()
-    req.itemUnqNo = filters.itemUniqueNumber.trim()
-  }
-  if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
-  if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
-  if (filters.sortDateFrom) {
-    req.startArrgAt = filters.sortDateFrom
-    req.startDrgAt = filters.sortDateFrom
-  }
-  if (filters.sortDateTo) {
-    req.endArrgAt = filters.sortDateTo
-    req.endDrgAt = filters.sortDateTo
-  }
-  if (filters.operatingDept && filters.operatingDept !== '전체') {
-    applyDeptLabelToSearchRequest(req, filters.operatingDept)
-  }
-  if (filters.operatingStatus && filters.operatingStatus !== '전체') {
-    req.operSts = OPER_STS_MAP[filters.operatingStatus] ?? filters.operatingStatus
-  }
-  return req
+  const payload = res.data.data
+  return Array.isArray(payload?.content) ? payload.content : []
+}
+
+function filterByOperSts(
+  items: AssetInventoryStatusContent[],
+  operSts: string,
+): AssetInventoryStatusContent[] {
+  const code = operSts.trim().toUpperCase()
+  return items.filter((item) => String(item.operSts ?? '').trim().toUpperCase() === code)
+}
+
+function formatOperatingDept(deptNm: string | null | undefined, deptCd: string | null | undefined): string {
+  const name = deptNm != null ? String(deptNm).trim() : ''
+  if (name) return name
+  const cd = deptCd != null ? String(deptCd).trim() : ''
+  if (cd && cd.toUpperCase() !== 'NONE') return cd
+  return ''
 }
 
 function mapContentToRow(
@@ -177,10 +140,10 @@ function mapContentToRow(
     acquireDate: String(item.acqAt ?? ''),
     acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
     sortDate: String(item.arrgAt ?? item.arrAt ?? item.drgAt ?? ''),
-    operatingDept: String(item.deptNm ?? ''),
+    operatingDept: formatOperatingDept(item.deptNm, item.deptCd),
     deptCd: String(item.deptCd ?? ''),
-    operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')),
-    operStsCode: String(item.operSts ?? ''),
+    operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')) || String(item.operSts ?? ''),
+    operStsCode: String(item.operSts ?? '').trim().toUpperCase(),
     usefulLife,
     acqUpr: acqUprValue,
     drbYr: drbYrRaw != null ? String(drbYrRaw) : '',
@@ -196,39 +159,47 @@ export async function fetchAssetInventoryStatus(params: {
 }): Promise<{ data: AssetInventoryStatusRow[]; totalCount: number }> {
   const { page, pageSize, filters } = params
   const term = filters.g2bName?.trim()
+  const operStsFilter = resolveOperStsSearchCode(filters.operatingStatus)
+  const searchRequest = filtersToSearchRequest(filters) as Record<string, unknown>
 
-  if (term) {
-    const searchRequest = filtersToSearchRequest({
-      ...filters,
-      g2bName: '',
-    }) as Record<string, unknown>
-    const raw = await fetchSearchRequestSingleBatch<AssetInventoryStatusContent>(
-      '/api/item/asset-inventory-status',
-      searchRequest,
-    )
-    const matched = filterByG2bItemNmIncludes(
-      raw as Record<string, unknown>[],
-      term,
-    ) as AssetInventoryStatusContent[]
-    const totalCount = matched.length
+  const paginateClientSide = (items: AssetInventoryStatusContent[]) => {
+    const totalCount = items.length
     const offset = (page - 1) * pageSize
-    const pageItems = matched.slice(offset, offset + pageSize)
+    const pageItems = items.slice(offset, offset + pageSize)
     return {
       data: pageItems.map((item, index) => mapContentToRow(item, index, offset)),
       totalCount,
     }
   }
 
-  const searchRequest = filtersToSearchRequest(filters)
-  const pageable: Pageable = { page: page - 1, size: pageSize }
-
-  const res = await http.get<ApiResponse<AssetInventoryStatusData>>('/api/item/asset-inventory-status', {
-    params: {
-      searchRequest: JSON.stringify(searchRequest),
-      pageable: JSON.stringify(pageable),
+  if (term) {
+    const raw = await fetchInventoryStatusContentBatch({
       ...searchRequest,
-      ...pageable,
-    },
+      operSts: undefined,
+      itemSts: undefined,
+    })
+    let matched = filterByG2bItemNmIncludes(
+      raw as Record<string, unknown>[],
+      term,
+    ) as AssetInventoryStatusContent[]
+    if (operStsFilter) {
+      matched = filterByOperSts(matched, operStsFilter)
+    }
+    return paginateClientSide(matched)
+  }
+
+  if (operStsFilter) {
+    const batchReq = { ...searchRequest }
+    delete batchReq.operSts
+    delete batchReq.itemSts
+    const raw = await fetchInventoryStatusContentBatch(batchReq)
+    const matched = filterByOperSts(raw, operStsFilter)
+    return paginateClientSide(matched)
+  }
+
+  const pageable: Pageable = { page: page - 1, size: pageSize }
+  const res = await http.get<ApiResponse<AssetInventoryStatusData>>('/api/item/asset-inventory-status', {
+    params: buildInventoryStatusQueryParams(searchRequest, pageable),
   })
 
   const payload = res.data.data
@@ -268,6 +239,9 @@ type AssetInventoryStatusDetailItemContent = {
 
 type AssetInventoryStatusDetailData = {
   itmNos?: AssetInventoryStatusDetailItemContent[]
+  g2bNm?: string
+  g2bItemNm?: string
+  [key: string]: unknown
 }
 
 export type AssetInventoryStatusDetailItem = {
@@ -283,25 +257,44 @@ export type AssetInventoryStatusDetailItem = {
   remarks: string
 }
 
+function normalizeDetailQueryParams(
+  query: AssetInventoryStatusDetailQuery,
+): Record<string, string | number> {
+  const operSts =
+    resolveOperStsSearchCode(query.operSts) ?? String(query.operSts ?? '').trim().toUpperCase()
+  const drbYr = String(query.drbYr ?? '')
+    .replace(/년\s*$/, '')
+    .trim()
+  const params: Record<string, string | number> = {
+    acqId: query.acqId.trim(),
+    deptCd: query.deptCd.trim(),
+    operSts,
+    acqUpr: query.acqUpr,
+    drbYr,
+  }
+  const rmk = String(query.rmk ?? '').trim()
+  if (rmk) params.rmk = rmk
+  return params
+}
+
+function extractDetailItemList(payload: AssetInventoryStatusDetailData | null | undefined): AssetInventoryStatusDetailItemContent[] {
+  if (!payload || typeof payload !== 'object') return []
+  if (Array.isArray(payload.itmNos)) return payload.itmNos
+  return []
+}
+
 export async function fetchAssetInventoryStatusDetail(
   query: AssetInventoryStatusDetailQuery,
 ): Promise<AssetInventoryStatusDetailItem[]> {
   const res = await http.get<ApiResponse<AssetInventoryStatusDetailData>>(
     '/api/item/asset-inventory-status/detail',
     {
-      params: {
-        acqId: query.acqId,
-        deptCd: query.deptCd,
-        operSts: query.operSts,
-        acqUpr: query.acqUpr,
-        drbYr: query.drbYr,
-        rmk: query.rmk,
-      },
+      params: normalizeDetailQueryParams(query),
     },
   )
 
   const payload = res.data.data
-  const items = Array.isArray(payload?.itmNos) ? payload.itmNos : []
+  const items = extractDetailItemList(payload)
   return items.map((item, index) => {
     const acqUprValue =
       typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
@@ -314,7 +307,9 @@ export async function fetchAssetInventoryStatusDetail(
         : ''
     return {
       id: index + 1,
-      g2bNumber: String(item.g2bNo ?? item.g2bItemNo ?? ''),
+      g2bNumber: String(
+        item.g2bNo ?? item.g2bItemNo ?? payload?.g2bNm ?? payload?.g2bItemNm ?? '',
+      ),
       itemUniqueNumber: String(item.itmNo ?? ''),
       acquireDate: String(item.acqAt ?? ''),
       sortDate: String(item.arrgAt ?? item.arrAt ?? ''),

@@ -13,6 +13,11 @@ import {
   filterByG2bItemNmIncludes,
 } from './g2bFilterNormalize'
 import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
+import {
+  buildItemAssetListQueryParams,
+  buildItemAssetListSearchRequest,
+  type ItemAssetListFilters,
+} from './itemAssetListSearch'
 
 export type ItemAssetSearchRequest = {
   /** G2B 목록번호(코드) */
@@ -73,17 +78,8 @@ export type ItemAssetsData = {
   totalElements?: number
 }
 
-export type AssetLedgerFilters = {
+export type AssetLedgerFilters = ItemAssetListFilters & {
   g2bName: string
-  g2bNumberPrefix: string
-  g2bNumberSuffix: string
-  itemUniqueNumber: string
-  operatingDept: string
-  operatingStatus: string
-  acquireDateFrom: string
-  acquireDateTo: string
-  sortDateFrom: string
-  sortDateTo: string
 }
 
 export type AssetLedgerRow = {
@@ -248,45 +244,7 @@ export async function updateItemAsset(
 }
 
 function filtersToSearchRequest(filters: AssetLedgerFilters): ItemAssetSearchRequest {
-  const req: ItemAssetSearchRequest = {}
-
-  const g2bDcd = buildCombinedG2bListNoForFilter(
-    filters.g2bNumberPrefix,
-    filters.g2bNumberSuffix,
-  )
-  if (g2bDcd) {
-    req.g2bDcd = g2bDcd
-    req.g2bCd = g2bDcd
-    req.g2bItemNo = g2bDcd
-  }
-  if (filters.itemUniqueNumber?.trim()) {
-    req.itmNo = filters.itemUniqueNumber.trim()
-    req.itemUnqNo = filters.itemUniqueNumber.trim()
-  }
-
-  // 날짜: 취득/정리
-  if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
-  if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
-  if (filters.sortDateFrom) {
-    req.startArrgAt = filters.sortDateFrom
-    req.startDrgAt = filters.sortDateFrom
-  }
-  if (filters.sortDateTo) {
-    req.endArrgAt = filters.sortDateTo
-    req.endDrgAt = filters.sortDateTo
-  }
-
-  // 운용상태 코드 매핑
-  if (filters.operatingStatus && filters.operatingStatus !== '전체') {
-    // API가 코드/한글 중 무엇을 받든 대응할 수 있게 기본은 코드로, 매핑 없으면 원문 전달
-    req.operSts = OPER_STS_MAP[filters.operatingStatus] ?? filters.operatingStatus
-  }
-
-  if (filters.operatingDept && filters.operatingDept !== '전체') {
-    applyDeptLabelToSearchRequest(req, filters.operatingDept)
-  }
-
-  return req
+  return buildItemAssetListSearchRequest(filters)
 }
 
 function mapItemAssetToRow(item: ItemAssetContent, index: number, offset: number): AssetLedgerRow {
@@ -339,14 +297,7 @@ export async function fetchItemAssets(params: FetchItemAssetsParams): Promise<Fe
   const pageable: ItemAssetPageable = { page: page - 1, size: pageSize }
 
   const res = await http.get<ApiResponse<ItemAssetsData>>('/api/item/assets', {
-    params: {
-      searchRequest: JSON.stringify(searchRequest),
-      pageable: JSON.stringify(pageable),
-      // 일부 백엔드는 searchRequest/pageable JSON 문자열이 아니라 query를 평탄화해서 받는다.
-      // 둘 다 지원하도록 동일 값을 개별 query로도 함께 전달한다(문제 시 백엔드가 무시).
-      ...searchRequest,
-      ...pageable,
-    },
+    params: buildItemAssetListQueryParams(searchRequest, pageable),
   })
 
   const payload = res.data.data
