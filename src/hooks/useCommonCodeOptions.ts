@@ -31,11 +31,23 @@ const APPR_LABEL_TO_CODE_TRANSFER_STYLE: Record<string, string> = {
 /** 불용 목록 API — apprSts: WAIT / REQUEST / REJECTED / APPROVED */
 const APPR_LABEL_TO_CODE_DISUSE_STYLE: Record<string, string> = {
   전체: '',
+  반려: 'REJECTED',
+  승인요청중: 'REQUEST',
+  작성중: 'WAIT',
+  확정: 'APPROVED',
+  /** 이전 라벨 호환 */
   대기: 'WAIT',
   승인요청: 'REQUEST',
-  반려: 'REJECTED',
-  확정: 'APPROVED',
 }
+
+/** 물품 불용 등록 관리(요청관리) — 승인상태 필터 (고정 5개·순서) */
+export const DISUSE_APPROVAL_FILTER_OPTIONS = [
+  '전체',
+  '반려',
+  '승인요청중',
+  '작성중',
+  '확정',
+] as const
 
 /**
  * 운용상태 필터(전체) — GET /api/codes/OPER_STATUS 우선, 없으면 ITEM_STATUS
@@ -124,4 +136,11 @@ export function resolveApprovalFilterDisuseStyle(
 ): string {
   if (!label || label === '전체') return '전체'
   return descToCode[label] ?? APPR_LABEL_TO_CODE_DISUSE_STYLE[label] ?? label
+}
+
+/** 물품 불용 등록 관리(요청관리 /disuse-management) — 승인상태 라디오 필터 */
+export function useDisuseApprovalStatusFilterOptions() {
+  const descToCode = useMemo(() => ({ ...APPR_LABEL_TO_CODE_DISUSE_STYLE }), [])
+  const options = useMemo(() => [...DISUSE_APPROVAL_FILTER_OPTIONS], [])
+  return { options, descToCode }
 }

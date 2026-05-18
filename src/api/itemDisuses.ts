@@ -5,18 +5,21 @@ import { pickFirstStringFromRecord } from './pickFromRecord'
 /* ─── 승인상태 매핑 ─── */
 
 const APPR_STS_MAP: Record<string, string> = {
-  WAIT: '대기',
-  REQUEST: '승인요청',
+  WAIT: '작성중',
+  REQUEST: '승인요청중',
   REJECTED: '반려',
   APPROVED: '확정',
 }
 
 const APPR_STS_CODE_MAP: Record<string, string> = {
   전체: '',
+  반려: 'REJECTED',
+  승인요청중: 'REQUEST',
+  작성중: 'WAIT',
+  확정: 'APPROVED',
+  /** 이전 라벨 호환 */
   대기: 'WAIT',
   승인요청: 'REQUEST',
-  반려: 'REJECTED',
-  확정: 'APPROVED',
 }
 
 /* ─── 타입 (불용 등록 목록) ─── */

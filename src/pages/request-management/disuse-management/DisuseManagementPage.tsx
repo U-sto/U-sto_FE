@@ -17,6 +17,10 @@ import {
   type DisuseRegistrationRow,
   type DisuseItemRow,
 } from '../../../api/itemDisuses'
+import {
+  useDisuseApprovalStatusFilterOptions,
+  resolveApprovalFilterDisuseStyle,
+} from '../../../hooks/useCommonCodeOptions'
 import './DisuseManagementPage.css'
 
 type Filters = {
@@ -47,7 +51,8 @@ const DisuseManagementPage = () => {
     ],
   })
 
-  const approvalOptions = ['전체', '대기', '반려', '확정']
+  const { options: approvalOptions, descToCode: approvalDescToCode } =
+    useDisuseApprovalStatusFilterOptions()
 
   /** 목록 조회 조건·페이지 (취득 확정 관리 페이지와 동일 패턴) */
   const [query, setQuery] = useState<{ page: number; filters: Filters }>({
@@ -68,12 +73,23 @@ const DisuseManagementPage = () => {
   /** 초기화 시 DataTable 내부 선택/드래그 상태까지 초기화 */
   const [dataTableEpoch, setDataTableEpoch] = useState(0)
 
+  const apiFilters = useMemo(
+    () => ({
+      ...query.filters,
+      approvalStatus: resolveApprovalFilterDisuseStyle(
+        query.filters.approvalStatus,
+        approvalDescToCode,
+      ),
+    }),
+    [query.filters, approvalDescToCode],
+  )
+
   const loadRegistrations = useCallback(async () => {
     try {
       const res = await fetchDisuseList({
         page: query.page,
         pageSize: 10,
-        filters: query.filters,
+        filters: apiFilters,
       })
       setRegistrationData(Array.isArray(res.data) ? res.data : [])
       setRegistrationTotalCount(res.totalCount)
@@ -81,7 +97,7 @@ const DisuseManagementPage = () => {
       setRegistrationData([])
       setRegistrationTotalCount(0)
     }
-  }, [query])
+  }, [query.page, apiFilters])
 
   useEffect(() => {
     void loadRegistrations()
