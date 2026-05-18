@@ -330,6 +330,7 @@ function mapItemDisposalItemToRow(
   item: ItemDisposalItemContent,
   index: number,
   offset: number,
+  labelMaps?: FetchItemDisposalItemsLabelMaps,
 ): DisposalItemRow {
   const g2bNumber = String((item.g2bItemNo as string | undefined) ?? '')
   const g2bName = String((item.g2bDNm as string | undefined) ?? (item.g2bItemNm as string | undefined) ?? '')
