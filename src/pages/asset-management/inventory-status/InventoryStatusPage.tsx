@@ -14,10 +14,7 @@ import G2BSearchModal, {
 } from '../../../features/asset-management/components/G2BSearchModal/G2BSearchModal'
 import '../operation-management/operation-ledger/OperationLedgerPage.css'
 import { useOperatingDepartmentFilterOptions } from '../../../hooks/useOperatingDepartmentOptions'
-import {
-  useOperatingStatusFilterOptions,
-  resolveOperatingStatusFilterValue,
-} from '../../../hooks/useCommonCodeOptions'
+import { useOperatingStatusFilterOptions } from '../../../hooks/useCommonCodeOptions'
 import {
   fetchAssetInventoryStatus,
   type AssetInventoryStatusRow,
@@ -55,8 +52,7 @@ const SearchIcon = () => (
 const InventoryStatusPage = () => {
   const navigate = useNavigate()
   const operatingDeptOptions = useOperatingDepartmentFilterOptions()
-  const { options: operatingStatusOptions, descToCode: operStatusDescToCode } =
-    useOperatingStatusFilterOptions()
+  const { options: operatingStatusOptions } = useOperatingStatusFilterOptions()
   const [isG2BModalOpen, setIsG2BModalOpen] = useState(false)
   const [filters, setFilters] = useState<InventoryStatusFilters>({
     g2bName: '',
@@ -96,13 +92,7 @@ const InventoryStatusPage = () => {
       const res = await fetchAssetInventoryStatus({
         page: currentPage,
         pageSize: 10,
-        filters: {
-          ...searchedFilters,
-          operatingStatus: resolveOperatingStatusFilterValue(
-            searchedFilters.operatingStatus,
-            operStatusDescToCode,
-          ),
-        },
+        filters: searchedFilters,
       })
       setTableData(res.data)
       setTotalCount(res.totalCount)
@@ -115,7 +105,7 @@ const InventoryStatusPage = () => {
       setCheckedRowIds(new Set())
       setLoadError(e instanceof Error ? e.message : '보유 현황 목록을 불러오지 못했습니다.')
     }
-  }, [currentPage, searchedFilters, operStatusDescToCode])
+  }, [currentPage, searchedFilters])
 
   useEffect(() => {
     void loadData()
@@ -356,13 +346,7 @@ const InventoryStatusPage = () => {
             <Button
               className="operation-ledger-btn operation-ledger-btn-primary"
               onClick={() => {
-                setSearchedFilters({
-                  ...filters,
-                  operatingStatus: resolveOperatingStatusFilterValue(
-                    filters.operatingStatus,
-                    operStatusDescToCode,
-                  ),
-                })
+                setSearchedFilters({ ...filters })
                 setCurrentPage(1)
               }}
             >

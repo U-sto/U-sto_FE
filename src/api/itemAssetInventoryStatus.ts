@@ -2,11 +2,13 @@ import http from './http'
 import type { ApiResponse } from './types'
 import { filterByG2bItemNmIncludes } from './g2bFilterNormalize'
 import { mapOperStsToLabel } from './itemAssets'
-import { G2B_NAME_CLIENT_FETCH_SIZE } from './g2bNameClientSearch'
 import {
+  buildItemAssetListQueryParams,
   buildItemAssetListSearchRequest,
   type ItemAssetListFilters,
+  type ItemAssetListSearchRequest,
 } from './itemAssetListSearch'
+import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
 import { resolveOperStsSearchCode } from '../utils/operStsSearch'
 
 export type AssetInventoryStatusFilters = ItemAssetListFilters & {
@@ -27,10 +29,8 @@ type AssetInventoryStatusContent = {
   g2bItemNm?: string
   acqAt?: string
   acqUpr?: number
-  /** 정리일자(목록 응답 우선) */
+  /** 정리일자 */
   arrgAt?: string
-  arrAt?: string
-  drgAt?: string
   deptNm?: string
   deptCd?: string
   operSts?: string
@@ -65,31 +65,59 @@ export type AssetInventoryStatusRow = {
   qty: number
 }
 
-function filtersToSearchRequest(filters: AssetInventoryStatusFilters) {
-  return buildItemAssetListSearchRequest(filters)
+/** 보유현황 API — 정리일자 필드: arrgAt (조회 startArrgAt / endArrgAt) */
+function filtersToSearchRequest(filters: AssetInventoryStatusFilters): ItemAssetListSearchRequest {
+  const req = buildItemAssetListSearchRequest(filters)
+  delete req.startDrgAt
+  delete req.endDrgAt
+  delete req.startArrAt
+  delete req.endArrAt
+  const sortFrom = filters.sortDateFrom?.trim()
+  const sortTo = filters.sortDateTo?.trim()
+  if (sortFrom) req.startArrgAt = sortFrom
+  if (sortTo) req.endArrgAt = sortTo
+  return req
 }
 
-/** 보유현황 API — searchRequest/pageable JSON만 전달 (평탄 operSts·page 중복 제거) */
-function buildInventoryStatusQueryParams(
-  searchRequest: Record<string, unknown>,
-  pageable: Pageable,
-): Record<string, string> {
-  return {
-    searchRequest: JSON.stringify(searchRequest),
-    pageable: JSON.stringify(pageable),
+function normalizeDateOnly(value: string): string {
+  const s = value.trim()
+  if (!s) return ''
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  const digits = s.replace(/\D/g, '')
+  if (digits.length >= 8) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
   }
+  return s
 }
 
-async function fetchInventoryStatusContentBatch(
-  searchRequest: Record<string, unknown>,
-): Promise<AssetInventoryStatusContent[]> {
-  const pageable = { page: 0, size: G2B_NAME_CLIENT_FETCH_SIZE }
-  const res = await http.get<ApiResponse<AssetInventoryStatusData>>(
-    '/api/item/asset-inventory-status',
-    { params: buildInventoryStatusQueryParams(searchRequest, pageable) },
-  )
-  const payload = res.data.data
-  return Array.isArray(payload?.content) ? payload.content : []
+function getInventorySortDate(item: AssetInventoryStatusContent): string {
+  return normalizeDateOnly(String(item.arrgAt ?? ''))
+}
+
+function filterBySortDateRange(
+  items: AssetInventoryStatusContent[],
+  sortDateFrom?: string,
+  sortDateTo?: string,
+): AssetInventoryStatusContent[] {
+  const from = sortDateFrom?.trim() ? normalizeDateOnly(sortDateFrom) : ''
+  const to = sortDateTo?.trim() ? normalizeDateOnly(sortDateTo) : ''
+  if (!from && !to) return items
+  return items.filter((item) => {
+    const d = getInventorySortDate(item)
+    if (!d) return false
+    if (from && d < from) return false
+    if (to && d > to) return false
+    return true
+  })
+}
+
+const INVENTORY_STATUS_API = '/api/item/asset-inventory-status'
+
+function buildInventoryStatusQueryParams(
+  searchRequest: ItemAssetListSearchRequest,
+  pageable: Pageable,
+): Record<string, string | number> {
+  return buildItemAssetListQueryParams(searchRequest, pageable)
 }
 
 function filterByOperSts(
@@ -139,7 +167,7 @@ function mapContentToRow(
     itemUniqueNumber: String(item.itmNo ?? item.itemUnqNo ?? ''),
     acquireDate: String(item.acqAt ?? ''),
     acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
-    sortDate: String(item.arrgAt ?? item.arrAt ?? item.drgAt ?? ''),
+    sortDate: String(item.arrgAt ?? ''),
     operatingDept: formatOperatingDept(item.deptNm, item.deptCd),
     deptCd: String(item.deptCd ?? ''),
     operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')) || String(item.operSts ?? ''),
@@ -159,8 +187,11 @@ export async function fetchAssetInventoryStatus(params: {
 }): Promise<{ data: AssetInventoryStatusRow[]; totalCount: number }> {
   const { page, pageSize, filters } = params
   const term = filters.g2bName?.trim()
+  const sortFrom = filters.sortDateFrom?.trim()
+  const sortTo = filters.sortDateTo?.trim()
+  const hasSortDateFilter = Boolean(sortFrom || sortTo)
   const operStsFilter = resolveOperStsSearchCode(filters.operatingStatus)
-  const searchRequest = filtersToSearchRequest(filters) as Record<string, unknown>
+  const searchRequest = filtersToSearchRequest(filters)
 
   const paginateClientSide = (items: AssetInventoryStatusContent[]) => {
     const totalCount = items.length
@@ -172,33 +203,39 @@ export async function fetchAssetInventoryStatus(params: {
     }
   }
 
-  if (term) {
-    const raw = await fetchInventoryStatusContentBatch({
-      ...searchRequest,
-      operSts: undefined,
-      itemSts: undefined,
-    })
-    let matched = filterByG2bItemNmIncludes(
-      raw as Record<string, unknown>[],
-      term,
-    ) as AssetInventoryStatusContent[]
+  const applyClientFilters = (raw: AssetInventoryStatusContent[]) => {
+    let matched = raw
+    if (term) {
+      matched = filterByG2bItemNmIncludes(
+        matched as Record<string, unknown>[],
+        term,
+      ) as AssetInventoryStatusContent[]
+    }
     if (operStsFilter) {
       matched = filterByOperSts(matched, operStsFilter)
     }
-    return paginateClientSide(matched)
+    if (hasSortDateFilter) {
+      matched = filterBySortDateRange(matched, sortFrom, sortTo)
+    }
+    return matched
   }
 
-  if (operStsFilter) {
-    const batchReq = { ...searchRequest }
-    delete batchReq.operSts
-    delete batchReq.itemSts
-    const raw = await fetchInventoryStatusContentBatch(batchReq)
-    const matched = filterByOperSts(raw, operStsFilter)
-    return paginateClientSide(matched)
+  /** G2B명·운용상태·정리일자 — 서버 필터 미적용/불안정 시 배치 조회 후 클라이언트 필터 */
+  if (term || operStsFilter || hasSortDateFilter) {
+    const batchReq: Record<string, unknown> = { ...searchRequest }
+    if (operStsFilter) {
+      delete batchReq.operSts
+      delete batchReq.itemSts
+    }
+    const raw = await fetchSearchRequestSingleBatch<AssetInventoryStatusContent>(
+      INVENTORY_STATUS_API,
+      batchReq,
+    )
+    return paginateClientSide(applyClientFilters(raw))
   }
 
   const pageable: Pageable = { page: page - 1, size: pageSize }
-  const res = await http.get<ApiResponse<AssetInventoryStatusData>>('/api/item/asset-inventory-status', {
+  const res = await http.get<ApiResponse<AssetInventoryStatusData>>(INVENTORY_STATUS_API, {
     params: buildInventoryStatusQueryParams(searchRequest, pageable),
   })
 
@@ -227,8 +264,8 @@ type AssetInventoryStatusDetailItemContent = {
   g2bItemNo?: string
   itmNo?: string
   acqAt?: string
+  /** 정리일자 */
   arrgAt?: string
-  arrAt?: string
   operSts?: string
   drbYr?: string | number
   acqUpr?: number | string
@@ -312,7 +349,7 @@ export async function fetchAssetInventoryStatusDetail(
       ),
       itemUniqueNumber: String(item.itmNo ?? ''),
       acquireDate: String(item.acqAt ?? ''),
-      sortDate: String(item.arrgAt ?? item.arrAt ?? ''),
+      sortDate: String(item.arrgAt ?? ''),
       operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')),
       usefulLife,
       acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
