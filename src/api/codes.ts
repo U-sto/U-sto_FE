@@ -110,13 +110,48 @@ export function buildDescriptionToCodeMap(
   return map
 }
 
-/** 필터용: ['전체', ...라벨] */
+/** 필터용: ['전체', ...라벨] (가나다순) */
 export function buildFilterOptionsWithAll(
   labelToCode: Record<string, string>,
   allLabel = '전체',
 ): string[] {
   const labels = Object.keys(labelToCode).sort((a, b) => a.localeCompare(b, 'ko-KR'))
   return [allLabel, ...labels]
+}
+
+/** 조회 섹션 운용상태 드롭다운 표시 순서 (전체 제외) */
+export const OPER_STATUS_FILTER_LABEL_ORDER = ['운용중', '반납', '불용', '처분'] as const
+
+/** API 라벨이 「운용」 등으로 올 때 동일 슬롯으로 매칭 */
+const OPER_STATUS_FILTER_LABEL_ALIASES: readonly (readonly string[])[] = [
+  ['운용중', '운용'],
+  ['반납'],
+  ['불용'],
+  ['처분'],
+]
+
+/**
+ * 필터용: ['전체', ...] — 지정 순서 우선, API에만 있는 항목은 뒤에 가나다순
+ */
+export function buildOperatingStatusFilterOptions(
+  labelToCode: Record<string, string>,
+  allLabel = '전체',
+): string[] {
+  const used = new Set<string>()
+  const ordered: string[] = []
+
+  for (const aliases of OPER_STATUS_FILTER_LABEL_ALIASES) {
+    const hit = aliases.find((label) => label in labelToCode)
+    if (hit && !used.has(hit)) {
+      ordered.push(hit)
+      used.add(hit)
+    }
+  }
+
+  const rest = Object.keys(labelToCode)
+    .filter((label) => !used.has(label))
+    .sort((a, b) => a.localeCompare(b, 'ko-KR'))
+  return [allLabel, ...ordered, ...rest]
 }
 
 /** 드롭다운용: ['선택', ...라벨] */

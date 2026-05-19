@@ -27,6 +27,7 @@ import {
   resolveApprovalFilterDisuseStyle,
 } from '../../../hooks/useCommonCodeOptions'
 import {
+  ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE,
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
   isAssetRegistrationEditLockedByAppr,
 } from '../../../utils/assetRegistrationApprovalLock'
@@ -271,6 +272,11 @@ const DisuseManagementPage = () => {
       window.alert('삭제할 건을 선택해 주세요.')
       return
     }
+    const row = registrationData.find((r) => r.dsuMId === selectedDsuMId)
+    if (row && isAssetRegistrationEditLockedByAppr(row.approvalStatus)) {
+      window.alert(ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE)
+      return
+    }
     setDeleteConfirmOpen(true)
   }
 
@@ -368,7 +374,7 @@ const DisuseManagementPage = () => {
           <>
             선택한 <strong>{selectedDsuMId ? 1 : 0}건</strong>을 삭제합니다.
             <br />
-            <span className="delete-confirm-modal__hint">(작성중 상태만 삭제 가능합니다.)</span>
+            <span className="delete-confirm-modal__hint">(확정된 건은 삭제할 수 없습니다.)</span>
           </>
         }
       />

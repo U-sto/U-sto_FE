@@ -25,6 +25,7 @@ import {
   resolveApprovalFilterTransferStyle,
 } from '../../../../hooks/useCommonCodeOptions'
 import {
+  ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE,
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
   isAssetRegistrationEditLockedByAppr,
 } from '../../../../utils/assetRegistrationApprovalLock'
@@ -33,12 +34,6 @@ const INITIAL_FILTERS: OperationTransferListFilters = {
   transferDateFrom: '',
   transferDateTo: '',
   approvalStatus: '전체',
-}
-
-/** 스웨거: 작성중(WAIT)만 삭제 — 화면 라벨은 보통 '대기' */
-function isOperationWaitDraftStatus(approvalStatus: string): boolean {
-  const s = approvalStatus.trim()
-  return s === '대기' || s === 'WAIT' || s === '작성중'
 }
 
 const OperationTransferPage = () => {
@@ -261,18 +256,18 @@ const OperationTransferPage = () => {
     }
     const checkedRows = registrationData.filter((r) => r.operMId && checkedOperMIds.has(r.operMId))
     const deletableIds = checkedRows
-      .filter((r) => isOperationWaitDraftStatus(r.approvalStatus))
+      .filter((r) => !isAssetRegistrationEditLockedByAppr(r.approvalStatus))
       .map((r) => r.operMId)
     const skippedCount = checkedRows.length - deletableIds.length
 
     if (deletableIds.length === 0) {
-      window.alert('작성중(WAIT) 상태의 운용 신청만 삭제할 수 있습니다.')
+      window.alert(ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE)
       return
     }
     if (skippedCount > 0) {
       if (
         !window.confirm(
-          `선택한 항목 중 작성중 상태가 아닌 ${skippedCount}건은 제외하고, ${deletableIds.length}건만 삭제합니다. 계속하시겠습니까?`,
+          `선택한 항목 중 확정된 ${skippedCount}건은 제외하고, ${deletableIds.length}건만 삭제합니다. 계속하시겠습니까?`,
         )
       ) {
         return

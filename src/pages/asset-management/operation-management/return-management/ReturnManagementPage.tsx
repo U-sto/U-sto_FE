@@ -29,6 +29,7 @@ import {
   type ItemReturningSearchRequest,
 } from '../../../../api/itemReturnings'
 import {
+  ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE,
   ASSET_REGISTRATION_EDIT_LOCKED_MESSAGE,
   isAssetRegistrationEditLockedByAppr,
 } from '../../../../utils/assetRegistrationApprovalLock'
@@ -457,6 +458,14 @@ const ReturnManagementPage = () => {
       window.alert('삭제할 건을 체크해 주세요.')
       return
     }
+    const hasConfirmed = ids.some((id) => {
+      const row = registrationRows.find((r) => r.rtrnId === id)
+      return row ? isAssetRegistrationEditLockedByAppr(row.approvalStatus) : false
+    })
+    if (hasConfirmed) {
+      window.alert(ASSET_REGISTRATION_DELETE_LOCKED_MESSAGE)
+      return
+    }
     setDeleteConfirmOpen(true)
   }
 
@@ -557,7 +566,7 @@ const ReturnManagementPage = () => {
           <>
             선택한 <strong>{selectedReturningIds.size}건</strong>을 삭제합니다.
             <br />
-            <span className="delete-confirm-modal__hint">(작성중 상태만 삭제 가능합니다.)</span>
+            <span className="delete-confirm-modal__hint">(확정된 건은 삭제할 수 없습니다.)</span>
           </>
         }
       />

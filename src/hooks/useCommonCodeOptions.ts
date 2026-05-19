@@ -3,6 +3,7 @@ import {
   CODE_GROUP,
   buildCodeToDescriptionMap,
   buildDescriptionToCodeMap,
+  buildOperatingStatusFilterOptions,
   buildFilterOptionsWithAll,
   buildSelectOptionsWithPlaceholder,
 } from '../api/codes'
@@ -63,9 +64,9 @@ export function useOperatingStatusFilterOptions() {
   }, [operGroup, itemGroup])
   const options = useMemo(() => {
     if (Object.keys(descToCode).length > 0) {
-      return buildFilterOptionsWithAll(descToCode)
+      return buildOperatingStatusFilterOptions(descToCode)
     }
-    return FALLBACK_OPER_FILTER
+    return [...FALLBACK_OPER_FILTER]
   }, [descToCode])
   return { options, descToCode }
 }
@@ -162,8 +163,11 @@ export function useDisuseRegistrationOperatingStatusFilterOptions() {
   const base = useOperatingStatusFilterOptions()
   const options = useMemo(() => {
     const allowed = new Set<string>(DISUSE_REGISTRATION_OPER_FILTER_LABELS)
-    const fromApi = base.options.filter((label) => allowed.has(label))
-    return fromApi.length > 0 ? fromApi : [...DISUSE_REGISTRATION_OPER_FILTER_LABELS]
+    const fromBase = base.options.filter((label) => allowed.has(label))
+    const ordered = DISUSE_REGISTRATION_OPER_FILTER_LABELS.filter((label) =>
+      fromBase.includes(label),
+    )
+    return ordered.length > 0 ? ordered : [...DISUSE_REGISTRATION_OPER_FILTER_LABELS]
   }, [base.options])
   const descToCode = useMemo(() => {
     const m: Record<string, string> = { 전체: '' }

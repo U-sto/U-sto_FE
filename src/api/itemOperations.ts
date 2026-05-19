@@ -652,7 +652,7 @@ export async function cancelItemOperationRequest(operMId: string): Promise<void>
 }
 
 /**
- * 운용 신청 삭제 (MANAGER) — 작성중(WAIT) 상태만 삭제 가능
+ * 운용 신청 삭제 (MANAGER) — 확정(APPROVED/CONFIRM) 건 제외
  * DELETE /api/item/operations/{operMId}
  */
 export async function deleteItemOperation(operMId: string): Promise<void> {
