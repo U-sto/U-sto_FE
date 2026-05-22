@@ -67,6 +67,13 @@ const DISPOSAL_TYPE_CODE_TO_LABEL: Record<string, string> = {
   LOSS: '멸실',
   THEFT: '도난',
 }
+
+const DISPOSAL_LEDGER_ONLY_DISUSE_MESSAGE =
+  '처분 등록은 불용 상태인 물품만 등록 가능합니다.'
+
+function isDisposalEligibleLedgerRow(row: LedgerRow): boolean {
+  return row.operatingStatus === '불용'
+}
 type LedgerRow = {
   id: number
   g2bNumber: string
@@ -272,15 +279,23 @@ const DisposalRegistrationPage = () => {
       key: 'select',
       header: '',
       render: (row) => (
-        // 처분 신청은 불용(DSU) 상태만 가능
         <input
           type="checkbox"
-          disabled={row.operatingStatus !== '불용'}
-          checked={ledgerCheckedIds.has(row.id)}
+          checked={
+            isDisposalEligibleLedgerRow(row) && ledgerCheckedIds.has(row.id)
+          }
           onChange={(e) => {
+            if (!isDisposalEligibleLedgerRow(row)) {
+              if (e.target.checked) {
+                window.alert(DISPOSAL_LEDGER_ONLY_DISUSE_MESSAGE)
+              }
+              return
+            }
             if (e.target.checked) {
               setLedgerCheckedIds((prev) => new Set(prev).add(row.id))
-              setSelectedRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, row]))
+              setSelectedRows((prev) =>
+                prev.some((r) => r.id === row.id) ? prev : [...prev, row],
+              )
             } else {
               setLedgerCheckedIds((prev) => {
                 const next = new Set(prev)
@@ -338,7 +353,12 @@ const DisposalRegistrationPage = () => {
   ]
 
   const setDisposalLedgerRowCheckboxChecked = useCallback((row: LedgerRow, checked: boolean) => {
-    if (row.operatingStatus !== '불용') return
+    if (!isDisposalEligibleLedgerRow(row)) {
+      if (checked) {
+        window.alert(DISPOSAL_LEDGER_ONLY_DISUSE_MESSAGE)
+      }
+      return
+    }
     setLedgerCheckedIds((prev) => {
       const next = new Set(prev)
       if (checked) next.add(row.id)
@@ -653,14 +673,13 @@ const DisposalRegistrationPage = () => {
         <DataTable<LedgerRow>
           pageKey="operation-ledger"
           title="물품 운용 대장 목록"
-          titleHint="처분 등록은 불용 상태인 물품만 등록 가능합니다."
           data={ledgerData}
           totalCount={ledgerTotalCount}
           pageSize={10}
           columns={ledgerColumns}
           getRowKey={(row) => row.id}
           getRowCheckboxChecked={(row) =>
-            row.operatingStatus === '불용' && ledgerCheckedIds.has(row.id)
+            isDisposalEligibleLedgerRow(row) && ledgerCheckedIds.has(row.id)
           }
           setRowCheckboxChecked={setDisposalLedgerRowCheckboxChecked}
           currentPage={ledgerPage}

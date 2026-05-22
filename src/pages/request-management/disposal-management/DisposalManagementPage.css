@@ -431,8 +431,13 @@
 
 .disposal-table-wrap-inner {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   flex: 0 0 auto;
+}
+
+/* 처분 등록 목록: 열이 많아 가로 스크롤 허용(맨 오른쪽 승인상태 잘림 방지) */
+.disposal-table-upper .disposal-table-wrap-inner {
+  overflow-x: auto;
 }
 
 .disposal-table-el {
@@ -456,11 +461,12 @@
 
 /* DataTable column widths */
 .disposal-table-el .disposal-th-id { width: 74px; min-width: 74px; max-width: 74px; }
-.disposal-table-el .disposal-th-disposalDate { width: 150px; }
-.disposal-table-el .disposal-th-disposalConfirmDate { width: 150px; }
-.disposal-table-el .disposal-th-registrantId { width: 150px; }
-.disposal-table-el .disposal-th-registrantName { width: 150px; }
-.disposal-table-el .disposal-th-approvalStatus { width: 100px; }
+.disposal-table-el .disposal-th-disposalDate { width: 150px; min-width: 110px; }
+.disposal-table-el .disposal-th-disposalConfirmDate { width: 150px; min-width: 110px; }
+.disposal-table-el .disposal-th-disposalType { width: 150px; min-width: 110px; }
+.disposal-table-el .disposal-th-registrantId { width: 150px; min-width: 100px; }
+.disposal-table-el .disposal-th-registrantName { width: 150px; min-width: 90px; }
+.disposal-table-el .disposal-th-approvalStatus { width: 100px; min-width: 90px; }
 .disposal-table-el .disposal-th-check,
 .disposal-table-el .disposal-th-select { width: 40px; min-width: 40px; max-width: 40px; }
 .disposal-table-el .disposal-th-g2bNumber { width: 150px; }

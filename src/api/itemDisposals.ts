@@ -95,19 +95,26 @@ export type FetchItemDisposalsResponse = {
   totalCount: number
 }
 
+/** 조회 필터(화면 라벨) → API 코드 — 필터 UI는 「대기」 등, API는 WAIT */
 const APPR_STS_MAP: Record<string, string> = {
+  작성중: 'WAIT',
   대기: 'WAIT',
   승인요청: 'REQUEST',
+  승인요청중: 'REQUEST',
   반려: 'REJECT',
+  REJECTED: 'REJECTED',
   확정: 'CONFIRM',
+  APPROVED: 'APPROVED',
 }
 
+/** 목록 표시 — WAIT는 「작성중」(운용전환의 「대기」와 구분, 불용 등록 목록과 동일) */
 const APPR_STS_CODE_TO_LABEL: Record<string, string> = {
-  WAIT: '대기',
+  WAIT: '작성중',
   REQUEST: '승인요청',
   REJECT: '반려',
   REJECTED: '반려',
   CONFIRM: '확정',
+  CONFIRMED: '확정',
   APPROVED: '확정',
 }
 
@@ -118,10 +125,24 @@ const DISP_TYPE_CODE_TO_LABEL: Record<string, string> = {
   THEFT: '도난',
 }
 
+/** API가 한글 상태명을 그대로 내려줄 때 */
+const APPR_STS_KOREAN_TO_LABEL: Record<string, string> = {
+  작성중: '작성중',
+  승인요청중: '승인요청',
+  반려: '반려',
+  확정: '확정',
+}
+
 function mapApprovalStatusToLabel(raw: string | undefined): string {
-  const code = String(raw ?? '').trim()
-  if (!code) return ''
-  return APPR_STS_CODE_TO_LABEL[code] ?? code
+  const s = String(raw ?? '').trim()
+  if (!s) return ''
+  const upper = s.toUpperCase()
+  return (
+    APPR_STS_CODE_TO_LABEL[upper] ??
+    APPR_STS_KOREAN_TO_LABEL[s] ??
+    APPR_STS_CODE_TO_LABEL[s] ??
+    s
+  )
 }
 
 function mapDisposalTypeToLabel(raw: string | undefined): string {
@@ -167,7 +188,13 @@ function mapItemDisposalToRow(
   ])
   const registrantId = pickFirstStringFromRecord(rec, ['aplyUsrId', 'usrId', 'registrantId'])
   const registrantName = pickFirstStringFromRecord(rec, ['aplyUsrNm', 'usrNm', 'registrantName'])
-  const approvalStatusRaw = pickFirstStringFromRecord(rec, ['apprSts', 'approvalStatus'])
+  const approvalStatusRaw = pickFirstStringFromRecord(rec, [
+    'apprSts',
+    'appr_sts',
+    'approvalStatus',
+    'apprStsNm',
+    'apprStsName',
+  ])
   const disposalType = mapDisposalTypeToLabel(
     pickFirstStringFromRecord(rec, ['dispType', 'disp_type', 'disposalType']),
   )

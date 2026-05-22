@@ -17,9 +17,9 @@
   max-width: 100%;
 }
 
-/* 반납 등록 페이지: 물품 운용 대장 목록 테이블 최대 3행 노출, 나머지 스크롤 */
+/* 반납 등록 페이지: 물품 운용 대장 목록 테이블 높이 (처분·불용 등록과 동일 360px) */
 .return-registration-ledger-table-wrap .operation-ledger-table-wrap-inner {
-  max-height: 180px;
+  max-height: 360px;
   overflow-y: auto;
 }
 

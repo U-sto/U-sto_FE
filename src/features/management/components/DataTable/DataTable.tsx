@@ -15,6 +15,11 @@ function isInteractiveRowClickTarget(target: EventTarget | null): boolean {
   if (lab?.querySelector('input[type="checkbox"]')) {
     return false
   }
+  const roleButton = target.closest('[role="button"]')
+  // 행 선택용 tr[role="button"]은 클릭 대상이 아님(중첩 버튼만 차단)
+  if (roleButton instanceof HTMLTableRowElement) {
+    return false
+  }
   return (
     target.closest(
       'input:not([type="checkbox"]), button, textarea, select, a[href], [role="button"], [role="checkbox"], label',
