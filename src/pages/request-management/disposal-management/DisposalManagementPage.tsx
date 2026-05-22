@@ -397,6 +397,7 @@ const DisposalManagementPage = () => {
           Boolean(row.dispMId && checkedDispMIds.has(row.dispMId))
         }
         setRowCheckboxChecked={setRequestDisposalRegCheckboxChecked}
+        enableRowDragSelect
         isRowSelected={(row) => selectedRegistration?.dispMId === row.dispMId}
         renderActions={() => (
           <div className="disposal-table-actions">

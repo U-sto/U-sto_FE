@@ -530,6 +530,7 @@ const ReturnManagementPage = () => {
           Boolean(row.rtrnId && selectedReturningIds.has(row.rtrnId))
         }
         setRowCheckboxChecked={setReturningRowCheckboxChecked}
+        enableRowDragSelect
         isRowSelected={(row) => row.rtrnId === selectedRtrnId}
         renderActions={() => (
           <div className="return-table-actions">

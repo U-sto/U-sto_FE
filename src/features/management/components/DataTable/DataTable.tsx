@@ -62,6 +62,11 @@ interface DataTableProps<T> {
    */
   getRowCheckboxChecked?: (row: T) => boolean
   setRowCheckboxChecked?: (row: T, checked: boolean) => void
+  /**
+   * true일 때만 체크박스 열 드래그로 여러 행 일괄 선택.
+   * 단일 행 선택·등록 목록 등에는 false(기본값) — 클릭만 사용.
+   */
+  enableRowDragSelect?: boolean
 }
 
 /** 체크 열 (20px 컨트롤 + 여백). 이 키에는 column.width 무시 */
@@ -112,10 +117,12 @@ function DataTable<T>({
   isRowSelected,
   getRowCheckboxChecked,
   setRowCheckboxChecked,
+  enableRowDragSelect = false,
 }: DataTableProps<T>) {
   const prefix = pageKey
   const [internalPage, setInternalPage] = useState(1)
   const [isDragSelecting, setIsDragSelecting] = useState(false)
+  const rowDragSelectEnabled = enableRowDragSelect === true
   const dragActionRef = useRef<'check' | 'uncheck' | null>(null)
   const suppressNextRowClickRef = useRef(false)
   const suppressNextCheckboxNativeClickRef = useRef(false)
@@ -142,7 +149,7 @@ function DataTable<T>({
   }, [data])
 
   useEffect(() => {
-    if (!isDragSelecting) return
+    if (!rowDragSelectEnabled || !isDragSelecting) return
     const onMouseUp = () => {
       if (dragVisitedRowIndicesRef.current.size > 1) {
         suppressNextRowClickRef.current = true
@@ -160,7 +167,7 @@ function DataTable<T>({
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('blur', onMouseUp)
     }
-  }, [isDragSelecting])
+  }, [rowDragSelectEnabled, isDragSelecting])
 
   const { pageData, totalPages } = useMemo(() => {
     const safePageSize = pageSize > 0 ? pageSize : 10
@@ -240,8 +247,10 @@ function DataTable<T>({
 
   return (
     <section
-      className={`${tableClassNames}${isDragSelecting ? ' management-table-dragging' : ''}`}
-      onClickCapture={(e) => {
+      className={`${tableClassNames}${rowDragSelectEnabled && isDragSelecting ? ' management-table-dragging' : ''}`}
+      onClickCapture={
+        rowDragSelectEnabled
+          ? (e) => {
         if (!suppressNextCheckboxNativeClickRef.current) return
         // Consume stale suppression on the very next click regardless of target.
         // If it is not consumed here, a later intentional checkbox click can be swallowed.
@@ -251,7 +260,9 @@ function DataTable<T>({
         // After a drag-select ends, cancel the release click's native checkbox toggle once.
         e.preventDefault()
         e.stopPropagation()
-      }}
+      }
+          : undefined
+      }
     >
       <div className={`${prefix}-table-top`}>
         <div className="management-table-title-row">
@@ -331,6 +342,7 @@ function DataTable<T>({
                       .filter(Boolean)
                       .join(' ')}
                     onMouseDown={(e) => {
+                      if (!rowDragSelectEnabled) return
                       if (e.button !== 0) return
                       const isCheckboxTarget =
                         e.target instanceof HTMLInputElement && e.target.type === 'checkbox'
@@ -384,7 +396,7 @@ function DataTable<T>({
                       e.preventDefault()
                     }}
                     onMouseEnter={(e) => {
-                      if (!isDragSelecting) return
+                      if (!rowDragSelectEnabled || !isDragSelecting) return
                       const action = dragActionRef.current
                       if (!action) return
                       const tr = e.currentTarget as HTMLElement

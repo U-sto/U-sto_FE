@@ -505,6 +505,7 @@ const AcqConfirmationPage = () => {
         getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
         getRowCheckboxChecked={(row) => Boolean(row.acqId && selectedAcqIds.has(row.acqId))}
         setRowCheckboxChecked={setAcqTableRowCheckboxChecked}
+        enableRowDragSelect
         renderActions={() => (
           <>
             <Button

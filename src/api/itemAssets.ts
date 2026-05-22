@@ -17,6 +17,7 @@ import {
   buildItemAssetListQueryParams,
   buildItemAssetListSearchRequest,
   type ItemAssetListFilters,
+  type ItemAssetListSearchRequest,
 } from './itemAssetListSearch'
 import { isDisuseEligibleOperatingStatus } from '../utils/disuseRegistrationEligibility'
 
@@ -338,12 +339,16 @@ export type ItemAssetsPrintFilters = {
   sortDateTo: string
 }
 
-/** 스웨거: searchRequest — g2bNo, startAcqAt, endAcqAt, startArrAt, endArrAt, deptCd, operSts, itemNo, printYn */
+/** 스웨거: searchRequest — g2bNo, startAcqAt, endAcqAt, startArrgAt, endArrgAt, deptCd, itemNo, printYn */
 export type ItemAssetPrintSearchRequest = {
   g2bNo?: string
   g2bItemNm?: string
   startAcqAt?: string
   endAcqAt?: string
+  /** 정리일자(arrgAt) */
+  startArrgAt?: string
+  endArrgAt?: string
+  /** (호환) 구 스펙 키 */
   startArrAt?: string
   endArrAt?: string
   deptCd?: string
@@ -392,6 +397,40 @@ export type PrintoutListRow = {
   outputTarget: string
 }
 
+function normalizePrintDateOnly(value: string): string {
+  const s = value.trim()
+  if (!s) return ''
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  const digits = s.replace(/\D/g, '')
+  if (digits.length >= 8) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+  }
+  return s
+}
+
+function getPrintSortDate(item: ItemAssetPrintContent): string {
+  return normalizePrintDateOnly(
+    String(item.arrgAt ?? item.arrAt ?? item.drgAt ?? ''),
+  )
+}
+
+function filterPrintBySortDateRange(
+  items: ItemAssetPrintContent[],
+  sortDateFrom?: string,
+  sortDateTo?: string,
+): ItemAssetPrintContent[] {
+  const from = sortDateFrom?.trim() ? normalizePrintDateOnly(sortDateFrom) : ''
+  const to = sortDateTo?.trim() ? normalizePrintDateOnly(sortDateTo) : ''
+  if (!from && !to) return items
+  return items.filter((item) => {
+    const d = getPrintSortDate(item)
+    if (!d) return false
+    if (from && d < from) return false
+    if (to && d > to) return false
+    return true
+  })
+}
+
 function printFiltersToSearchRequest(filters: ItemAssetsPrintFilters): ItemAssetPrintSearchRequest {
   const req: ItemAssetPrintSearchRequest = {}
   const g2bNo = buildCombinedG2bListNoForFilter(
@@ -407,8 +446,16 @@ function printFiltersToSearchRequest(filters: ItemAssetsPrintFilters): ItemAsset
   }
   if (filters.acquireDateFrom) req.startAcqAt = filters.acquireDateFrom
   if (filters.acquireDateTo) req.endAcqAt = filters.acquireDateTo
-  if (filters.sortDateFrom) req.startArrAt = filters.sortDateFrom
-  if (filters.sortDateTo) req.endArrAt = filters.sortDateTo
+  const sortFrom = filters.sortDateFrom?.trim()
+  const sortTo = filters.sortDateTo?.trim()
+  if (sortFrom) {
+    req.startArrgAt = sortFrom
+    req.startArrAt = sortFrom
+  }
+  if (sortTo) {
+    req.endArrgAt = sortTo
+    req.endArrAt = sortTo
+  }
   if (filters.operatingDept && filters.operatingDept !== '전체') {
     applyDeptLabelToSearchRequest(req, filters.operatingDept)
   }
@@ -461,6 +508,10 @@ export async function fetchItemAssetsPrint(params: {
   const { page, pageSize, filters } = params
   const term = filters.g2bName?.trim()
 
+  const sortFrom = filters.sortDateFrom?.trim()
+  const sortTo = filters.sortDateTo?.trim()
+  const needsClientSortDateFilter = Boolean(sortFrom || sortTo)
+
   if (term) {
     const searchRequest = printFiltersToSearchRequest({
       ...filters,
@@ -470,10 +521,13 @@ export async function fetchItemAssetsPrint(params: {
       '/api/item/assets/print',
       searchRequest,
     )
-    const matched = filterByG2bItemNmIncludes(
+    let matched = filterByG2bItemNmIncludes(
       raw as Record<string, unknown>[],
       term,
     ) as ItemAssetPrintContent[]
+    if (needsClientSortDateFilter) {
+      matched = filterPrintBySortDateRange(matched, filters.sortDateFrom, filters.sortDateTo)
+    }
     const totalCount = matched.length
     const offset = (page - 1) * pageSize
     const pageItems = matched.slice(offset, offset + pageSize)
@@ -488,13 +542,32 @@ export async function fetchItemAssetsPrint(params: {
   const searchRequest = printFiltersToSearchRequest(filters)
   const pageable: ItemAssetPageable = { page: page - 1, size: pageSize }
 
+  if (needsClientSortDateFilter) {
+    const raw = await fetchSearchRequestSingleBatch<ItemAssetPrintContent>(
+      '/api/item/assets/print',
+      searchRequest as Record<string, unknown>,
+    )
+    const matched = filterPrintBySortDateRange(
+      raw as ItemAssetPrintContent[],
+      filters.sortDateFrom,
+      filters.sortDateTo,
+    )
+    const totalCount = matched.length
+    const offset = (page - 1) * pageSize
+    const pageItems = matched.slice(offset, offset + pageSize)
+    return {
+      data: pageItems.map((item, index) =>
+        mapItemPrintToRow(item as ItemAssetPrintContent, index, offset),
+      ),
+      totalCount,
+    }
+  }
+
   const res = await http.get<ApiResponse<ItemAssetsPrintData>>('/api/item/assets/print', {
-    params: {
-      searchRequest: JSON.stringify(searchRequest),
-      pageable: JSON.stringify(pageable),
-      ...searchRequest,
-      ...pageable,
-    },
+    params: buildItemAssetListQueryParams(
+      searchRequest as ItemAssetListSearchRequest,
+      pageable,
+    ),
   })
 
   const payload = res.data.data

@@ -177,7 +177,7 @@ const OperationManagementPage = () => {
 
   const handleAdminReject = async () => {
     if (checkedOperMIds.size === 0) {
-      window.alert('상단 운용 등록 목록에서 반려할 항목을 체크해 주세요.')
+      window.alert('상단 운용 전환 등록 목록에서 반려할 항목을 체크해 주세요.')
       return
     }
     setAdminActionLoading(true)
@@ -197,7 +197,7 @@ const OperationManagementPage = () => {
 
   const handleAdminApprove = async () => {
     if (checkedOperMIds.size === 0) {
-      window.alert('상단 운용 등록 목록에서 확정할 항목을 체크해 주세요.')
+      window.alert('상단 운용 전환 등록 목록에서 확정할 항목을 체크해 주세요.')
       return
     }
     setAdminActionLoading(true)
@@ -333,7 +333,7 @@ const OperationManagementPage = () => {
   return (
     <ManagementPageLayout
       pageKey="operation"
-      depthSecondLabel="물품 운용 등록 관리"
+      depthSecondLabel="물품 운용 전환 등록 관리"
     >
       <FilterPanel pageKey="operation">
         <div className="operation-filter-grid">
@@ -420,7 +420,7 @@ const OperationManagementPage = () => {
 
       <DataTable<OperationTransferRegistrationRow>
         pageKey="operation"
-        title="운용 등록 목록"
+        title="운용 전환 등록 목록"
         data={registrationData}
         totalCount={registrationTotal}
         pageSize={10}
@@ -435,6 +435,7 @@ const OperationManagementPage = () => {
           Boolean(row.operMId && checkedOperMIds.has(row.operMId))
         }
         setRowCheckboxChecked={setOperRegistrationCheckboxChecked}
+        enableRowDragSelect
         renderActions={() => (
           <div className="operation-table-actions">
             <Button

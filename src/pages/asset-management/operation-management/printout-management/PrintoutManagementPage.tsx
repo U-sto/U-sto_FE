@@ -468,6 +468,7 @@ const PrintoutManagementPage = () => {
           return Boolean(id && checkedItmNos.has(id))
         }}
         setRowCheckboxChecked={setPrintoutRowCheckboxChecked}
+        enableRowDragSelect
         renderActions={() => (
           <div className="operation-ledger-table-actions">
             <Button

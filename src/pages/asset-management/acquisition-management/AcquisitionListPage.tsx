@@ -498,6 +498,7 @@ const AcquisitionListPage = () => {
         getRowKey={(row) => (row.acqId ? row.acqId : String(row.id))}
         getRowCheckboxChecked={(row) => Boolean(row.acqId && selectedAcqIds.has(row.acqId))}
         setRowCheckboxChecked={setAcqRowCheckboxChecked}
+        enableRowDragSelect
         renderActions={() => (
           <div className="return-registration-actions">
             <button

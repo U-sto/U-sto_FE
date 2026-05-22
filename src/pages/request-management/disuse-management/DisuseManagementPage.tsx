@@ -402,6 +402,7 @@ const DisuseManagementPage = () => {
             Boolean(row.dsuMId && selectedDsuMIds.has(row.dsuMId))
           }
           setRowCheckboxChecked={setRequestDisuseRegCheckboxChecked}
+          enableRowDragSelect
           isRowSelected={(row) => row.dsuMId === selectedDsuMId}
           renderActions={() => (
             <div className="disuse-table-actions">
