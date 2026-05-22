@@ -68,7 +68,8 @@ interface DataTableProps<T> {
   getRowCheckboxChecked?: (row: T) => boolean
   setRowCheckboxChecked?: (row: T, checked: boolean) => void
   /**
-   * true일 때만 체크박스 열 드래그로 여러 행 일괄 선택.
+   * true일 때만 체크박스 열 드래그로 여러 행 일괄 선택/해제.
+   * 미체크 행에서 시작 → 구간 체크, 체크된 행에서 시작 → 구간 해제.
    * 단일 행 선택·등록 목록 등에는 false(기본값) — 클릭만 사용.
    */
   enableRowDragSelect?: boolean
@@ -233,16 +234,18 @@ function DataTable<T>({
   const canPrevBlock = pageBlockStart > 1
   const canNextBlock = pageBlockStart + PAGE_NUMBER_WINDOW <= totalPages
 
-  const applyControlledDragRange = (currentRowIndex: number) => {
+  const applyDragRange = (currentRowIndex: number) => {
     if (!isControlledCheckbox) return
     const anchor = dragAnchorRowIndexRef.current
-    if (anchor == null) return
+    const action = dragActionRef.current
+    if (anchor == null || action == null) return
     const rangeStart = Math.min(anchor, currentRowIndex)
     const rangeEnd = Math.max(anchor, currentRowIndex)
     pageData.forEach((candidateRow, candidateIndex) => {
       const baselineChecked = dragBaselineCheckedRef.current.get(candidateIndex) ?? false
       const inRange = candidateIndex >= rangeStart && candidateIndex <= rangeEnd
-      const shouldBeChecked = baselineChecked || inRange
+      const shouldBeChecked =
+        action === 'check' ? baselineChecked || inRange : baselineChecked && !inRange
       const currentChecked = getRowCheckboxChecked!(candidateRow)
       if (currentChecked !== shouldBeChecked) {
         setRowCheckboxChecked!(candidateRow, shouldBeChecked)
@@ -356,49 +359,56 @@ function DataTable<T>({
                       const checkbox = tr.querySelector<HTMLInputElement>('input[type="checkbox"]')
                       if (!checkbox || checkbox.disabled) return
 
-                      // Drag selection is additive: keep existing checks and only add newly visited rows.
-                      // This prevents the first checked row from being unintentionally turned off.
-                      const nextAction: 'check' | 'uncheck' = 'check'
-                      dragActionRef.current = nextAction
-                      dragVisitedRowIndicesRef.current = new Set([rowIndex])
-                      dragAnchorRowIndexRef.current = rowIndex
-                      if (isControlledCheckbox) {
-                        const baseline = new Map<number, boolean>()
-                        pageData.forEach((candidateRow, candidateIndex) => {
-                          baseline.set(candidateIndex, getRowCheckboxChecked!(candidateRow))
-                        })
-                        dragBaselineCheckedRef.current = baseline
-                        // 체크박스 직접 클릭: 여기서 범위를 적용하면 직후 네이티브 click이 또 토글해
-                        // 체크→즉시 해제처럼 보임. 드래그는 onMouseEnter에서만 범위 적용.
-                        if (!isCheckboxTarget) {
-                          applyControlledDragRange(rowIndex)
-                        }
-                      }
-                      setIsDragSelecting(true)
-
-                      // Checkbox direct click should remain native to avoid double toggles
-                      // (native onChange + row click handler). Drag to other rows is still handled
-                      // by onMouseEnter while isDragSelecting is true.
-                      if (isCheckboxTarget) return
-
                       const currentlyChecked = isControlledCheckbox
                         ? getRowCheckboxChecked!(row)
                         : checkbox.checked
-                      // If the row is already checked, let click handler perform uncheck toggle.
-                      // We still keep drag mode active so dragging to other rows can add checks.
-                      if (currentlyChecked) return
+                      // 미체크 행에서 시작 → 구간 체크, 체크된 행에서 시작 → 구간 해제
+                      const nextAction: 'check' | 'uncheck' =
+                        currentlyChecked ? 'uncheck' : 'check'
+                      dragActionRef.current = nextAction
+                      dragVisitedRowIndicesRef.current = new Set([rowIndex])
+                      dragAnchorRowIndexRef.current = rowIndex
 
-                      const shouldCheck = nextAction === 'check'
+                      const baseline = new Map<number, boolean>()
                       if (isControlledCheckbox) {
-                        setRowCheckboxChecked!(row, shouldCheck)
+                        pageData.forEach((candidateRow, candidateIndex) => {
+                          baseline.set(candidateIndex, getRowCheckboxChecked!(candidateRow))
+                        })
                       } else {
-                        checkbox.checked = shouldCheck
-                        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
+                        const tbody = (e.currentTarget as HTMLElement).closest('tbody')
+                        tbody?.querySelectorAll('tr').forEach((tr, candidateIndex) => {
+                          const cb = tr.querySelector<HTMLInputElement>(
+                            'input[type="checkbox"]',
+                          )
+                          if (cb && !cb.disabled) {
+                            baseline.set(candidateIndex, cb.checked)
+                          }
+                        })
                       }
-                      // mousedown에서 이미 체크 상태를 바꿨으므로 이어지는 click 이중 토글 방지
-                      suppressNextRowClickRef.current = true
-                      onRowClick?.(row, rowIndex)
-                      e.preventDefault()
+                      dragBaselineCheckedRef.current = baseline
+
+                      if (isControlledCheckbox) {
+                        // 체크박스 직접 클릭: mousedown에서 범위 적용 시 release click과 이중 토글
+                        if (!isCheckboxTarget) {
+                          applyDragRange(rowIndex)
+                          suppressNextRowClickRef.current = true
+                          e.preventDefault()
+                        }
+                      } else if (!isCheckboxTarget) {
+                        const shouldBeChecked = nextAction === 'check'
+                        if (checkbox.checked !== shouldBeChecked) {
+                          checkbox.checked = shouldBeChecked
+                          checkbox.dispatchEvent(new Event('change', { bubbles: true }))
+                        }
+                        suppressNextRowClickRef.current = true
+                        onRowClick?.(row, rowIndex)
+                        e.preventDefault()
+                      }
+
+                      setIsDragSelecting(true)
+
+                      // 체크박스 직접 클릭: 단일 토글은 click에 맡기고, 드래그는 onMouseEnter에서 범위 적용
+                      if (isCheckboxTarget) return
                     }}
                     onMouseEnter={(e) => {
                       if (!rowDragSelectEnabled || !isDragSelecting) return
@@ -408,10 +418,20 @@ function DataTable<T>({
                       const checkbox = tr.querySelector<HTMLInputElement>('input[type="checkbox"]')
                       if (!checkbox || checkbox.disabled) return
                       dragVisitedRowIndicesRef.current.add(rowIndex)
-                      const shouldBeChecked = action === 'check'
                       if (isControlledCheckbox) {
-                        applyControlledDragRange(rowIndex)
+                        applyDragRange(rowIndex)
                       } else {
+                        const baselineChecked =
+                          dragBaselineCheckedRef.current.get(rowIndex) ?? checkbox.checked
+                        const anchor = dragAnchorRowIndexRef.current
+                        if (anchor == null) return
+                        const rangeStart = Math.min(anchor, rowIndex)
+                        const rangeEnd = Math.max(anchor, rowIndex)
+                        const inRange = rowIndex >= rangeStart && rowIndex <= rangeEnd
+                        const shouldBeChecked =
+                          action === 'check'
+                            ? baselineChecked || inRange
+                            : baselineChecked && !inRange
                         if (checkbox.checked === shouldBeChecked) return
                         checkbox.checked = shouldBeChecked
                         checkbox.dispatchEvent(new Event('change', { bubbles: true }))
