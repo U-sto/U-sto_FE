@@ -9,6 +9,7 @@ import {
   type ItemAssetListSearchRequest,
 } from './itemAssetListSearch'
 import { fetchSearchRequestSingleBatch } from './g2bNameClientSearch'
+import { labelForAcqArrangementCode } from '../constants/acqArrangementType'
 import { resolveOperStsSearchCode } from '../utils/operStsSearch'
 
 export type AssetInventoryStatusFilters = ItemAssetListFilters & {
@@ -263,34 +264,56 @@ type AssetInventoryStatusDetailItemContent = {
   g2bNo?: string
   g2bItemNo?: string
   itmNo?: string
+  itemUnqNo?: string
   acqAt?: string
   /** 정리일자 */
   arrgAt?: string
   operSts?: string
   drbYr?: string | number
   acqUpr?: number | string
+  deptNm?: string
   deptCd?: string
+  qty?: number | string
+  acqArrgTy?: string
+  g2bItemNm?: string
   rmk?: string
   [key: string]: unknown
 }
 
+/** 상세 API: itmNos는 물품고유번호 문자열 배열, 나머지 필드는 공통 메타 */
 type AssetInventoryStatusDetailData = {
-  itmNos?: AssetInventoryStatusDetailItemContent[]
+  itmNos?: string[] | AssetInventoryStatusDetailItemContent[]
+  g2bDNm?: string
   g2bNm?: string
   g2bItemNm?: string
+  g2bItemNo?: string
+  acqAt?: string
+  arrgAt?: string
+  operSts?: string
+  drbYr?: string | number
+  acqUpr?: number | string
+  deptNm?: string
+  deptCd?: string
+  qty?: number | string
+  acqArrgTy?: string
+  rmk?: string | null
   [key: string]: unknown
 }
 
 export type AssetInventoryStatusDetailItem = {
   id: number
   g2bNumber: string
+  g2bName: string
   itemUniqueNumber: string
   acquireDate: string
   sortDate: string
   operatingStatus: string
   usefulLife: string
   acquireAmount: string
+  operatingDept: string
   deptCd: string
+  qty: number
+  acqArrangementType: string
   remarks: string
 }
 
@@ -314,10 +337,100 @@ function normalizeDetailQueryParams(
   return params
 }
 
-function extractDetailItemList(payload: AssetInventoryStatusDetailData | null | undefined): AssetInventoryStatusDetailItemContent[] {
+function normalizeDetailItmNo(entry: unknown): string {
+  if (typeof entry === 'string' || typeof entry === 'number') {
+    return String(entry).trim()
+  }
+  if (entry && typeof entry === 'object') {
+    const rec = entry as AssetInventoryStatusDetailItemContent
+    return String(rec.itmNo ?? rec.itemUnqNo ?? '').trim()
+  }
+  return ''
+}
+
+type DetailItmNoEntry = {
+  itmNo: string
+  item: AssetInventoryStatusDetailItemContent | null
+}
+
+function extractDetailItmNoEntries(
+  payload: AssetInventoryStatusDetailData | null | undefined,
+): DetailItmNoEntry[] {
   if (!payload || typeof payload !== 'object') return []
-  if (Array.isArray(payload.itmNos)) return payload.itmNos
-  return []
+  if (!Array.isArray(payload.itmNos)) return []
+  return payload.itmNos
+    .map((entry): DetailItmNoEntry => {
+      if (typeof entry === 'string' || typeof entry === 'number') {
+        return { itmNo: normalizeDetailItmNo(entry), item: null }
+      }
+      if (entry && typeof entry === 'object') {
+        return {
+          itmNo: normalizeDetailItmNo(entry),
+          item: entry as AssetInventoryStatusDetailItemContent,
+        }
+      }
+      return { itmNo: '', item: null }
+    })
+    .filter((entry) => entry.itmNo.length > 0)
+}
+
+function formatDetailUsefulLife(drbYrRaw: string | number | undefined | null): string {
+  if (drbYrRaw == null || String(drbYrRaw).trim() === '') return ''
+  const s = String(drbYrRaw).trim()
+  return s.endsWith('년') ? s : `${s}년`
+}
+
+function parseDetailQty(qtyRaw: number | string | undefined | null): number {
+  if (typeof qtyRaw === 'number' && Number.isFinite(qtyRaw)) return qtyRaw
+  if (qtyRaw != null && qtyRaw !== '') {
+    const n = Number(qtyRaw)
+    if (Number.isFinite(n)) return n
+  }
+  return 0
+}
+
+function mapDetailEntryToRow(
+  payload: AssetInventoryStatusDetailData,
+  entry: DetailItmNoEntry,
+  index: number,
+): AssetInventoryStatusDetailItem {
+  const item = entry.item
+  const acqUprRaw = item?.acqUpr ?? payload.acqUpr
+  const acqUprValue =
+    typeof acqUprRaw === 'number' ? acqUprRaw : Number(acqUprRaw ?? 0)
+  const drbYrRaw = item?.drbYr ?? payload.drbYr
+
+  return {
+    id: index + 1,
+    g2bNumber: String(item?.g2bItemNo ?? item?.g2bNo ?? payload.g2bItemNo ?? ''),
+    g2bName: String(
+      payload.g2bDNm ?? payload.g2bItemNm ?? payload.g2bNm ?? item?.g2bItemNm ?? '',
+    ),
+    itemUniqueNumber: entry.itmNo,
+    acquireDate: String(item?.acqAt ?? payload.acqAt ?? ''),
+    sortDate: String(item?.arrgAt ?? payload.arrgAt ?? ''),
+    operatingStatus: mapOperStsToLabel(String(item?.operSts ?? payload.operSts ?? '')),
+    usefulLife: formatDetailUsefulLife(drbYrRaw),
+    acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
+    operatingDept: formatOperatingDept(
+      payload.deptNm ?? item?.deptNm,
+      item?.deptCd ?? payload.deptCd,
+    ),
+    deptCd: String(item?.deptCd ?? payload.deptCd ?? ''),
+    qty: parseDetailQty(item?.qty ?? payload.qty),
+    acqArrangementType: labelForAcqArrangementCode(
+      String(item?.acqArrgTy ?? payload.acqArrgTy ?? ''),
+    ),
+    remarks: item?.rmk != null ? String(item.rmk) : payload.rmk != null ? String(payload.rmk) : '',
+  }
+}
+
+function mapDetailPayloadToRows(
+  payload: AssetInventoryStatusDetailData | null | undefined,
+): AssetInventoryStatusDetailItem[] {
+  const entries = extractDetailItmNoEntries(payload)
+  if (!payload || entries.length === 0) return []
+  return entries.map((entry, index) => mapDetailEntryToRow(payload, entry, index))
 }
 
 export async function fetchAssetInventoryStatusDetail(
@@ -331,30 +444,5 @@ export async function fetchAssetInventoryStatusDetail(
   )
 
   const payload = res.data.data
-  const items = extractDetailItemList(payload)
-  return items.map((item, index) => {
-    const acqUprValue =
-      typeof item.acqUpr === 'number' ? item.acqUpr : Number(item.acqUpr ?? 0)
-    const drbYrRaw = item.drbYr
-    const usefulLife =
-      drbYrRaw != null && String(drbYrRaw).trim() !== ''
-        ? String(drbYrRaw).endsWith('년')
-          ? String(drbYrRaw)
-          : `${String(drbYrRaw)}년`
-        : ''
-    return {
-      id: index + 1,
-      g2bNumber: String(
-        item.g2bNo ?? item.g2bItemNo ?? payload?.g2bNm ?? payload?.g2bItemNm ?? '',
-      ),
-      itemUniqueNumber: String(item.itmNo ?? ''),
-      acquireDate: String(item.acqAt ?? ''),
-      sortDate: String(item.arrgAt ?? ''),
-      operatingStatus: mapOperStsToLabel(String(item.operSts ?? '')),
-      usefulLife,
-      acquireAmount: acqUprValue ? `${acqUprValue.toLocaleString()}원` : '',
-      deptCd: String(item.deptCd ?? ''),
-      remarks: String(item.rmk ?? ''),
-    }
-  })
+  return mapDetailPayloadToRows(payload)
 }

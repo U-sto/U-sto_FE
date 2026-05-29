@@ -81,12 +81,16 @@ const InventoryStatusDetailPage = () => {
   const detailColumns: DataTableColumn<AssetInventoryStatusDetailItem>[] = [
     { key: 'id', header: '순번', render: (row) => row.id },
     { key: 'g2bNumber', header: 'G2B목록번호', render: (row) => row.g2bNumber },
+    { key: 'g2bName', header: 'G2B목록명', render: (row) => row.g2bName },
     { key: 'itemUniqueNumber', header: '물품고유번호', render: (row) => row.itemUniqueNumber },
     { key: 'acquireDate', header: '취득일자', render: (row) => row.acquireDate },
     { key: 'sortDate', header: '정리일자', render: (row) => row.sortDate },
+    { key: 'acquireAmount', header: '취득금액', render: (row) => row.acquireAmount },
+    { key: 'operatingDept', header: '운용부서', render: (row) => row.operatingDept },
     { key: 'operatingStatus', header: '운용상태', render: (row) => row.operatingStatus },
     { key: 'usefulLife', header: '내용연수', render: (row) => row.usefulLife },
-    { key: 'acquireAmount', header: '취득금액', render: (row) => row.acquireAmount },
+    { key: 'qty', header: '수량', width: 64, render: (row) => String(row.qty) },
+    { key: 'acqArrangementType', header: '취득정리구분', render: (row) => row.acqArrangementType },
     { key: 'deptCd', header: '운용부서코드', render: (row) => row.deptCd },
     { key: 'remarks', header: '비고', render: (row) => row.remarks },
   ]
