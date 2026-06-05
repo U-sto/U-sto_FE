@@ -29,6 +29,29 @@ type ChartRow = DemandTimeSeriesPoint & {
   xValue: number
 }
 
+/** max+200 후 백의 자리 올림 (443 → 500) */
+function ceilToHundred(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) return 100
+  return Math.ceil(value / 100) * 100
+}
+
+function maxSeriesValue(rows: ChartRow[]): number {
+  let max = 0
+  for (const row of rows) {
+    max = Math.max(max, row.quantity ?? 0, row.totalOrderQty ?? 0)
+  }
+  return max
+}
+
+function buildYAxisScale(rows: ChartRow[]): { yMax: number; yTicks: number[] } {
+  const yMax = ceilToHundred(maxSeriesValue(rows) + 200)
+  const yTicks: number[] = []
+  for (let v = 0; v <= yMax; v += 100) {
+    yTicks.push(v)
+  }
+  return { yMax, yTicks }
+}
+
 function parseRopDay(ropDate?: string): number | null {
   if (!ropDate) return null
   const trimmed = ropDate.trim()
@@ -79,6 +102,7 @@ const DemandTimeSeriesChart = ({
     { value: '총 발주수량', type: 'line', color: lineColor },
     { value: '발주 최종 기간', type: 'circle', color: lineColor },
   ]
+  const { yMax, yTicks } = buildYAxisScale(normalizedData)
 
   return (
     <div className="demand-time-series-chart" style={{ width: '100%', height }}>
@@ -99,8 +123,8 @@ const DemandTimeSeriesChart = ({
           <YAxis
             tick={{ fontSize: 14, fill: 'var(--usto-alt-black)' }}
             tickLine={false}
-            domain={[0, 100]}
-            ticks={[0, 20, 40, 60, 80, 100]}
+            domain={[0, yMax]}
+            ticks={yTicks}
             label={{ value: '(개수)', angle: 0, position: 'insideTopLeft', dy: -34, fontSize: 12, fill: 'var(--usto-gray-200)' }}
           />
           <Tooltip
