@@ -36,14 +36,33 @@ const EXTRA_EXACT_PATHS: string[] = [
   '/user-info/withdraw',
   '/user-info/withdraw/complete',
   '/asset-management/acquisition-management/register',
+  '/asset-management/operation-management/operation-transfer',
   '/asset-management/operation-management/operation-ledger/detail',
   '/asset-management/operation-management/operation-transfer/register',
   '/asset-management/operation-management/return-management/register',
   '/asset-management/disuse-management/register',
   '/asset-management/disposal-management/register',
+  '/asset-management/inventory-status/detail',
 ]
 
 const EXACT_PATHS = new Set<string>([...PATHS_FROM_MENU, ...EXTRA_EXACT_PATHS])
+
+/**
+ * 백엔드 action_buttons url → 앱 실제 라우트.
+ * 짧은 path(/acquisition-management 등)는 asset-management 하위로 매핑.
+ * /return-management 등 요청관리 path는 그대로 두고 별칭하지 않음.
+ */
+const CHATBOT_ACTION_BUTTON_PATH_ALIASES: Record<string, string> = {
+  '/acquisition-management': '/asset-management/acquisition-management',
+  '/operation-transfer': '/asset-management/operation-management/operation-transfer',
+  '/operation-ledger': '/asset-management/operation-management/operation-ledger',
+  '/printout-management': '/asset-management/operation-management/printout-management',
+  '/inventory-status': '/asset-management/inventory-status',
+}
+
+function resolveChatbotActionPath(pathname: string): string {
+  return CHATBOT_ACTION_BUTTON_PATH_ALIASES[pathname] ?? pathname
+}
 
 /** :id 한 단만 허용 (백엔드가 준 동적 상세 URL) */
 const EDIT_ID_PREFIXES = [
@@ -86,8 +105,10 @@ export function filterChatbotActionButtons(buttons: AiChatActionButton[]): AiCha
   const seen = new Set<string>()
   const out: AiChatActionButton[] = []
   for (const b of buttons) {
-    const path = normalizeChatbotPathname(b.url)
-    if (!path || !isAllowedChatbotPathname(path)) continue
+    const rawPath = normalizeChatbotPathname(b.url)
+    if (!rawPath) continue
+    const path = resolveChatbotActionPath(rawPath)
+    if (!isAllowedChatbotPathname(path)) continue
     if (seen.has(path)) continue
     seen.add(path)
     out.push({ label: b.label, url: path })
