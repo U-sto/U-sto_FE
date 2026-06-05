@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ChatBotLanding from './ChatBotLanding'
 import './ChatBotButton.css'
-import { inferMenuActionButtons, mergeActionButtons } from '../../../../constants/chatMenuInference'
+import { normalizeApiActionButtons } from '../../../../constants/chatbotAllowedRoutes'
 import {
   sendAiChat,
   deleteChatThread,
@@ -558,11 +558,7 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
         if (assetContext) {
           replyText = `${assetContext}\n\n${replyText}`
         }
-        const inferred = inferMenuActionButtons(trimmed, replyText)
-        const buttons = mergeActionButtons(
-          Array.isArray(aiChatResponse.action_buttons) ? aiChatResponse.action_buttons : undefined,
-          inferred,
-        )
+        const buttons = normalizeApiActionButtons(aiChatResponse.action_buttons)
         const assistantMessage: ChatMessage = {
           id: Date.now() + 1,
           role: 'assistant',
@@ -605,11 +601,7 @@ const ChatBotButton = ({ onClick }: ChatBotButtonProps) => {
         const rawReply = typeof aiData.reply === 'string' ? aiData.reply : ''
         const text = rawReply.trim().length > 0 ? rawReply.trim() : '응답을 가져오지 못했습니다.'
         const assetContext = formatAssetRowsForChat(assetRows)
-        const inferred = inferMenuActionButtons(trimmed, text)
-        const buttons = mergeActionButtons(
-          Array.isArray(aiData.action_buttons) ? aiData.action_buttons : undefined,
-          inferred,
-        )
+        const buttons = normalizeApiActionButtons(aiData.action_buttons)
         const assistantMessage: ChatMessage = {
           id: Date.now() + 1,
           role: 'assistant',

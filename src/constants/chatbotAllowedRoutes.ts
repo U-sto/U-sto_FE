@@ -81,7 +81,7 @@ export function isAllowedChatbotPathname(pathname: string): boolean {
   return false
 }
 
-/** API·추론 버튼 중 화이트리스트 path만 남기고, url은 상대 경로로 통일 */
+/** API action_buttons: 화이트리스트 path만 남기고 url 기준 중복 제거 */
 export function filterChatbotActionButtons(buttons: AiChatActionButton[]): AiChatActionButton[] {
   const seen = new Set<string>()
   const out: AiChatActionButton[] = []
@@ -93,4 +93,13 @@ export function filterChatbotActionButtons(buttons: AiChatActionButton[]): AiCha
     out.push({ label: b.label, url: path })
   }
   return out
+}
+
+/** 백엔드 action_buttons만 렌더 — url 중복 제거·허용 경로 필터 */
+export function normalizeApiActionButtons(
+  buttons: AiChatActionButton[] | undefined,
+): AiChatActionButton[] | undefined {
+  if (!Array.isArray(buttons) || buttons.length === 0) return undefined
+  const filtered = filterChatbotActionButtons(buttons)
+  return filtered.length > 0 ? filtered : undefined
 }
