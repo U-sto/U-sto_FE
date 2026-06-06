@@ -56,6 +56,12 @@ export interface AiForecastApiRecommendationItem {
   quantity: number
   estimated_budget: number
   recommend_order_date: string
+  base_qty?: number
+  safety_stock?: number
+  rop?: number
+  lead_time_days?: number
+  monthly_avg_demand?: number
+  ai_analysis_comment?: string | null
   ai_insight?: string | AiForecastApiAiInsightObject | null
   comment?: string | null
 }
@@ -70,6 +76,18 @@ export interface AiForecastApiAlgorithmGuide {
 export interface AiForecastApiData {
   /** 예측 시 사용한 질문 (히스토리 상세 등에서 내려주면 목록/결과에 그대로 사용) */
   prompt?: string
+  target?: string
+  risk?: string
+  period?: string
+  campus?: string
+  conditions?: {
+    year?: number
+    semester?: string
+    campus?: string
+    dept_name?: string
+    category?: string
+    risk_level?: string
+  }
   section_1_time_series: AiForecastApiTimeSeriesItem[]
   section_2_strategic_guide: AiForecastApiStrategicGuide
   section_3_recommendations: AiForecastApiRecommendationItem[]
@@ -180,6 +198,10 @@ function formatBudget(value: number): string {
 
 /** ai_insight가 문자열 또는 객체로 올 수 있음 — 테이블에는 문자열만 넘겨야 함 */
 function resolveRecommendationAiComment(r: AiForecastApiRecommendationItem): string {
+  const analysisComment = r.ai_analysis_comment
+  if (typeof analysisComment === 'string' && analysisComment.trim()) {
+    return analysisComment.trim()
+  }
   const insight = r.ai_insight
   if (insight == null) return r.comment ?? ''
   if (typeof insight === 'string') return insight
@@ -475,7 +497,15 @@ export async function fetchAiForecastHistoryDetail(
   }
   const apiData = body.data
   const promptForDisplay = apiData.prompt?.trim() || displayTitle || '이전 예측'
-  return mapApiDataToResponse(promptForDisplay, apiData)
+  const displaySummary: AiForecastDisplaySummary | undefined =
+    apiData.target || apiData.risk || apiData.period
+      ? {
+          target: apiData.target ?? '',
+          risk: apiData.risk ?? '',
+          period: apiData.period ?? '',
+        }
+      : undefined
+  return mapApiDataToResponse(promptForDisplay, apiData, displaySummary)
 }
 
 /**
