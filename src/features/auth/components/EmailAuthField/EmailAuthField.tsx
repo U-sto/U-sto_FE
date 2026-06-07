@@ -14,6 +14,7 @@ interface EmailAuthFieldProps {
   /** 인증번호 전송 성공 후 true — 입력란·타이머 표시 */
   codeSent?: boolean
   verificationKey?: number
+  onVerificationExpired?: () => void
 }
 
 const EmailAuthField = ({
@@ -25,6 +26,7 @@ const EmailAuthField = ({
   onAuthCodeChange,
   codeSent = false,
   verificationKey = 0,
+  onVerificationExpired,
 }: EmailAuthFieldProps) => {
   return (
     <div className="email-auth-field">
@@ -59,6 +61,7 @@ const EmailAuthField = ({
           timerKey={verificationKey}
           onResendCode={onSendCode}
           isResending={isSending}
+          onVerificationExpired={onVerificationExpired}
         />
       ) : null}
     </div>

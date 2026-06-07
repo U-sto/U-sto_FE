@@ -16,8 +16,21 @@ const http = axios.create({
   withCredentials: true,
 })
 
+function isPublicSessionAuthPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/find-id') ||
+    pathname.startsWith('/find-password')
+  )
+}
+
 /** 요청 직전: 로그인 후 필요한 API용 Authorization 헤더 추가 */
 http.interceptors.request.use((config) => {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  // 회원가입·찾기 플로우는 HttpSession(JSESSIONID)만 사용 — stale JWT가 섞이면 세션 충돌 가능
+  if (isPublicSessionAuthPath(pathname)) {
+    return config
+  }
   const token = localStorage.getItem(ACCESS_TOKEN_KEY)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -38,15 +51,18 @@ http.interceptors.response.use(
   (error: AxiosError<{ success?: boolean; message?: string; data?: unknown }>) => {
     const status = error.response?.status
 
-    // 인증 만료 또는 로그인 필요 (401) 시 토큰 삭제 후 로그인 페이지로 이동
-    if (status === 401) {
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isPublicSessionAuth = isPublicSessionAuthPath(pathname)
+
+    // 인증 만료 또는 로그인 필요 (401) — 회원가입·찾기는 세션 오류로 페이지에서 처리
+    if (status === 401 && !isPublicSessionAuth) {
       try {
         localStorage.removeItem(ACCESS_TOKEN_KEY)
       } catch {
         // ignore
       }
 
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      if (typeof window !== 'undefined' && pathname !== '/login') {
         window.alert('로그인이 만료되어 로그인 화면으로 돌아갑니다.')
         window.location.href = '/login'
       }

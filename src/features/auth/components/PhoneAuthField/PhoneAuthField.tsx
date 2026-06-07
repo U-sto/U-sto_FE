@@ -14,6 +14,7 @@ interface PhoneAuthFieldProps {
   codeSent?: boolean
   verificationKey?: number
   inputClassName?: string
+  onVerificationExpired?: () => void
 }
 
 const PhoneAuthField = ({
@@ -26,6 +27,7 @@ const PhoneAuthField = ({
   codeSent = false,
   verificationKey = 0,
   inputClassName,
+  onVerificationExpired,
 }: PhoneAuthFieldProps) => {
   return (
     <div className="phone-auth-field">
@@ -58,6 +60,7 @@ const PhoneAuthField = ({
           inputClassName={inputClassName}
           onResendCode={onSendCode}
           isResending={isSending}
+          onVerificationExpired={onVerificationExpired}
         />
       ) : null}
     </div>

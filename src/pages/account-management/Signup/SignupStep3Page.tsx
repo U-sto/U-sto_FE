@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import TextField from '../../../components/common/TextField/TextField'
 import Dropdown from '../../../components/common/Dropdown/Dropdown'
@@ -7,14 +7,16 @@ import PhoneAuthField from '../../../features/auth/components/PhoneAuthField/Pho
 import Button from '../../../components/common/Button/Button'
 import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../../api/auth'
 import { fetchOrganizations, buildOrganizationSelect } from '../../../api/organization'
-import { signUp, checkSmsExists } from '../../../api/users'
+import { signUp } from '../../../api/users'
 import { formatPhoneNumber } from '../../../utils/formatPhoneNumber'
+import { refreshExistsBeforeSmsSend } from '../../../features/auth/signup/signupApiHelpers'
+import {
+  canAccessSignupStep,
+  loadSignupSession,
+  saveSignupSession,
+} from '../../../features/auth/signup/signupSession'
+import { mapSignupSessionError } from '../../../features/auth/signup/signupErrors'
 import './SignupStep3Page.css'
-
-export interface SignupStep2State {
-  userId: string
-  password: string
-}
 
 /** API 실패 시에만 사용하는 소속 폴백 (기존 하드코딩) */
 const SIGNUP_ORG_FALLBACK_BY_CAMPUS: Record<string, string> = {
@@ -25,8 +27,6 @@ const SIGNUP_ORG_FALLBACK_OPTIONS = Object.keys(SIGNUP_ORG_FALLBACK_BY_CAMPUS)
 
 const SignupStep3Page = () => {
   const navigate = useNavigate()
-  const location = useLocation()
-  const step2State = location.state as SignupStep2State | null
   const [name, setName] = useState('')
   const [department, setDepartment] = useState('')
   const [phone, setPhone] = useState('')
@@ -42,10 +42,10 @@ const SignupStep3Page = () => {
   }))
 
   useEffect(() => {
-    if (!step2State?.userId || !step2State?.password) {
+    if (!canAccessSignupStep(3)) {
       navigate('/signup/step2', { replace: true })
     }
-  }, [step2State, navigate])
+  }, [navigate])
 
   /** GET /api/organization/organizations — 회원가입 소속 목록 */
   useEffect(() => {
@@ -87,17 +87,26 @@ const SignupStep3Page = () => {
       setError('올바른 전화번호를 입력해 주세요.')
       return
     }
+
+    const session = loadSignupSession()
+    if (!session.isUserIdVerified || !session.isEmailVerified) {
+      setError('이전 단계 인증 정보가 없습니다. 처음부터 다시 진행해 주세요.')
+      navigate('/signup', { replace: true })
+      return
+    }
+
     setError(null)
     setIsSendingCode(true)
     try {
       const target = trimmedPhone.replace(/-/g, '')
-      await checkSmsExists(target)
+      await refreshExistsBeforeSmsSend(session.userId, session.emailId, target)
       await sendSmsVerificationCode({ target, purpose: 'SIGNUP' })
       setAuthCode('')
       setCodeSent(true)
       setVerificationKey((key) => key + 1)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
+      const message = e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.'
+      setError(mapSignupSessionError(message))
     } finally {
       setIsSendingCode(false)
     }
@@ -105,9 +114,10 @@ const SignupStep3Page = () => {
 
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault()
+    const session = loadSignupSession()
 
-    if (!step2State?.userId || !step2State?.password) {
-      setError('이전 단계 정보가 없습니다. 아이디·비밀번호 단계부터 진행해 주세요.')
+    if (!canAccessSignupStep(3)) {
+      setError('이전 단계 정보가 없습니다. 처음부터 진행해 주세요.')
       navigate('/signup/step2', { replace: true })
       return
     }
@@ -153,23 +163,31 @@ const SignupStep3Page = () => {
     try {
       await checkSmsVerificationCode({ code: trimmedAuthCode })
       await signUp({
-        usrId: step2State.userId,
+        usrId: session.userId,
         usrNm: trimmedName,
-        pwd: step2State.password,
+        pwd: session.password,
         orgCd,
       })
+      saveSignupSession({ completed: true })
       navigate('/signup/complete')
     } catch (e) {
-      setError(e instanceof Error ? e.message : '가입 처리에 실패했습니다.')
+      const message = e instanceof Error ? e.message : '가입 처리에 실패했습니다.'
+      setError(mapSignupSessionError(message))
     } finally {
       setIsVerifying(false)
     }
+  }
+
+  const handleVerificationExpired = () => {
+    setCodeSent(false)
+    setAuthCode('')
   }
 
   return (
     <SignupLayout
       step={3}
       title="회원가입"
+      subtitle="회원 정보를 입력하고 휴대폰 인증을 완료해 주세요"
       onSubmit={handleSignup}
       formClassName="signup-layout-form--step3"
     >
@@ -196,6 +214,7 @@ const SignupStep3Page = () => {
             onAuthCodeChange={(e) => setAuthCode(e.target.value)}
             codeSent={codeSent}
             verificationKey={verificationKey}
+            onVerificationExpired={handleVerificationExpired}
           />
         </div>
       </div>

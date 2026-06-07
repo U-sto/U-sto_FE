@@ -14,6 +14,8 @@ interface VerificationCodeInputProps {
   inputClassName?: string
   onResendCode?: () => void | Promise<void>
   isResending?: boolean
+  /** 타이머 만료 시 부모 상태(codeSent 등) 초기화 */
+  onVerificationExpired?: () => void
 }
 
 const VerificationCodeInput = ({
@@ -24,6 +26,7 @@ const VerificationCodeInput = ({
   inputClassName,
   onResendCode,
   isResending = false,
+  onVerificationExpired,
 }: VerificationCodeInputProps) => {
   const { formatted, isExpired } = useVerificationCountdown(timerKey, visible)
   const [expiredModalOpen, setExpiredModalOpen] = useState(false)
@@ -39,7 +42,8 @@ const VerificationCodeInput = ({
     }
     if (dismissedExpiryKeyRef.current === timerKey) return
     setExpiredModalOpen(true)
-  }, [visible, isExpired, timerKey])
+    onVerificationExpired?.()
+  }, [visible, isExpired, timerKey, onVerificationExpired])
 
   const handleConfirm = () => {
     dismissedExpiryKeyRef.current = timerKey
