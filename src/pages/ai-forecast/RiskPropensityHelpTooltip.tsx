@@ -4,7 +4,7 @@ import './RiskPropensityHelpTooltip.css'
 /** 마우스가 벗어난 뒤 패널을 닫기까지 여유 시간(ms). 이 안에 다시 들어오면 유지 */
 const CLOSE_DELAY_MS = 380
 
-/** 리스크성향 드롭다운 옆 물음표 — 호버 시 설명 패널 (최소 → 표준 → 최대 순) */
+/** 조달성향 드롭다운 옆 물음표 — 호버 시 설명 패널 (최소 → 표준 → 최대 순) */
 const RiskPropensityHelpTooltip = () => {
   const [open, setOpen] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -46,7 +46,7 @@ const RiskPropensityHelpTooltip = () => {
       <button
         type="button"
         className="risk-propensity-help__trigger"
-        aria-label="리스크성향 유형 설명"
+        aria-label="조달성향 유형 설명"
         aria-expanded={open}
         aria-describedby={open ? 'risk-propensity-help-panel' : undefined}
       >
@@ -58,7 +58,7 @@ const RiskPropensityHelpTooltip = () => {
         role="tooltip"
         aria-hidden={!open}
       >
-        <h3 className="risk-propensity-help__title">리스크 성향이란?</h3>
+        <h3 className="risk-propensity-help__title">조달성향이란?</h3>
         <div className="risk-propensity-help__scroll">
           <section className="risk-propensity-help__section">
             <h4 className="risk-propensity-help__heading">

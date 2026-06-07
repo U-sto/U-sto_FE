@@ -273,7 +273,7 @@
   color: var(--usto-alt-black);
 }
 
-/* 리스크성향: 드롭다운 + 물음표(설명 툴팁) */
+/* 조달성향: 드롭다운 + 물음표(설명 툴팁) */
 .ai-forecast-risk-dropdown-row {
   display: flex;
   align-items: center;

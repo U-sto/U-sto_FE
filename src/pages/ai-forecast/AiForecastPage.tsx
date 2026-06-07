@@ -618,7 +618,7 @@ const AiForecastPage = () => {
                 {analysisConditionOpen && (
                   <div className="ai-forecast-analysis-condition-body">
                     <p className="ai-forecast-analysis-condition-required-note" role="note">
-                      분석조건은 필수입니다. 년도·학기·캠퍼스·운용부서·리스크성향을 모두 지정해야 하며, 상단
+                      분석조건은 필수입니다. 년도·학기·캠퍼스·운용부서·조달성향을 모두 지정해야 하며, 상단
                       검색창에 분석 요청 문장을 확인한 뒤 검색해 주세요.
                     </p>
                     <div className="ai-forecast-analysis-condition-row">
@@ -699,7 +699,7 @@ const AiForecastPage = () => {
                         </div>
                       </div>
                       <div className="ai-forecast-analysis-condition-field ai-forecast-risk-field">
-                        <label className="ai-forecast-analysis-condition-label">리스크성향</label>
+                        <label className="ai-forecast-analysis-condition-label">조달성향</label>
                         <div className="ai-forecast-risk-dropdown-row">
                           <Dropdown
                             size="small"
@@ -709,7 +709,7 @@ const AiForecastPage = () => {
                               setAnalysisCondition((prev) => ({ ...prev, riskPropensity: value }))
                             }
                             options={RISK_OPTIONS}
-                            ariaLabel="리스크성향 선택"
+                            ariaLabel="조달성향 선택"
                           />
                           <RiskPropensityHelpTooltip />
                         </div>
