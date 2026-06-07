@@ -58,65 +58,101 @@ const RiskPropensityHelpTooltip = () => {
         role="tooltip"
         aria-hidden={!open}
       >
-        <h3 className="risk-propensity-help__title">조달성향이란?</h3>
+        <h3 className="risk-propensity-help__title">조달 성향이란?</h3>
         <div className="risk-propensity-help__scroll">
+          <p className="risk-propensity-help__p risk-propensity-help__p--intro">
+            조달 성향은 물품 부족 위험과 재고·예산 부담 중 무엇을 우선할지 선택하는 기준입니다.
+          </p>
+          <p className="risk-propensity-help__p risk-propensity-help__p--intro">
+            선택한 성향에 따라 <strong>안전재고 수량과 권장발주기한</strong>이 조정됩니다.
+          </p>
+
           <section className="risk-propensity-help__section">
-            <h4 className="risk-propensity-help__heading">
-              안전재고 최소 (비용 절감 및 공간 최적화 중심)
-            </h4>
-            <p className="risk-propensity-help__p">
-              보관 비용이나 관리 인력을 줄이기 위해 재고를 최소화하려는 태도입니다.
+            <h4 className="risk-propensity-help__heading">안전재고 최소</h4>
+            <p className="risk-propensity-help__p risk-propensity-help__p--tagline">
+              <strong>비용 및 보관 공간 절감 중심</strong>
             </p>
             <p className="risk-propensity-help__p">
-              <strong>주요 대상:</strong> 내용 연수가 긴 고가의 교육용 기자재(PC, 실험 장비), 가구류.
+              예측된 필요수량을 중심으로 조달하고 추가 안전재고는 최소화하는 방식입니다.
             </p>
-            <p className="risk-propensity-help__p">
-              <strong>특징:</strong> 재고를 쌓아두지 않고 수요가 발생할 때마다{' '}
-              <strong>‘수시 구매’</strong>하거나, 필요할 때 빌려 쓰는 ‘렌탈 방식’을 선호합니다.
-            </p>
-            <p className="risk-propensity-help__p">
-              <strong>리스크 관리:</strong> 당장 나가는 관리 예산을 줄일 수 있고 창고 공간을 아낄 수 있습니다.
-              하지만 조달청 입찰 절차 등 대학 특유의 복잡한 구매 행정 프로세스 때문에, 필요한 시점에
-              물건이 도착하지 않는(납기 지연) 리스크가 매우 큽니다.
-            </p>
+            <ul className="risk-propensity-help__list">
+              <li>
+                <strong>적합 대상:</strong> 조달 기간이 짧고 대체품 확보가 쉬운 일반 기자재
+              </li>
+              <li>
+                <strong>운영 방식:</strong> 수요가 발생할 때 필요한 수량 위주로 구매
+              </li>
+              <li>
+                <strong>장점:</strong> 재고 보관 비용과 예산 부담을 줄일 수 있음
+              </li>
+              <li>
+                <strong>유의사항:</strong> 갑작스러운 수요 증가나 납기 지연 시 물품이 부족할 수 있음
+              </li>
+              <li>
+                <strong>시스템 반영:</strong> 안전재고 계수 <code>0.0</code>, 추가 발주 여유{' '}
+                <code>0일</code>
+              </li>
+            </ul>
           </section>
 
           <section className="risk-propensity-help__section">
-            <h4 className="risk-propensity-help__heading">안전재고 표준 (효율적 행정 중심)</h4>
-            <p className="risk-propensity-help__p">
-              과거의 사용량 데이터를 분석하여 최적의 구매 시점과 수량을 정하는 태도입니다.
+            <h4 className="risk-propensity-help__heading">안전재고 표준</h4>
+            <p className="risk-propensity-help__p risk-propensity-help__p--tagline">
+              <strong>비용과 운영 안정성의 균형</strong>
             </p>
             <p className="risk-propensity-help__p">
-              <strong>주요 대상:</strong> 복사용지, 토너, 사무용 비품, 청소용품 등 일반 행정 소모품.
+              과거 수요 변동과 조달 리드타임을 고려하여 일반적인 수준의 안전재고를 확보하는 방식입니다.
             </p>
-            <p className="risk-propensity-help__p">
-              <strong>특징:</strong> 매달 혹은 분기별 사용량을 체크하여 재고가 일정 수준(발주점) 이하로
-              떨어지면 자동으로 구매합니다.
-            </p>
-            <p className="risk-propensity-help__p">
-              <strong>리스크 관리:</strong> 가장 합리적인 방식이지만, 갑작스러운 신입생 증가나 대규모
-              행사 등으로 수요가 폭증하면 일시적으로 물품이 부족해지는 리스크가 있습니다.
-            </p>
+            <ul className="risk-propensity-help__list">
+              <li>
+                <strong>적합 대상:</strong> 노트북, 모니터, 사무기기 등 일반적인 대학 기자재
+              </li>
+              <li>
+                <strong>운영 방식:</strong> 예측수요에 표준 안전재고와 발주 여유기간을 추가
+              </li>
+              <li>
+                <strong>장점:</strong> 과도한 재고를 방지하면서 일반적인 수요 변동에 대응 가능
+              </li>
+              <li>
+                <strong>유의사항:</strong> 예상보다 큰 행사나 수요 급증에는 일시적인 부족이 발생할 수
+                있음
+              </li>
+              <li>
+                <strong>시스템 반영:</strong> 안전재고 계수 <code>1.28</code>, 추가 발주 여유{' '}
+                <code>14일</code>
+              </li>
+            </ul>
           </section>
 
           <section className="risk-propensity-help__section">
-            <h4 className="risk-propensity-help__heading">안전재고 최대 (안정성 및 공공성 중심)</h4>
-            <p className="risk-propensity-help__p">
-              대학의 핵심 기능인 교육과 연구가 중단되는 상황을 극도로 경계하는 태도입니다.
+            <h4 className="risk-propensity-help__heading">안전재고 최대</h4>
+            <p className="risk-propensity-help__p risk-propensity-help__p--tagline">
+              <strong>수업·연구 운영의 연속성 우선</strong>
             </p>
             <p className="risk-propensity-help__p">
-              <strong>주요 대상:</strong> 연구실 실험 기자재용 특수 가스, 중앙 도서관 서버 부품, 전산실
-              소모품, 학위수여식용 학위복 등.
+              결품으로 인한 교육·연구 중단을 방지하기 위해 안전재고와 발주 여유기간을 크게 확보하는
+              방식입니다.
             </p>
-            <p className="risk-propensity-help__p">
-              <strong>특징:</strong> “없어서는 안 될 것”들에 대해 항상 과잉 재고를 유지합니다. 예산을 미리
-              확보하여 학기 초에 대량으로 구매해 쌓아둡니다.
-            </p>
-            <p className="risk-propensity-help__p">
-              <strong>리스크 관리:</strong> 물품 부족으로 인해 연구가 중단되거나 행정 시스템이 마비되는
-              것을 막는 것이 최우선입니다. 하지만 연말에 재고 조사(실사) 때 남는 물품이 너무 많으면 예산
-              낭비로 지적받을 리스크가 있습니다.
-            </p>
+            <ul className="risk-propensity-help__list">
+              <li>
+                <strong>적합 대상:</strong> 실험 장비, 서버 부품, 전산실 기자재 등 운영 중단 영향이 큰
+                물품
+              </li>
+              <li>
+                <strong>운영 방식:</strong> 예측수요에 높은 안전재고를 추가하고 발주 시점을 앞당김
+              </li>
+              <li>
+                <strong>장점:</strong> 수요 증가와 납기 지연에도 안정적으로 대응 가능
+              </li>
+              <li>
+                <strong>유의사항:</strong> 재고 보관 비용과 예산 부담, 장기 보관에 따른 노후화 가능성이
+                증가
+              </li>
+              <li>
+                <strong>시스템 반영:</strong> 안전재고 계수 <code>1.65</code>, 추가 발주 여유{' '}
+                <code>30일</code>
+              </li>
+            </ul>
           </section>
         </div>
       </div>
