@@ -4,7 +4,7 @@ import './RiskPropensityHelpTooltip.css'
 /** 마우스가 벗어난 뒤 패널을 닫기까지 여유 시간(ms). 이 안에 다시 들어오면 유지 */
 const CLOSE_DELAY_MS = 380
 
-/** 리스크성향 드롭다운 옆 물음표 — 호버 시 설명 패널 (선호 → 중립 → 회피 순) */
+/** 리스크성향 드롭다운 옆 물음표 — 호버 시 설명 패널 (최소 → 표준 → 최대 순) */
 const RiskPropensityHelpTooltip = () => {
   const [open, setOpen] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -62,7 +62,7 @@ const RiskPropensityHelpTooltip = () => {
         <div className="risk-propensity-help__scroll">
           <section className="risk-propensity-help__section">
             <h4 className="risk-propensity-help__heading">
-              리스크 선호형 (비용 절감 및 공간 최적화 중심)
+              안전재고 최소 (비용 절감 및 공간 최적화 중심)
             </h4>
             <p className="risk-propensity-help__p">
               보관 비용이나 관리 인력을 줄이기 위해 재고를 최소화하려는 태도입니다.
@@ -82,7 +82,7 @@ const RiskPropensityHelpTooltip = () => {
           </section>
 
           <section className="risk-propensity-help__section">
-            <h4 className="risk-propensity-help__heading">리스크 중립형 (효율적 행정 중심)</h4>
+            <h4 className="risk-propensity-help__heading">안전재고 표준 (효율적 행정 중심)</h4>
             <p className="risk-propensity-help__p">
               과거의 사용량 데이터를 분석하여 최적의 구매 시점과 수량을 정하는 태도입니다.
             </p>
@@ -100,7 +100,7 @@ const RiskPropensityHelpTooltip = () => {
           </section>
 
           <section className="risk-propensity-help__section">
-            <h4 className="risk-propensity-help__heading">리스크 회피형 (안정성 및 공공성 중심)</h4>
+            <h4 className="risk-propensity-help__heading">안전재고 최대 (안정성 및 공공성 중심)</h4>
             <p className="risk-propensity-help__p">
               대학의 핵심 기능인 교육과 연구가 중단되는 상황을 극도로 경계하는 태도입니다.
             </p>

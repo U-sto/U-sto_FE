@@ -100,7 +100,7 @@ function buildYearOptions(): string[] {
 
 const YEAR_OPTIONS = buildYearOptions()
 const SEMESTER_OPTIONS = ['1학기', '여름학기', '2학기', '겨울학기']
-const RISK_OPTIONS = ['리스크 선호', '리스크 중립', '리스크 회피']
+const RISK_OPTIONS = ['안전재고 최소', '안전재고 표준', '안전재고 최대']
 
 /** 분석조건 기본 운용부서 — API 라벨과 다를 수 있어 로드 후 매칭 */
 const DEFAULT_OPERATING_DEPT_KEY = '소프트웨어융합대학RC행정팀'
@@ -132,7 +132,7 @@ const DEFAULT_ANALYSIS_CONDITION: AnalysisCondition = {
   semester: '여름학기',
   operatingDept: DEFAULT_OPERATING_DEPT_LABEL,
   itemCategoryName: '노트북컴퓨터',
-  riskPropensity: '리스크 선호',
+  riskPropensity: '안전재고 최소',
 }
 
 /** 분석조건 → 검색창 자동 문장 생성 */
@@ -147,6 +147,9 @@ function buildAutoPrompt(condition: {
   const category = condition.itemCategoryName.trim()
   const categoryPart = category ? `${category} ` : '전체 '
   const riskTextMap: Record<string, string> = {
+    '안전재고 최소': '타이트하게(재고 최소화)',
+    '안전재고 표준': '적정하게',
+    '안전재고 최대': '넉넉하게(결품 방지)',
     '리스크 선호': '타이트하게(재고 최소화)',
     '리스크 중립': '적정하게',
     '리스크 회피': '넉넉하게(결품 방지)',
@@ -500,12 +503,15 @@ const AiForecastPage = () => {
         return
       }
       const riskDisplayMap: Record<string, string> = {
-        '리스크 선호': '리스크 선호',
-        '리스크 중립': '리스크 중립',
-        '리스크 회피': '리스크 회피',
-        필수: '리스크 선호',
-        권장: '리스크 중립',
-        선택: '리스크 회피',
+        '안전재고 최소': '안전재고 최소',
+        '안전재고 표준': '안전재고 표준',
+        '안전재고 최대': '안전재고 최대',
+        '리스크 선호': '안전재고 최소',
+        '리스크 중립': '안전재고 표준',
+        '리스크 회피': '안전재고 최대',
+        필수: '안전재고 최소',
+        권장: '안전재고 표준',
+        선택: '안전재고 최대',
       }
       const displaySummary: AiForecastDisplaySummary = {
         target: analysisCondition.operatingDept === '선택' ? '' : analysisCondition.operatingDept,

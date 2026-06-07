@@ -376,6 +376,9 @@ export function buildForecastConditions(
   const categoryTrimmed = ui.itemCategoryName?.trim() ?? ''
   const categoryForApi = categoryTrimmed.length > 0 ? categoryTrimmed : '전체'
   const riskLevelByPropensity: Record<string, ForecastRiskLevel> = {
+    '안전재고 최소': 'HIGH',
+    '안전재고 표준': 'MEDIUM',
+    '안전재고 최대': 'LOW',
     '리스크 선호': 'HIGH',
     '리스크 중립': 'MEDIUM',
     '리스크 회피': 'LOW',
