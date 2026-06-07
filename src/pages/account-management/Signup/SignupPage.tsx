@@ -1,8 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SignupLayout from '../../../components/layout/auth/SignupLayout/SignupLayout'
 import EmailAuthField from '../../../features/auth/components/EmailAuthField/EmailAuthField'
-import TextField from '../../../components/common/TextField/TextField'
 import Button from '../../../components/common/Button/Button'
 import { sendEmailVerificationEmail, checkEmailVerificationCode } from '../../../api/auth'
 import { checkEmailExists } from '../../../api/users'
@@ -14,12 +13,20 @@ const SignupPage = () => {
   const navigate = useNavigate()
   const [emailLocal, setEmailLocal] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [verificationKey, setVerificationKey] = useState(0)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isEmailValid =
     emailLocal.trim().length > 0 && LOCAL_PART_REGEX.test(emailLocal.trim())
+
+  useEffect(() => {
+    setCodeSent(false)
+    setAuthCode('')
+    setVerificationKey(0)
+  }, [emailLocal])
 
   const handleSendCode = async () => {
     if (!isEmailValid) {
@@ -36,6 +43,9 @@ const SignupPage = () => {
         usrId: '',
         emailId,
       })
+      setAuthCode('')
+      setCodeSent(true)
+      setVerificationKey((key) => key + 1)
     } catch (e) {
       const message = e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.'
       setError(message)
@@ -46,6 +56,10 @@ const SignupPage = () => {
 
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault()
+    if (!codeSent) {
+      setError('인증번호 보내기를 먼저 진행해 주세요.')
+      return
+    }
     const trimmedCode = authCode.trim()
     if (!trimmedCode) {
       setError('인증번호를 입력해 주세요.')
@@ -76,15 +90,15 @@ const SignupPage = () => {
         email={emailLocal}
         onEmailChange={(e) => setEmailLocal(e.target.value)}
         onSendCode={handleSendCode}
-      />
-      <TextField
-        placeholder="인증번호를 입력해 주세요"
-        value={authCode}
-        onChange={(e) => setAuthCode(e.target.value)}
+        isSending={isSendingCode}
+        authCode={authCode}
+        onAuthCodeChange={(e) => setAuthCode(e.target.value)}
+        codeSent={codeSent}
+        verificationKey={verificationKey}
       />
       {error && <p className="form-error">{error}</p>}
-      <Button type="submit" disabled={isSendingCode || isVerifying}>
-        {isVerifying ? '확인 중...' : isSendingCode ? '전송 중...' : '인증하기'}
+      <Button type="submit" disabled={isSendingCode || isVerifying || !codeSent}>
+        {isVerifying ? '확인 중...' : '인증하기'}
       </Button>
     </SignupLayout>
   )

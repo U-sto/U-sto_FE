@@ -1,15 +1,31 @@
 import type { ChangeEvent } from 'react'
 import TextField from '../../../../components/common/TextField/TextField'
 import Button from '../../../../components/common/Button/Button'
+import VerificationCodeInput from '../VerificationCodeInput/VerificationCodeInput'
 import './EmailAuthField.css'
 
 interface EmailAuthFieldProps {
   email: string
   onEmailChange: (e: ChangeEvent<HTMLInputElement>) => void
   onSendCode: () => void
+  isSending?: boolean
+  authCode?: string
+  onAuthCodeChange?: (e: ChangeEvent<HTMLInputElement>) => void
+  /** 인증번호 전송 성공 후 true — 입력란·타이머 표시 */
+  codeSent?: boolean
+  verificationKey?: number
 }
 
-const EmailAuthField = ({ email, onEmailChange, onSendCode }: EmailAuthFieldProps) => {
+const EmailAuthField = ({
+  email,
+  onEmailChange,
+  onSendCode,
+  isSending = false,
+  authCode = '',
+  onAuthCodeChange,
+  codeSent = false,
+  verificationKey = 0,
+}: EmailAuthFieldProps) => {
   return (
     <div className="email-auth-field">
       <div className="email-auth-wrapper">
@@ -24,14 +40,27 @@ const EmailAuthField = ({ email, onEmailChange, onSendCode }: EmailAuthFieldProp
           />
           <span className="email-domain">@hanyang.ac.kr</span>
         </div>
-        <Button
-          type="button"
-          onClick={onSendCode}
-          className="send-code-button"
-        >
-          인증번호
-        </Button>
+        {!codeSent ? (
+          <Button
+            type="button"
+            onClick={onSendCode}
+            className="send-code-button"
+            disabled={isSending}
+          >
+            {isSending ? '전송 중...' : '인증번호 보내기'}
+          </Button>
+        ) : null}
       </div>
+      {onAuthCodeChange ? (
+        <VerificationCodeInput
+          visible={codeSent}
+          authCode={authCode}
+          onAuthCodeChange={onAuthCodeChange}
+          timerKey={verificationKey}
+          onResendCode={onSendCode}
+          isResending={isSending}
+        />
+      ) : null}
     </div>
   )
 }

@@ -344,6 +344,15 @@ const ORG_CD_BY_CAMPUS: Record<string, string> = {
   '한양대학교 서울캠퍼스': '7002282',
 }
 
+/** 회원정보(orgNm/orgCd) → 분석조건 캠퍼스 표시·org_cd */
+export function resolveForecastCampusFromUser(
+  user: { orgNm?: string; orgCd?: string } | null | undefined,
+): { campus: string; orgCd: string } {
+  const campus = user?.orgNm?.trim() ?? ''
+  const orgCd = user?.orgCd?.trim() || ORG_CD_BY_CAMPUS[campus] || ''
+  return { campus, orgCd }
+}
+
 function normalizeDeptName(label: string): string {
   // 중복 부서명 구분용으로 붙인 " (DEPT_CD)" suffix는 API 요청에서 제거
   return label.replace(/\s\([A-Za-z0-9_-]+\)$/, '').trim()

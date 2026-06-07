@@ -31,6 +31,8 @@ const SignupStep3Page = () => {
   const [department, setDepartment] = useState('')
   const [phone, setPhone] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [verificationKey, setVerificationKey] = useState(0)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,6 +75,12 @@ const SignupStep3Page = () => {
     setPhone(formatPhoneNumber(e.target.value))
   }
 
+  useEffect(() => {
+    setCodeSent(false)
+    setAuthCode('')
+    setVerificationKey(0)
+  }, [phone])
+
   const handleSendCode = async () => {
     const trimmedPhone = phone.replace(/\s/g, '').trim()
     if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
@@ -85,6 +93,9 @@ const SignupStep3Page = () => {
       const target = trimmedPhone.replace(/-/g, '')
       await checkSmsExists(target)
       await sendSmsVerificationCode({ target, purpose: 'SIGNUP' })
+      setAuthCode('')
+      setCodeSent(true)
+      setVerificationKey((key) => key + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
     } finally {
@@ -124,6 +135,11 @@ const SignupStep3Page = () => {
 
     if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요.')
+      return
+    }
+
+    if (!codeSent) {
+      setError('인증번호 보내기를 먼저 진행해 주세요.')
       return
     }
 
@@ -175,17 +191,16 @@ const SignupStep3Page = () => {
             phone={phone}
             onPhoneChange={handlePhoneChange}
             onSendCode={handleSendCode}
-          />
-          <TextField
-            placeholder="인증번호를 입력해 주세요"
-            value={authCode}
-            onChange={(e) => setAuthCode(e.target.value)}
-            inputMode="numeric"
+            isSending={isSendingCode}
+            authCode={authCode}
+            onAuthCodeChange={(e) => setAuthCode(e.target.value)}
+            codeSent={codeSent}
+            verificationKey={verificationKey}
           />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
-      <Button type="submit" disabled={isVerifying}>
+      <Button type="submit" disabled={isVerifying || !codeSent}>
         {isVerifying ? '확인 중...' : '가입하기'}
       </Button>
     </SignupLayout>

@@ -1,8 +1,9 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GNBWithMenu from '../../components/layout/management/GNBWithMenu/GNBWithMenu'
 import TextField from '../../components/common/TextField/TextField'
 import Button from '../../components/common/Button/Button'
+import VerificationCodeInput from '../../features/auth/components/VerificationCodeInput/VerificationCodeInput'
 import ChatBotButton from '../../features/support/components/ChatBotButton/ChatBotButton'
 import { formatPhoneNumber } from '../../utils/formatPhoneNumber'
 import { sendSmsVerificationCode, checkSmsVerificationCode } from '../../api/auth'
@@ -13,6 +14,8 @@ const ChangePhonePage = () => {
   const navigate = useNavigate()
   const [phone, setPhone] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [verificationKey, setVerificationKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -20,6 +23,12 @@ const ChangePhonePage = () => {
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhoneNumber(e.target.value))
   }
+
+  useEffect(() => {
+    setCodeSent(false)
+    setAuthCode('')
+    setVerificationKey(0)
+  }, [phone])
 
   const handleSendCode = async () => {
     const trimmed = phone.replace(/\s/g, '').trim()
@@ -32,6 +41,9 @@ const ChangePhonePage = () => {
     try {
       const target = trimmed.replace(/-/g, '')
       await sendSmsVerificationCode({ target, purpose: 'RESET_PASSWORD' })
+      setAuthCode('')
+      setCodeSent(true)
+      setVerificationKey((key) => key + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
     } finally {
@@ -46,6 +58,10 @@ const ChangePhonePage = () => {
 
     if (!/^010-\d{4}-\d{4}$/.test(trimmedPhone)) {
       setError('올바른 전화번호를 입력해 주세요. (010-XXXX-XXXX)')
+      return
+    }
+    if (!codeSent) {
+      setError('인증번호 보내기를 먼저 진행해 주세요.')
       return
     }
     if (!trimmedCode) {
@@ -95,29 +111,36 @@ const ChangePhonePage = () => {
                 className="change-phone-input"
                 inputMode="numeric"
               />
-              <Button
-                type="button"
-                className="change-phone-send-btn"
-                onClick={handleSendCode}
-                disabled={isSendingCode}
-              >
-                {isSendingCode ? '전송 중...' : '인증번호'}
-              </Button>
+              {!codeSent ? (
+                <Button
+                  type="button"
+                  className="change-phone-send-btn"
+                  onClick={handleSendCode}
+                  disabled={isSendingCode}
+                >
+                  {isSendingCode ? '전송 중...' : '인증번호 보내기'}
+                </Button>
+              ) : null}
             </div>
-            <div className="change-phone-auth-code-wrap">
-              <TextField
-                placeholder="인증번호를 입력해 주세요"
-                value={authCode}
-                onChange={(e) => setAuthCode(e.target.value)}
-                className="change-phone-input"
-              />
-              {error && <p className="change-phone-error">{error}</p>}
-            </div>
+            {codeSent ? (
+              <div className="change-phone-auth-code-wrap">
+                <VerificationCodeInput
+                  visible={codeSent}
+                  authCode={authCode}
+                  onAuthCodeChange={(e) => setAuthCode(e.target.value)}
+                  timerKey={verificationKey}
+                  inputClassName="change-phone-input"
+                  onResendCode={handleSendCode}
+                  isResending={isSendingCode}
+                />
+              </div>
+            ) : null}
+            {error && <p className="change-phone-error">{error}</p>}
           </div>
           <Button
             type="submit"
             className="change-phone-submit-btn"
-            disabled={isSendingCode || isSubmitting}
+            disabled={isSendingCode || isSubmitting || !codeSent}
           >
             {isSubmitting ? '변경 중...' : '변경'}
           </Button>

@@ -116,12 +116,12 @@
 
 .change-phone-send-btn {
   flex-shrink: 0;
-  width: 136px;
+  width: 180px;
   height: 70px;
-  padding: 14px;
+  padding: 14px 10px;
   font-family: var(--font-family);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.45;
   letter-spacing: -0.03em;
   color: var(--usto-alt-white);
@@ -183,7 +183,7 @@
   }
 
   .change-phone-send-btn {
-    width: 100px;
+    width: 100%;
     height: 56px;
     font-size: 18px;
   }

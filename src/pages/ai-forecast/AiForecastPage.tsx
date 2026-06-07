@@ -15,6 +15,7 @@ import {
   fetchAiForecastHistoryDetail,
   deleteAiForecastRecord,
   patchAiForecastRecordTitle,
+  resolveForecastCampusFromUser,
   type AiForecastResponse,
   type AiForecastDisplaySummary,
   type ProcurementRecommendationRow,
@@ -25,6 +26,7 @@ import {
   buildOperatingDepartmentSelect,
 } from '../../api/organization'
 import G2BClassificationSearchModal from '../../features/asset-management/components/G2BClassificationSearchModal/G2BClassificationSearchModal'
+import { getUserInfo } from '../../api/users'
 import RiskPropensityHelpTooltip from './RiskPropensityHelpTooltip'
 import AiForecastRenameModal from './AiForecastRenameModal'
 import './AiForecastPage.css'
@@ -100,23 +102,36 @@ const YEAR_OPTIONS = buildYearOptions()
 const SEMESTER_OPTIONS = ['1학기', '여름학기', '2학기', '겨울학기']
 const RISK_OPTIONS = ['리스크 선호', '리스크 중립', '리스크 회피']
 
-const CAMPUS_FIXED = '한양대학교 ERICA캠퍼스'
+/** 분석조건 기본 운용부서 — API 라벨과 다를 수 있어 로드 후 매칭 */
+const DEFAULT_OPERATING_DEPT_KEY = '소프트웨어융합대학RC행정팀'
+const DEFAULT_OPERATING_DEPT_LABEL = '소프트웨어융합대학RC행정팀(ERICA)'
+
+function normalizeDeptLabel(label: string): string {
+  return label.replace(/\s/g, '').replace(/\(ERICA\)/gi, '')
+}
+
+function resolveDefaultOperatingDept(options: string[]): string {
+  const matched = options.find(
+    (opt) =>
+      opt !== '선택' &&
+      normalizeDeptLabel(opt).includes(normalizeDeptLabel(DEFAULT_OPERATING_DEPT_KEY)),
+  )
+  return matched ?? options.find((opt) => opt !== '선택') ?? '선택'
+}
 
 type AnalysisCondition = {
   year: string
   semester: string
-  campus: string
   operatingDept: string
   itemCategoryName: string
   riskPropensity: string
 }
 
 const DEFAULT_ANALYSIS_CONDITION: AnalysisCondition = {
-  year: String(new Date().getFullYear()),
-  semester: '1학기',
-  campus: CAMPUS_FIXED,
-  operatingDept: '선택',
-  itemCategoryName: '',
+  year: '2030',
+  semester: '여름학기',
+  operatingDept: DEFAULT_OPERATING_DEPT_LABEL,
+  itemCategoryName: '노트북컴퓨터',
   riskPropensity: '리스크 선호',
 }
 
@@ -185,8 +200,35 @@ const AiForecastPage = () => {
   const [renameModalItem, setRenameModalItem] = useState<AiForecastHistoryItem | null>(null)
   const [operatingDeptOptions, setOperatingDeptOptions] = useState<string[]>(['선택'])
   const [deptLabelToCd, setDeptLabelToCd] = useState<Record<string, string>>({})
-  const [orgCdForForecast, setOrgCdForForecast] = useState('7008277')
+  const [userOrgNm, setUserOrgNm] = useState('')
+  const [userOrgCd, setUserOrgCd] = useState('')
+  const [userOrgLoading, setUserOrgLoading] = useState(true)
   const [isG2BClassificationModalOpen, setIsG2BClassificationModalOpen] = useState(false)
+
+  /** 회원정보 API 소속(orgNm/orgCd) — 캠퍼스 표시·분석 org_cd에 사용 */
+  useEffect(() => {
+    let cancelled = false
+    setUserOrgLoading(true)
+    getUserInfo()
+      .then((res) => {
+        if (cancelled) return
+        const { campus, orgCd } = resolveForecastCampusFromUser(res.data)
+        setUserOrgNm(campus)
+        setUserOrgCd(orgCd)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUserOrgNm('')
+          setUserOrgCd('')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setUserOrgLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSidebarTabChange = (tab: 'ai' | 'history') => {
     if (tab === 'history') {
@@ -195,8 +237,6 @@ const AiForecastPage = () => {
     }
     setActiveTab(result ? 'result' : 'query')
   }
-
-  const getFirstSelectableDept = (options: string[]) => options.find((opt) => opt !== '선택') ?? '선택'
 
   useEffect(() => {
     let cancelled = false
@@ -207,14 +247,14 @@ const AiForecastPage = () => {
         const { options, labelToDeptCd } = buildOperatingDepartmentSelect(rows)
         setOperatingDeptOptions(options)
         setDeptLabelToCd(labelToDeptCd)
-        const firstDept = getFirstSelectableDept(options)
-        setAnalysisCondition((prev) =>
-          prev.operatingDept === '선택' && firstDept !== '선택'
-            ? { ...prev, operatingDept: firstDept }
-            : prev,
-        )
-        const orgCd = rows.find((r) => typeof r.orgCd === 'string' && r.orgCd.trim())?.orgCd
-        if (orgCd) setOrgCdForForecast(orgCd)
+        const defaultDept = resolveDefaultOperatingDept(options)
+        setAnalysisCondition((prev) => {
+          const isDefaultDept =
+            prev.operatingDept === '선택' ||
+            prev.operatingDept === DEFAULT_OPERATING_DEPT_LABEL ||
+            !options.includes(prev.operatingDept)
+          return isDefaultDept ? { ...prev, operatingDept: defaultDept } : prev
+        })
       } catch {
         if (cancelled) return
         setOperatingDeptOptions(['선택'])
@@ -419,8 +459,8 @@ const AiForecastPage = () => {
   }
 
   const handleResetCondition = () => {
-    const firstDept = getFirstSelectableDept(operatingDeptOptions)
-    const next = { ...DEFAULT_ANALYSIS_CONDITION, operatingDept: firstDept }
+    const defaultDept = resolveDefaultOperatingDept(operatingDeptOptions)
+    const next = { ...DEFAULT_ANALYSIS_CONDITION, operatingDept: defaultDept }
     setAnalysisCondition(next)
     /** 초기화 시 검색창도 새 조건 기준으로 갱신 */
     const generated = buildAutoPrompt(next)
@@ -433,7 +473,7 @@ const AiForecastPage = () => {
     const isConditionMissing =
       !analysisCondition.year ||
       !analysisCondition.semester ||
-      !analysisCondition.campus ||
+      !userOrgNm ||
       !analysisCondition.operatingDept ||
       analysisCondition.operatingDept === '선택' ||
       !analysisCondition.riskPropensity
@@ -444,12 +484,19 @@ const AiForecastPage = () => {
     setError(null)
     setLoading(true)
     try {
-      const conditions = buildForecastConditions(analysisCondition, {
-        campusOrgCd: orgCdForForecast,
-        deptLabelToCd,
-      })
+      const conditions = buildForecastConditions(
+        { ...analysisCondition, campus: userOrgNm },
+        {
+          campusOrgCd: userOrgCd,
+          deptLabelToCd,
+        },
+      )
       if (!conditions.dept_cd?.trim()) {
         window.alert('모든 조건을 입력해 주세요.')
+        return
+      }
+      if (!conditions.org_cd?.trim()) {
+        window.alert('회원 소속(캠퍼스) 정보를 확인할 수 없습니다.')
         return
       }
       const riskDisplayMap: Record<string, string> = {
@@ -598,7 +645,7 @@ const AiForecastPage = () => {
                       <div className="ai-forecast-analysis-condition-field">
                         <label className="ai-forecast-analysis-condition-label">캠퍼스</label>
                         <TextField
-                          value={analysisCondition.campus}
+                          value={userOrgLoading ? '불러오는 중...' : userOrgNm || '-'}
                           readOnly
                           className="ai-forecast-analysis-condition-input ai-forecast-analysis-condition-input--readonly"
                         />

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import AuthLayout from '../../../components/layout/auth/AuthLayout/AuthLayout'
 import FindIdTabs from '../../../features/auth/components/FindIdTabs/FindIdTabs'
@@ -15,12 +15,20 @@ const FindPasswordPage = () => {
   const [userId, setUserId] = useState('')
   const [email, setEmail] = useState('')
   const [authCode, setAuthCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [verificationKey, setVerificationKey] = useState(0)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isEmailValid =
     email.trim().length > 0 && LOCAL_PART_REGEX.test(email.trim())
+
+  useEffect(() => {
+    setCodeSent(false)
+    setAuthCode('')
+    setVerificationKey(0)
+  }, [email])
 
   const handleSendCode = async () => {
     if (!isEmailValid) {
@@ -36,6 +44,9 @@ const FindPasswordPage = () => {
         usrId: userId.trim(),
         emailId,
       })
+      setAuthCode('')
+      setCodeSent(true)
+      setVerificationKey((key) => key + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : '인증번호 전송에 실패했습니다.')
     } finally {
@@ -45,6 +56,10 @@ const FindPasswordPage = () => {
 
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault()
+    if (!codeSent) {
+      setError('인증번호 보내기를 먼저 진행해 주세요.')
+      return
+    }
     const trimmedCode = authCode.trim()
     if (!trimmedCode) {
       setError('인증번호를 입력해 주세요.')
@@ -92,17 +107,16 @@ const FindPasswordPage = () => {
             email={email}
             onEmailChange={(e) => setEmail(e.target.value)}
             onSendCode={handleSendCode}
-          />
-          <TextField
-            placeholder="인증번호를 입력해 주세요"
-            value={authCode}
-            onChange={(e) => setAuthCode(e.target.value)}
-            inputMode="numeric"
+            isSending={isSendingCode}
+            authCode={authCode}
+            onAuthCodeChange={(e) => setAuthCode(e.target.value)}
+            codeSent={codeSent}
+            verificationKey={verificationKey}
           />
         </div>
         {error && <p className="form-error">{error}</p>}
-        <Button type="submit" disabled={isSendingCode || isVerifying}>
-          {isVerifying ? '확인 중...' : isSendingCode ? '전송 중...' : '인증하기'}
+        <Button type="submit" disabled={isSendingCode || isVerifying || !codeSent}>
+          {isVerifying ? '확인 중...' : '인증하기'}
         </Button>
       </form>
     </AuthLayout>
