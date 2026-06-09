@@ -33,12 +33,19 @@ export interface AiForecastApiTimeSeriesItem {
   total_order_qty?: number
 }
 
+/** section_2: guide_sections 항목 */
+export interface AiForecastApiGuideSectionItem {
+  title?: string
+  content?: string
+}
+
 /** section_2: AI 전략적 조달 가이드 */
 export interface AiForecastApiStrategicGuide {
   ai_summary_comment?: string
   smart_forecasting?: string
   time_to_procure?: string
   budget_guide?: string
+  guide_sections?: AiForecastApiGuideSectionItem[]
 }
 
 /** 히스토리 등에서 ai_insight가 객체로 올 때 (스웨거 스펙) */
@@ -219,6 +226,40 @@ const ALGORITHM_FORMULA_LABELS: Record<'formula_1' | 'formula_2' | 'formula_3', 
   formula_3: '잔여 수명 (RUL)',
 }
 
+function mapStrategicGuideSections(
+  strategicGuide: AiForecastApiStrategicGuide,
+): AiForecastGuideSection[] {
+  const fromGuideSections = strategicGuide.guide_sections
+  if (Array.isArray(fromGuideSections) && fromGuideSections.length > 0) {
+    return fromGuideSections
+      .map((item) => {
+        const title = item.title?.trim() ?? ''
+        const text = item.content?.trim() ?? ''
+        if (!title && !text) return null
+        return { title: title || '가이드', text }
+      })
+      .filter((section): section is AiForecastGuideSection => section !== null)
+  }
+
+  const legacySections: AiForecastGuideSection[] = []
+  if (strategicGuide.smart_forecasting) {
+    legacySections.push({
+      title: '수요 산출 근거 (Smart Forecasting)',
+      text: strategicGuide.smart_forecasting,
+    })
+  }
+  if (strategicGuide.time_to_procure) {
+    legacySections.push({
+      title: '조달 최적화 전략 (Time-to-Procure)',
+      text: strategicGuide.time_to_procure,
+    })
+  }
+  if (strategicGuide.budget_guide) {
+    legacySections.push({ title: '예산 가이드', text: strategicGuide.budget_guide })
+  }
+  return legacySections
+}
+
 /** API 응답 data + 사용자 질문 + 화면표시용 요약을 AiForecastResponse로 변환 */
 function mapApiDataToResponse(
   prompt: string,
@@ -257,25 +298,12 @@ function mapApiDataToResponse(
   const ropItem = timeSeries.find((d) => d.is_rop)
   const reorderPointPeriod = ropItem?.month
 
-  // section_2 → AI 전략적 조달 가이드
-  const guideSections: AiForecastGuideSection[] = []
-  if (strategicGuide.smart_forecasting) {
-    guideSections.push({
-      title: '수요 산출 근거 (Smart Forecasting)',
-      text: strategicGuide.smart_forecasting,
-    })
-  }
-  if (strategicGuide.time_to_procure) {
-    guideSections.push({
-      title: '조달 최적화 전략 (Time-to-Procure)',
-      text: strategicGuide.time_to_procure,
-    })
-  }
-  if (strategicGuide.budget_guide) {
-    guideSections.push({ title: '예산 가이드', text: strategicGuide.budget_guide })
-  }
+  // section_2 → AI 전략적 조달 가이드 (guide_sections 우선, 없으면 레거시 키)
+  const usesGuideSections =
+    Array.isArray(strategicGuide.guide_sections) && strategicGuide.guide_sections.length > 0
+  const guideSections = mapStrategicGuideSections(strategicGuide)
   const guide: AiForecastGuide = {
-    highlight: strategicGuide.ai_summary_comment,
+    highlight: usesGuideSections ? undefined : strategicGuide.ai_summary_comment,
     sections: guideSections,
   }
 
