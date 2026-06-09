@@ -528,6 +528,8 @@ const AiForecastPage = () => {
   }
 
   const handleNewForecast = () => {
+    setResult(null)
+    setError(null)
     setActiveTab('query')
   }
 
