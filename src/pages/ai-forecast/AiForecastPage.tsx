@@ -16,6 +16,7 @@ import {
   deleteAiForecastRecord,
   patchAiForecastRecordTitle,
   resolveForecastCampusFromUser,
+  resolveRiskDisplayLabel,
   type AiForecastResponse,
   type AiForecastDisplaySummary,
   type ProcurementRecommendationRow,
@@ -505,20 +506,11 @@ const AiForecastPage = () => {
         window.alert('회원 소속(캠퍼스) 정보를 확인할 수 없습니다.')
         return
       }
-      const riskDisplayMap: Record<string, string> = {
-        '안전재고 최소': '안전재고 최소',
-        '안전재고 표준': '안전재고 표준',
-        '안전재고 최대': '안전재고 최대',
-        '리스크 선호': '안전재고 최소',
-        '리스크 중립': '안전재고 표준',
-        '리스크 회피': '안전재고 최대',
-        필수: '안전재고 최소',
-        권장: '안전재고 표준',
-        선택: '안전재고 최대',
-      }
       const displaySummary: AiForecastDisplaySummary = {
         target: analysisCondition.operatingDept === '선택' ? '' : analysisCondition.operatingDept,
-        risk: riskDisplayMap[analysisCondition.riskPropensity] ?? analysisCondition.riskPropensity,
+        risk:
+          resolveRiskDisplayLabel(analysisCondition.riskPropensity) ||
+          analysisCondition.riskPropensity,
         period: `${analysisCondition.year}년 ${analysisCondition.semester}`,
       }
       const data = await fetchAiForecast(query.trim(), conditions, displaySummary)

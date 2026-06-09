@@ -299,7 +299,7 @@ function mapApiDataToResponse(
     summary: {
       query: queryText,
       target: displaySummary?.target ?? '',
-      risk: displaySummary?.risk ?? '',
+      risk: resolveRiskDisplayLabel(displaySummary?.risk) || displaySummary?.risk || '',
       period: periodLabel,
     },
     demandTimeSeries: { data: demandTimeSeriesData, reorderPointPeriod },
@@ -339,6 +339,42 @@ export interface BuildForecastConditionOptions {
 
 type ForecastRiskLevel = AiForecastRequestConditions['risk_level']
 
+/** UI·히스토리 표시용 조달성향 라벨 (구 명칭·risk_level 포함) */
+const RISK_PROPENSITY_DISPLAY_LABEL: Record<string, string> = {
+  '안전재고 최소': '안전재고 최소',
+  '안전재고 표준': '안전재고 표준',
+  '안전재고 최대': '안전재고 최대',
+  '리스크 선호': '안전재고 최소',
+  '리스크 중립': '안전재고 표준',
+  '리스크 회피': '안전재고 최대',
+  필수: '안전재고 최소',
+  권장: '안전재고 표준',
+  선택: '안전재고 최대',
+  HIGH: '안전재고 최대',
+  MEDIUM: '안전재고 표준',
+  LOW: '안전재고 최소',
+}
+
+/** 예측 결과·이력 Risk 표시 — 구 리스크성향·risk_level → 안전재고 라벨 */
+export function resolveRiskDisplayLabel(
+  risk?: string | null,
+  riskLevel?: string | null,
+): string {
+  const trimmed = risk?.trim() ?? ''
+  if (trimmed) {
+    return (
+      RISK_PROPENSITY_DISPLAY_LABEL[trimmed] ??
+      RISK_PROPENSITY_DISPLAY_LABEL[trimmed.toUpperCase()] ??
+      trimmed
+    )
+  }
+  const level = riskLevel?.trim().toUpperCase() ?? ''
+  if (level && RISK_PROPENSITY_DISPLAY_LABEL[level]) {
+    return RISK_PROPENSITY_DISPLAY_LABEL[level]
+  }
+  return ''
+}
+
 const ORG_CD_BY_CAMPUS: Record<string, string> = {
   '한양대학교 ERICA캠퍼스': '7008277',
   '한양대학교 서울캠퍼스': '7002282',
@@ -375,18 +411,19 @@ export function buildForecastConditions(
   const orgCd = options?.campusOrgCd?.trim() || ORG_CD_BY_CAMPUS[ui.campus] || '7008277'
   const categoryTrimmed = ui.itemCategoryName?.trim() ?? ''
   const categoryForApi = categoryTrimmed.length > 0 ? categoryTrimmed : '전체'
+  /** 백엔드: LOW=안전재고 적음, HIGH=안전재고 많음 */
   const riskLevelByPropensity: Record<string, ForecastRiskLevel> = {
-    '안전재고 최소': 'HIGH',
+    '안전재고 최소': 'LOW',
     '안전재고 표준': 'MEDIUM',
-    '안전재고 최대': 'LOW',
-    '리스크 선호': 'HIGH',
+    '안전재고 최대': 'HIGH',
+    '리스크 선호': 'LOW',
     '리스크 중립': 'MEDIUM',
-    '리스크 회피': 'LOW',
-    필수: 'HIGH',
+    '리스크 회피': 'HIGH',
+    필수: 'LOW',
     권장: 'MEDIUM',
-    선택: 'LOW',
+    선택: 'HIGH',
   }
-  const riskLevel = (riskLevelByPropensity[ui.riskPropensity] ?? 'HIGH').toUpperCase() as ForecastRiskLevel
+  const riskLevel = (riskLevelByPropensity[ui.riskPropensity] ?? 'LOW').toUpperCase() as ForecastRiskLevel
   const conditions: AiForecastRequestConditions = {
     year,
     semester,
@@ -510,10 +547,10 @@ export async function fetchAiForecastHistoryDetail(
   const apiData = body.data
   const promptForDisplay = apiData.prompt?.trim() || displayTitle || '이전 예측'
   const displaySummary: AiForecastDisplaySummary | undefined =
-    apiData.target || apiData.risk || apiData.period
+    apiData.target || apiData.risk || apiData.period || apiData.conditions?.risk_level
       ? {
           target: apiData.target ?? '',
-          risk: apiData.risk ?? '',
+          risk: resolveRiskDisplayLabel(apiData.risk, apiData.conditions?.risk_level),
           period: apiData.period ?? '',
         }
       : undefined
