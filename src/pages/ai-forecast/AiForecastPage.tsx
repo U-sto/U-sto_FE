@@ -182,7 +182,6 @@ const AiForecastPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>('query')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AiForecastResponse | null>(null)
-  const [algorithmGuideOpen, setAlgorithmGuideOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<AiForecastHistoryItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -528,6 +527,10 @@ const AiForecastPage = () => {
     window.alert('PDF 저장 기능은 준비 중입니다.')
   }
 
+  const handleNewForecast = () => {
+    setActiveTab('query')
+  }
+
   const recommendationColumns: DataTableColumn<ProcurementRecommendationRow>[] = [
     { key: 'no', header: '순번', render: (row) => row.no },
     { key: 'itemName', header: '품목명', render: (row) => row.itemName },
@@ -733,16 +736,13 @@ const AiForecastPage = () => {
           {result ? (
             <>
               <div className="ai-forecast-result-header">
-                {result.algorithmGuide.length > 0 && (
-                  <button
-                    type="button"
-                    className="ai-forecast-algo-btn"
-                    onClick={() => setAlgorithmGuideOpen(true)}
-                  >
-                    <span className="ai-forecast-algo-btn-icon">?</span>
-                    알고리즘 안내
-                  </button>
-                )}
+                <Button
+                  type="button"
+                  className="ai-forecast-new-forecast-btn"
+                  onClick={handleNewForecast}
+                >
+                  새 예측 하기
+                </Button>
                 <Button
                   type="button"
                   className="ai-forecast-pdf-btn"
@@ -833,41 +833,6 @@ const AiForecastPage = () => {
                   />
                 </div>
               </div>
-            {/* 알고리즘 가이드 팝업 */}
-          {algorithmGuideOpen && (
-            <div
-              className="ai-forecast-algo-overlay"
-              role="dialog"
-              aria-modal="true"
-              aria-label="알고리즘 안내"
-              onClick={() => setAlgorithmGuideOpen(false)}
-            >
-              <div
-                className="ai-forecast-algo-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="ai-forecast-algo-modal-header">
-                  <h2 className="ai-forecast-algo-modal-title">알고리즘 안내</h2>
-                  <button
-                    type="button"
-                    className="ai-forecast-algo-modal-close"
-                    onClick={() => setAlgorithmGuideOpen(false)}
-                    aria-label="닫기"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="ai-forecast-algo-modal-body">
-                  {result.algorithmGuide.map((item, idx) => (
-                    <div key={idx} className="ai-forecast-algo-item">
-                      <p className="ai-forecast-algo-item-label">{item.label}</p>
-                      <p className="ai-forecast-algo-item-desc">{item.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
           </>
           ) : (
             <div className="ai-forecast-result-empty">

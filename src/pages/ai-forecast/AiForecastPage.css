@@ -372,12 +372,10 @@
   align-items: center;
 }
 
-/* 알고리즘 안내 버튼 */
-.ai-forecast-algo-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.ai-forecast-new-forecast-btn {
+  width: auto;
   height: 32px;
+  min-height: 0;
   padding: 0 14px;
   font-family: var(--font-family);
   font-size: 13px;
@@ -393,119 +391,10 @@
   box-sizing: border-box;
 }
 
-.ai-forecast-algo-btn:hover {
+.button.ai-forecast-new-forecast-btn:hover:not(:disabled) {
+  background-color: var(--usto-primary-300);
   opacity: 0.85;
-}
-
-.ai-forecast-algo-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid var(--usto-alt-white);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-/* 알고리즘 가이드 팝업 오버레이 */
-.ai-forecast-algo-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-/* 알고리즘 가이드 모달 */
-.ai-forecast-algo-modal {
-  background: var(--usto-alt-white);
-  border-radius: 12px;
-  width: 560px;
-  max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
-  overflow: hidden;
-}
-
-.ai-forecast-algo-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--usto-primary-200);
-  flex-shrink: 0;
-}
-
-.ai-forecast-algo-modal-title {
-  font-family: var(--font-family);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--usto-alt-black);
-  margin: 0;
-}
-
-.ai-forecast-algo-modal-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--usto-gray-200);
-  padding: 4px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ai-forecast-algo-modal-close:hover {
-  color: var(--usto-alt-black);
-}
-
-.ai-forecast-algo-modal-body {
-  padding: 20px 24px 28px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.ai-forecast-algo-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 20px;
-  background: var(--usto-primary-100);
-  border-radius: 8px;
-  border-left: 4px solid var(--usto-primary-300);
-}
-
-.ai-forecast-algo-item-label {
-  font-family: var(--font-family);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--usto-primary-300);
-  margin: 0;
-}
-
-.ai-forecast-algo-item-desc {
-  font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--usto-alt-black);
-  line-height: 1.7;
-  margin: 0;
-  word-break: keep-all;
+  transform: none;
 }
 
 .ai-forecast-pdf-btn {
