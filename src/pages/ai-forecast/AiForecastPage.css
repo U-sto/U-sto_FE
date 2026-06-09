@@ -527,8 +527,10 @@
   box-sizing: border-box;
 }
 
-.ai-forecast-pdf-btn:hover {
-  background: var(--usto-primary-100);
+.button.ai-forecast-pdf-btn:hover:not(:disabled) {
+  background-color: var(--usto-primary-300);
+  color: var(--usto-alt-white);
+  border-color: var(--usto-primary-300);
 }
 
 /* 결과 페이지 틀 (테두리 있는 영역) */

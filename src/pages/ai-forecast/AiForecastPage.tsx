@@ -91,11 +91,14 @@ const SearchIcon = () => (
   </svg>
 )
 
+const YEAR_RANGE_START = 2026
+const YEAR_RANGE_END = 2056
+
 function buildYearOptions(): string[] {
-  const y = new Date().getFullYear()
-  const start = y - 50
-  const end = y + 50
-  return Array.from({ length: end - start + 1 }, (_, i) => String(start + i))
+  return Array.from(
+    { length: YEAR_RANGE_END - YEAR_RANGE_START + 1 },
+    (_, i) => String(YEAR_RANGE_START + i),
+  )
 }
 
 const YEAR_OPTIONS = buildYearOptions()
