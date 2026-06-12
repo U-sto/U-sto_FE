@@ -3,7 +3,7 @@ import { ACCESS_TOKEN_KEY } from './types'
 
 /**
  * baseURL '' → 같은 origin으로 요청.
- * 개발: Vite 프록시(/api → http://13.124.10.41:8080)가 백엔드로 전달.
+ * 개발: Vite 프록시(/api → https://api.parkdohyun.com)가 백엔드로 전달.
  * 운영(Vercel): vercel.json rewrite(/api/* → 백엔드)가 프록시 역할.
  * 이렇게 해야 이메일 중복확인 후 세션 쿠키가 인증번호 발송 요청에 붙어서 "중복확인 필요" 에러가 사라짐.
  */
