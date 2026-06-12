@@ -9,7 +9,7 @@
  *   SYNC_AUTH_TOKEN=JWT (필요 시)
  */
 
-const DEFAULT_DEV_API = 'http://13.124.10.41:8080'
+const DEFAULT_DEV_API = 'https://api.parkdohyun.com'
 
 const API_URL = (
   process.env.API_URL ??
